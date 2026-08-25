@@ -161,13 +161,6 @@
   font-size: 0.875rem;
   color: var(--color-card-foreground);
 }
-@utility field {
-  &:focus-visible {
-    outline: 2px solid var(--color-ring);
-    outline-offset: 1px;
-  }
-}
-
 @utility lbl {
   display: block;
   margin-bottom: 0.25rem;
