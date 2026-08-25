@@ -151,3 +151,67 @@
     color: var(--color-foreground);
   }
 }
+
+@utility field {
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-input);
+  background-color: var(--color-card);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+  color: var(--color-card-foreground);
+}
+@utility field {
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 1px;
+  }
+}
+
+@utility lbl {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-muted-foreground);
+}
+
+@utility btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+  &:hover { opacity: 0.9; }
+}
+
+@utility btnGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  color: var(--color-card-foreground);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.95rem;
+  &:hover { background-color: var(--color-secondary); }
+}
+
+@utility btnDanger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-destructive);
+  color: var(--color-destructive);
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  &:hover { background-color: color-mix(in oklab, var(--color-destructive) 10%, transparent); }
+}
