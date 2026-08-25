@@ -5,7 +5,7 @@ export type Hall = {
   name: string;
   floor: string;
   capacity: number;
-  dailyPrice: number;
+  hourlyPrice: number;
 };
 
 export type Venue = {
@@ -20,6 +20,8 @@ export type Reservation = {
   venueId: string;
   hallId: string;
   date: string; // YYYY-MM-DD
+  start: string; // HH:MM
+  end: string; // HH:MM
   customer: string;
   phone: string;
   price: number;
@@ -32,7 +34,7 @@ export type Store = {
   reservations: Reservation[];
 };
 
-const KEY = "belediye-kira-takip-v1";
+const KEY = "belediye-kiralama-v2";
 
 export const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -59,6 +61,23 @@ export const trDays = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 export const money = (n: number) =>
   new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);
 
+/** "14:30" -> 870 dakika */
+export const toMin = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+};
+
+export const hoursBetween = (start: string, end: string) =>
+  Math.max(0, (toMin(end) - toMin(start)) / 60);
+
+export const timeSlots = Array.from({ length: 33 }, (_, i) => {
+  const mins = 8 * 60 + i * 30; // 08:00 - 24:00
+  return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+});
+
+export const overlaps = (aS: string, aE: string, bS: string, bE: string) =>
+  toMin(aS) < toMin(bE) && toMin(bS) < toMin(aE);
+
 function seed(): Store {
   const today = new Date();
   const d = (offset: number) => {
@@ -70,9 +89,9 @@ function seed(): Store {
     name: "Şehir Düğün Sarayı",
     district: "Merkez",
     halls: [
-      { id: "h1", name: "Lale Salonu", floor: "Zemin Kat", capacity: 400, dailyPrice: 12000 },
-      { id: "h2", name: "Menekşe Salonu", floor: "1. Kat", capacity: 250, dailyPrice: 9000 },
-      { id: "h3", name: "Teras Bahçe", floor: "Çatı Katı", capacity: 180, dailyPrice: 7500 },
+      { id: "h1", name: "Lale Salonu", floor: "Zemin Kat", capacity: 400, hourlyPrice: 2000 },
+      { id: "h2", name: "Menekşe Salonu", floor: "1. Kat", capacity: 250, hourlyPrice: 1500 },
+      { id: "h3", name: "Teras Bahçe", floor: "Çatı Katı", capacity: 180, hourlyPrice: 1200 },
     ],
   };
   const v2: Venue = {
@@ -80,16 +99,17 @@ function seed(): Store {
     name: "Kültür Merkezi Nikah Salonu",
     district: "Yenişehir",
     halls: [
-      { id: "h4", name: "Büyük Salon", floor: "Zemin Kat", capacity: 300, dailyPrice: 10000 },
-      { id: "h5", name: "Küçük Salon", floor: "2. Kat", capacity: 120, dailyPrice: 5500 },
+      { id: "h4", name: "Büyük Salon", floor: "Zemin Kat", capacity: 300, hourlyPrice: 1800 },
+      { id: "h5", name: "Küçük Salon", floor: "2. Kat", capacity: 120, hourlyPrice: 900 },
     ],
   };
   return {
     venues: [v1, v2],
     reservations: [
-      { id: uid(), venueId: "v1", hallId: "h1", date: d(1), customer: "Yılmaz Ailesi", phone: "0532 111 22 33", price: 12000, paid: 6000 },
-      { id: uid(), venueId: "v1", hallId: "h2", date: d(1), customer: "Demir Ailesi", phone: "0533 444 55 66", price: 9000, paid: 9000 },
-      { id: uid(), venueId: "v2", hallId: "h4", date: d(4), customer: "Kaya Ailesi", phone: "0505 777 88 99", price: 10000, paid: 0 },
+      { id: uid(), venueId: "v1", hallId: "h1", date: d(1), start: "13:00", end: "17:00", customer: "Yılmaz Ailesi", phone: "0532 111 22 33", price: 8000, paid: 4000 },
+      { id: uid(), venueId: "v1", hallId: "h1", date: d(1), start: "19:00", end: "23:00", customer: "Aydın Ailesi", phone: "0542 222 33 44", price: 8000, paid: 8000 },
+      { id: uid(), venueId: "v1", hallId: "h2", date: d(1), start: "14:00", end: "18:00", customer: "Demir Ailesi", phone: "0533 444 55 66", price: 6000, paid: 6000 },
+      { id: uid(), venueId: "v2", hallId: "h4", date: d(4), start: "12:00", end: "16:00", customer: "Kaya Ailesi", phone: "0505 777 88 99", price: 7200, paid: 0 },
     ],
   };
 }
@@ -137,10 +157,13 @@ export function useRentalStore() {
     }));
   }, []);
 
+  /** Aynı salon + aynı gün + çakışan saat aralığı varsa reddeder. */
   const addReservation = useCallback((r: Omit<Reservation, "id">) => {
     let ok = true;
     setStore((s) => {
-      const clash = s.reservations.some((x) => x.hallId === r.hallId && x.date === r.date);
+      const clash = s.reservations.some(
+        (x) => x.hallId === r.hallId && x.date === r.date && overlaps(r.start, r.end, x.start, x.end),
+      );
       if (clash) {
         ok = false;
         return s;
