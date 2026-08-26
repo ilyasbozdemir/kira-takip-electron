@@ -3,7 +3,7 @@ name: Release VenueKeeper App Pro
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -26,10 +26,9 @@ jobs:
           node-version: 22
 
       - name: Install Dependencies
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build & Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: pnpm run build
-
