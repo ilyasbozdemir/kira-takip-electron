@@ -40,7 +40,7 @@ export function MailDialog({
   const [secure, setSecure] = useState(false);
   const [user, setUser] = useState("");
   const [pass, setPass] = useState("");
-  const [senderName, setSenderName] = useState("Belediye Düğün Salonu İşletmesi");
+  const [senderName, setSenderName] = useState("Mekan & Tesis Yönetimi");
 
   // Mail Content State
   const [to, setTo] = useState(defaultRecipient);
@@ -59,7 +59,7 @@ export function MailDialog({
         setSecure(parsed.secure ?? false);
         setUser(parsed.user || "");
         setPass(parsed.pass || "");
-        setSenderName(parsed.senderName || "Belediye Düğün Salonu İşletmesi");
+        setSenderName(parsed.senderName || "Mekan & Tesis Yönetimi");
       }
     } catch {}
   }, []);
