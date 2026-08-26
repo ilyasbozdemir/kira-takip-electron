@@ -9,12 +9,12 @@ fileAssociations:
   - ext: vke
     name: Venue Keeper Enterprise Document
     description: Venue Keeper Salon ve Evrak Yönetim Dosyası
-    icon: public/favicon.ico
+    icon: build/icon.ico
     role: Editor
   - ext: evrak
     name: Evraktron Compatible Document
     description: Evraktron Uyumlu Evrak Dosyası
-    icon: public/favicon.ico
+    icon: build/icon.ico
     role: Editor
 
 win:
@@ -29,9 +29,6 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: VenueKeeper App Pro
   include: build/installer.nsh
-  fileAssociation:
-    - ext: vke
-      icon: build/icon.ico
 
 publish:
   provider: github
