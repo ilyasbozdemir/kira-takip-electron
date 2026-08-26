@@ -225,26 +225,43 @@ export default function App() {
 
   const handleResetEventTypes = () => {
     setEventTypes(DEFAULT_EVENT_TYPES);
-    localStorage.setItem("venuekeeper-event-types", JSON.stringify(DEFAULT_EVENT_TYPES));
+    localStorage.setItem(
+      "venuekeeper-event-types",
+      JSON.stringify(DEFAULT_EVENT_TYPES),
+    );
     toast.success("Etkinlik türleri varsayılan listeye sıfırlandı.");
   };
 
   const getEventTypeColor = (type?: string) => {
     const isDark = theme === "dark";
-    if (!type) return isDark ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30" : "bg-indigo-50 text-indigo-700 border-indigo-300";
+    if (!type) {
+      return isDark
+        ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"
+        : "bg-indigo-50 text-indigo-700 border-indigo-300";
+    }
     switch (type) {
       case "Düğün & Nişan":
-        return isDark ? "bg-rose-500/15 text-rose-400 border-rose-500/30" : "bg-rose-50 text-rose-700 border-rose-300";
+        return isDark
+          ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+          : "bg-rose-50 text-rose-700 border-rose-300";
       case "Konferans & Kongre":
       case "Toplantı & Seminer":
-        return isDark ? "bg-sky-500/15 text-sky-400 border-sky-500/30" : "bg-sky-50 text-sky-700 border-sky-300";
+        return isDark
+          ? "bg-sky-500/15 text-sky-400 border-sky-500/30"
+          : "bg-sky-50 text-sky-700 border-sky-300";
       case "Konser & Sahne":
-        return isDark ? "bg-purple-500/15 text-purple-400 border-purple-500/30" : "bg-purple-50 text-purple-700 border-purple-300";
+        return isDark
+          ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
+          : "bg-purple-50 text-purple-700 border-purple-300";
       case "Balo & Gala":
       case "Lansman & Sergi":
-        return isDark ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-amber-50 text-amber-800 border-amber-300";
+        return isDark
+          ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+          : "bg-amber-50 text-amber-800 border-amber-300";
       case "İftar & Toplu Yemek":
-        return isDark ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-emerald-50 text-emerald-700 border-emerald-300";
+        return isDark
+          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+          : "bg-emerald-50 text-emerald-700 border-emerald-300";
       default: {
         const hash = type.split("").reduce(
           (acc, char) => acc + char.charCodeAt(0),
@@ -264,7 +281,9 @@ export default function App() {
           "bg-orange-50 text-orange-800 border-orange-300",
           "bg-cyan-50 text-cyan-700 border-cyan-300",
         ];
-        return isDark ? darkColors[hash % darkColors.length] : lightColors[hash % lightColors.length];
+        return isDark
+          ? darkColors[hash % darkColors.length]
+          : lightColors[hash % lightColors.length];
       }
     }
   };
@@ -277,7 +296,9 @@ export default function App() {
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [launcherOpen, setLauncherOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
-  const [selectedPrintReservation, setSelectedPrintReservation] = useState<Reservation | null>(null);
+  const [selectedPrintReservation, setSelectedPrintReservation] = useState<
+    Reservation | null
+  >(null);
 
   const handlePrintOfficialDoc = (res: Reservation) => {
     setSelectedPrintReservation(res);
@@ -415,12 +436,18 @@ export default function App() {
   });
 
   // Draft States for Settings Forms
-  const [draftInstitutionName, setDraftInstitutionName] = useState(institutionName);
-  const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(institutionLogo);
+  const [draftInstitutionName, setDraftInstitutionName] = useState(
+    institutionName,
+  );
+  const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(
+    institutionLogo,
+  );
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   const decisionSuggestions = useMemo(() => {
-    const list = store.reservations.map((r) => r.decisionInfo).filter((x): x is string => Boolean(x));
+    const list = store.reservations.map((r) => r.decisionInfo).filter((
+      x,
+    ): x is string => Boolean(x));
     return Array.from(new Set([defaultTariffBasis, ...list]));
   }, [store.reservations, defaultTariffBasis]);
 
@@ -467,7 +494,9 @@ export default function App() {
         const base64Str = event.target?.result as string;
         if (base64Str) {
           setDraftInstitutionLogo(base64Str);
-          toast.info("Logo önizlemeye yüklendi. Kaydet butonuna basarak onaylayabilirsiniz.");
+          toast.info(
+            "Logo önizlemeye yüklendi. Kaydet butonuna basarak onaylayabilirsiniz.",
+          );
         }
       };
       reader.readAsDataURL(file);
@@ -723,7 +752,9 @@ export default function App() {
     return (
       <div
         className={`min-h-screen flex flex-col font-sans ${
-          theme === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
+          theme === "dark"
+            ? "bg-slate-950 text-slate-100"
+            : "bg-slate-50 text-slate-900"
         }`}
       >
         <Toaster position="top-right" theme={theme} richColors />
@@ -819,8 +850,6 @@ export default function App() {
             className="flex items-center gap-2"
             style={{ WebkitAppRegion: "no-drag" } as any}
           >
-
-
             <Button
               size="sm"
               variant="outline"
@@ -1046,8 +1075,6 @@ export default function App() {
                 );
               })}
             </nav>
-
-
           </aside>
 
           {/* Main Content Area */}
@@ -2532,15 +2559,20 @@ export default function App() {
                       <div>
                         <CardTitle
                           className={`text-base font-bold flex items-center gap-2 ${
-                            theme === "dark" ? "text-slate-100" : "text-slate-900"
+                            theme === "dark"
+                              ? "text-slate-100"
+                              : "text-slate-900"
                           }`}
                         >
-                          <PartyPopper className="h-5 w-5 text-indigo-500" />{" "}
+                          <PartyPopper className="h-5 w-5 text-indigo-500" />
+                          {" "}
                           Etkinlik Kategori & Tür Yönetimi
                         </CardTitle>
                         <CardDescription
                           className={`text-xs mt-0.5 ${
-                            theme === "dark" ? "text-slate-400" : "text-slate-600"
+                            theme === "dark"
+                              ? "text-slate-400"
+                              : "text-slate-600"
                           }`}
                         >
                           Sistemdeki tüm etkinlik türlerini ekleyin veya silin.
@@ -2607,11 +2639,9 @@ export default function App() {
 
                   {/* Institutional Identity & Base64 Logo Card with Save & Cancel */}
                   <Card
-                    className={
-                      theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"
-                    }
+                    className={theme === "dark"
+                      ? "bg-slate-900/80 border-slate-800"
+                      : "bg-white border-slate-200 shadow-sm"}
                   >
                     <CardHeader>
                       <CardTitle
@@ -2627,18 +2657,26 @@ export default function App() {
                           theme === "dark" ? "text-slate-400" : "text-slate-600"
                         }`}
                       >
-                        Resmi evrak, döküm ve raporlarda kullanılacak kurum adı ve logosu.
+                        Resmi evrak, döküm ve raporlarda kullanılacak kurum adı
+                        ve logosu.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <Label className={`text-xs font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                        <Label
+                          className={`text-xs font-medium ${
+                            theme === "dark"
+                              ? "text-slate-300"
+                              : "text-slate-700"
+                          }`}
+                        >
                           Kurum / İşletme Resmi Adı
                         </Label>
                         <Input
                           placeholder="örn: Ankara İl Milli Eğitim Müdürlüğü"
                           value={draftInstitutionName}
-                          onChange={(e) => setDraftInstitutionName(e.target.value)}
+                          onChange={(e) =>
+                            setDraftInstitutionName(e.target.value)}
                           className={`text-xs mt-1 ${
                             theme === "dark"
                               ? "bg-slate-950 border-slate-800 text-slate-100"
@@ -2648,19 +2686,31 @@ export default function App() {
                       </div>
 
                       <div>
-                        <Label className={`text-xs font-medium block mb-1.5 ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                        <Label
+                          className={`text-xs font-medium block mb-1.5 ${
+                            theme === "dark"
+                              ? "text-slate-300"
+                              : "text-slate-700"
+                          }`}
+                        >
                           Kurum Logosu (Base64)
                         </Label>
                         <div className="flex items-center gap-3">
-                          {draftInstitutionLogo ? (
-                            <div className="relative h-14 w-14 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
-                              <img src={draftInstitutionLogo} alt="Kurum Logosu" className="h-full w-full object-contain p-1" />
-                            </div>
-                          ) : (
-                            <div className="h-14 w-14 rounded-lg border border-dashed border-slate-400 dark:border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">
-                              Logo Yok
-                            </div>
-                          )}
+                          {draftInstitutionLogo
+                            ? (
+                              <div className="relative h-14 w-14 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
+                                <img
+                                  src={draftInstitutionLogo}
+                                  alt="Kurum Logosu"
+                                  className="h-full w-full object-contain p-1"
+                                />
+                              </div>
+                            )
+                            : (
+                              <div className="h-14 w-14 rounded-lg border border-dashed border-slate-400 dark:border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">
+                                Logo Yok
+                              </div>
+                            )}
                           <div className="space-y-1.5 flex-1">
                             <input
                               type="file"
@@ -2671,7 +2721,9 @@ export default function App() {
                             />
                             <div className="flex gap-2">
                               <Button
-                                onClick={() => document.getElementById("logo-upload-input")?.click()}
+                                onClick={() =>
+                                  document.getElementById("logo-upload-input")
+                                    ?.click()}
                                 variant="outline"
                                 className={`text-xs h-8 px-3 border font-medium ${
                                   theme === "dark"
@@ -2691,17 +2743,28 @@ export default function App() {
                                 </Button>
                               )}
                             </div>
-                            <p className={`text-[10px] ${theme === "dark" ? "text-slate-500" : "text-slate-400"}`}>
-                              PNG / JPG (Maks. 2MB). Dosya Base64 olarak saklanır.
+                            <p
+                              className={`text-[10px] ${
+                                theme === "dark"
+                                  ? "text-slate-500"
+                                  : "text-slate-400"
+                              }`}
+                            >
+                              PNG / JPG (Maks. 2MB). Dosya Base64 olarak
+                              saklanır.
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Action Buttons: Kaydet & Vazgeç */}
-                      <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
-                        theme === "dark" ? "border-slate-800/80" : "border-slate-200"
-                      }`}>
+                      <div
+                        className={`flex items-center justify-end gap-2 pt-3 border-t ${
+                          theme === "dark"
+                            ? "border-slate-800/80"
+                            : "border-slate-200"
+                        }`}
+                      >
                         <Button
                           variant="ghost"
                           onClick={handleCancelInstitutionSettings}
@@ -2717,7 +2780,8 @@ export default function App() {
                           onClick={handleSaveInstitutionSettings}
                           className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
                         >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Değişiklikleri Kaydet
+                          <Check className="h-3.5 w-3.5 mr-1" />{" "}
+                          Değişiklikleri Kaydet
                         </Button>
                       </div>
                     </CardContent>
@@ -2725,11 +2789,9 @@ export default function App() {
 
                   {/* Official Tariff & Council Decision Basis Card with Save & Cancel */}
                   <Card
-                    className={
-                      theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"
-                    }
+                    className={theme === "dark"
+                      ? "bg-slate-900/80 border-slate-800"
+                      : "bg-white border-slate-200 shadow-sm"}
                   >
                     <CardHeader>
                       <CardTitle
@@ -2745,12 +2807,19 @@ export default function App() {
                           theme === "dark" ? "text-slate-400" : "text-slate-600"
                         }`}
                       >
-                        Belediye encümeni veya meclis kararı ücret tarifesi dayanağı.
+                        Belediye encümeni veya meclis kararı ücret tarifesi
+                        dayanağı.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <Label className={`text-xs font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                        <Label
+                          className={`text-xs font-medium ${
+                            theme === "dark"
+                              ? "text-slate-300"
+                              : "text-slate-700"
+                          }`}
+                        >
                           Varsayılan Karar & Tarife Dayanağı
                         </Label>
                         <Input
@@ -2766,9 +2835,13 @@ export default function App() {
                       </div>
 
                       {/* Action Buttons: Kaydet & Vazgeç */}
-                      <div className={`flex items-center justify-end gap-2 pt-3 border-t ${
-                        theme === "dark" ? "border-slate-800/80" : "border-slate-200"
-                      }`}>
+                      <div
+                        className={`flex items-center justify-end gap-2 pt-3 border-t ${
+                          theme === "dark"
+                            ? "border-slate-800/80"
+                            : "border-slate-200"
+                        }`}
+                      >
                         <Button
                           variant="ghost"
                           onClick={handleCancelTariffSettings}
@@ -2784,7 +2857,8 @@ export default function App() {
                           onClick={handleSaveTariffSettings}
                           className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
                         >
-                          <Check className="h-3.5 w-3.5 mr-1" /> Değişiklikleri Kaydet
+                          <Check className="h-3.5 w-3.5 mr-1" />{" "}
+                          Değişiklikleri Kaydet
                         </Button>
                       </div>
                     </CardContent>
@@ -2802,11 +2876,9 @@ export default function App() {
         {/* 1. New Reservation Dialog */}
         <Dialog open={resModalOpen} onOpenChange={setResModalOpen}>
           <DialogContent
-            classNames={{
-              content: theme === "dark"
-                ? "sm:max-w-[520px] bg-slate-900 border-slate-800 text-slate-100"
-                : "sm:max-w-[520px] bg-white border-slate-200 text-slate-900 shadow-2xl",
-            }}
+            className={theme === "dark"
+              ? "sm:max-w-[520px] bg-slate-900 border-slate-800 text-slate-100"
+              : "sm:max-w-[520px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
           >
             <DialogHeader>
               <DialogTitle
@@ -2975,9 +3047,10 @@ export default function App() {
                     }`}
                   />
                   <datalist id="customer-suggestions">
-                    {customerSuggestions.map((c) => (
-                      <option key={c} value={c} />
-                    ))}
+                    {customerSuggestions.map((c) => <option
+                      key={c}
+                      value={c}
+                    />)}
                   </datalist>
                 </div>
               </div>
@@ -3074,9 +3147,7 @@ export default function App() {
                     }`}
                   />
                   <datalist id="phone-suggestions">
-                    {phoneSuggestions.map((p) => (
-                      <option key={p} value={p} />
-                    ))}
+                    {phoneSuggestions.map((p) => <option key={p} value={p} />)}
                   </datalist>
                 </div>
 
@@ -3144,9 +3215,7 @@ export default function App() {
                   }`}
                 />
                 <datalist id="decision-suggestions">
-                  {decisionSuggestions.map((d) => (
-                    <option key={d} value={d} />
-                  ))}
+                  {decisionSuggestions.map((d) => <option key={d} value={d} />)}
                 </datalist>
               </div>
 
@@ -3173,11 +3242,9 @@ export default function App() {
         {/* 2. New Venue Dialog */}
         <Dialog open={venueModalOpen} onOpenChange={setVenueModalOpen}>
           <DialogContent
-            classNames={{
-              content: theme === "dark"
-                ? "sm:max-w-[420px] bg-slate-900 border-slate-800 text-slate-100"
-                : "sm:max-w-[420px] bg-white border-slate-200 text-slate-900 shadow-2xl",
-            }}
+            className={theme === "dark"
+              ? "sm:max-w-[420px] bg-slate-900 border-slate-800 text-slate-100"
+              : "sm:max-w-[420px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
           >
             <DialogHeader>
               <DialogTitle
@@ -3292,11 +3359,9 @@ export default function App() {
         {/* 3. New Hall Dialog */}
         <Dialog open={hallModalOpen} onOpenChange={setHallModalOpen}>
           <DialogContent
-            classNames={{
-              content: theme === "dark"
-                ? "sm:max-w-[400px] bg-slate-900 border-slate-800 text-slate-100"
-                : "sm:max-w-[400px] bg-white border-slate-200 text-slate-900 shadow-2xl",
-            }}
+            className={theme === "dark"
+              ? "sm:max-w-[400px] bg-slate-900 border-slate-800 text-slate-100"
+              : "sm:max-w-[400px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
           >
             <DialogHeader>
               <DialogTitle
@@ -3462,14 +3527,14 @@ export default function App() {
           </AlertDialogContent>
         </AlertDialog>
 
-
-
         {/* 8. Official Document Print Modal */}
         <OfficialPrintModal
           open={printModalOpen}
           onOpenChange={setPrintModalOpen}
           reservation={selectedPrintReservation}
-          venue={store.venues.find((v) => v.id === selectedPrintReservation?.venueId)}
+          venue={store.venues.find((v) =>
+            v.id === selectedPrintReservation?.venueId
+          )}
           hall={hallById(selectedPrintReservation?.hallId || "")}
           institutionName={institutionName}
           institutionLogo={institutionLogo}

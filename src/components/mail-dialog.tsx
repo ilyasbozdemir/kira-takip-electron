@@ -128,11 +128,9 @@ export function MailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        classNames={{
-          content: theme === "dark"
-            ? "sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100"
-            : "sm:max-w-[550px] bg-white border-slate-200 text-slate-900 shadow-2xl",
-        }}
+        className={theme === "dark"
+          ? "sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100"
+          : "sm:max-w-[550px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
       >
         <DialogHeader>
           <DialogTitle className={`flex items-center gap-2 text-xl font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>

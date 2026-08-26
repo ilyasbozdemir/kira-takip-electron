@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Copy, Check, MessageSquare, RefreshCw } from "lucide-react";
+import { Check, Copy, MessageSquare, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 interface CopySettingsModalProps {
@@ -29,7 +29,9 @@ Kalan Bakiye: {REMAINING}
 
 İyi günler dileriz.`;
 
-export function CopySettingsModal({ open, onOpenChange }: CopySettingsModalProps) {
+export function CopySettingsModal(
+  { open, onOpenChange }: CopySettingsModalProps,
+) {
   const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
   const [copied, setCopied] = useState(false);
 
@@ -72,13 +74,15 @@ export function CopySettingsModal({ open, onOpenChange }: CopySettingsModalProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent classNames={{ content: "sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100" }}>
+      <DialogContent className="sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-100">
-            <MessageSquare className="h-5 w-5 text-indigo-400" /> Kopyalama & Mesaj Şablonu Ayarları
+            <MessageSquare className="h-5 w-5 text-indigo-400" />{" "}
+            Kopyalama & Mesaj Şablonu Ayarları
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            Rezervasyonlarda WhatsApp veya SMS ile bilgi gönderirken kullanılacak hızlı kopyalama şablonunu düzenleyin.
+            Rezervasyonlarda WhatsApp veya SMS ile bilgi gönderirken
+            kullanılacak hızlı kopyalama şablonunu düzenleyin.
           </DialogDescription>
         </DialogHeader>
 
@@ -94,7 +98,9 @@ export function CopySettingsModal({ open, onOpenChange }: CopySettingsModalProps
           </div>
 
           <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-xs text-slate-400 space-y-1">
-            <p className="font-semibold text-slate-300">Kullanılabilir Değişkenler:</p>
+            <p className="font-semibold text-slate-300">
+              Kullanılabilir Değişkenler:
+            </p>
             <div className="grid grid-cols-2 gap-1 text-[11px] font-mono text-indigo-300">
               <span>{`{CUSTOMER}`} : Müşteri Adı</span>
               <span>{`{VENUE}`} : Mekan/Tesis Adı</span>
@@ -127,11 +133,16 @@ export function CopySettingsModal({ open, onOpenChange }: CopySettingsModalProps
               onClick={handleTestCopy}
               className="border-slate-800 text-indigo-400 hover:bg-slate-800"
             >
-              {copied ? <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+              {copied
+                ? <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" />
+                : <Copy className="h-3.5 w-3.5 mr-1" />}
               Örnek Kopyala
             </Button>
           </div>
-          <Button onClick={handleSave} className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium">
+          <Button
+            onClick={handleSave}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+          >
             Ayarları Kaydet
           </Button>
         </DialogFooter>
