@@ -1,0 +1,39 @@
+appId: com.venuekeeper.app
+productName: VenueKeeper App Pro
+directories:
+  output: release/${version}
+files:
+  - dist/**/*
+  - dist-electron/**/*
+fileAssociations:
+  - ext: vke
+    name: Venue Keeper Enterprise Document
+    description: Venue Keeper Salon ve Evrak Yönetim Dosyası
+    icon: public/favicon.ico
+    role: Editor
+  - ext: evrak
+    name: Evraktron Compatible Document
+    description: Evraktron Uyumlu Evrak Dosyası
+    icon: public/favicon.ico
+    role: Editor
+
+win:
+  target:
+    - nsis
+  icon: build/icon.ico
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: VenueKeeper App Pro
+  include: build/installer.nsh
+  fileAssociation:
+    - ext: vke
+      icon: build/icon.ico
+
+publish:
+  provider: github
+  owner: ilyasbozdemir
+  repo: venue-keeper-cloud

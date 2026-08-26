@@ -1,32 +1,29 @@
-# Venue Rental Tracker
+# VenueOS Pro — Mekan, Salon & Etkinlik Yönetim Sistemi
 
-bana  aylara göre takvim görünümlü olarka da ,
+VenueOS Pro; mekanların, salonların, balo salonlarının, konferans merkezlerinin, toplantı odalarının ve etkinlik alanlarının randevu, takvim, tahsilat, müşteri ve evrak takibini tamamen yerel (offline) **SQLite** veritabanı altyapısıyla gerçekleştiren profesyonel masaüstü uygulamasıdır.
 
-bir işletme ekelnip orda ise randevu tarihi ve ücreti gibi kiralama takibi lazım
+## 🚀 Öne Çıkan Özellikler
 
-amac belediyeye ait düğün yerlerinin kira takibi oalyı basitce bir orne yap repsonsive ve de işletmeye ait farklı katlarda yerlerde  de aynı anda izin verebilir kiraya mesela
+- **Masaüstü & SQLite Mimarisi:** Electron + React TSX + Radix UI + Tailwind CSS v4 ve `better-sqlite3` yerel veritabanı motoru.
+- **Tek Dosya Veritabanı (.vke):** Proje ve evrak verileri taşınabilir `.vke` SQLite dosyalarında saklanır. Çift tıklayarak doğrudan açılabilir.
+- **Çakışma Önleyici Takvim:** Seçilen salon, tarih ve saat aralığında çakışan rezervasyonları anında tespit eden akıllı motor.
+- **Çoklu Etkinlik Türleri:** Düğün, Nişan, Konferans, Balo, İftar, Konser, Lansman, Toplantı ve Özel Etkinlikler.
+- **E-posta & Otomatik Güncelleme:** Entegre SMTP Nodemailer mail gönderimi ve `electron-updater` güncelleme sistemi.
+- **Şablonlu Kopyalama:** WhatsApp / SMS bilgilendirme metinlerini tek tıkla dinamik değişkenlerle kopyalama.
 
-analdın mı tammaen dinamik olucak,
+## 💻 Geliştirme Komutları
 
-This project was built with [Lovable](https://lovable.dev).
+Paket yükleme:
+```bash
+pnpm install
+```
 
-**Live app**: https://venue-keeper-cloud.lovable.app
+Geliştirme sunucusu:
+```bash
+pnpm dev
+```
 
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/16965d5d-c0cd-42c4-8841-139d5a3ee870).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+Windows kurulum paketleyicisi (.exe):
+```bash
+pnpm run pack:win
 ```

@@ -24,9 +24,11 @@ export type Reservation = {
   end: string; // HH:MM
   customer: string;
   phone: string;
+  eventType?: string;
   price: number;
   paid: number;
   note?: string;
+  decisionInfo?: string;
 };
 
 export type Store = {
@@ -79,38 +81,9 @@ export const overlaps = (aS: string, aE: string, bS: string, bE: string) =>
   toMin(aS) < toMin(bE) && toMin(bS) < toMin(aE);
 
 function seed(): Store {
-  const today = new Date();
-  const d = (offset: number) => {
-    const x = new Date(today.getFullYear(), today.getMonth(), Math.min(28, today.getDate() + offset));
-    return toKey(x);
-  };
-  const v1: Venue = {
-    id: "v1",
-    name: "Şehir Düğün Sarayı",
-    district: "Merkez",
-    halls: [
-      { id: "h1", name: "Lale Salonu", floor: "Zemin Kat", capacity: 400, hourlyPrice: 2000 },
-      { id: "h2", name: "Menekşe Salonu", floor: "1. Kat", capacity: 250, hourlyPrice: 1500 },
-      { id: "h3", name: "Teras Bahçe", floor: "Çatı Katı", capacity: 180, hourlyPrice: 1200 },
-    ],
-  };
-  const v2: Venue = {
-    id: "v2",
-    name: "Kültür Merkezi Nikah Salonu",
-    district: "Yenişehir",
-    halls: [
-      { id: "h4", name: "Büyük Salon", floor: "Zemin Kat", capacity: 300, hourlyPrice: 1800 },
-      { id: "h5", name: "Küçük Salon", floor: "2. Kat", capacity: 120, hourlyPrice: 900 },
-    ],
-  };
   return {
-    venues: [v1, v2],
-    reservations: [
-      { id: uid(), venueId: "v1", hallId: "h1", date: d(1), start: "13:00", end: "17:00", customer: "Yılmaz Ailesi", phone: "0532 111 22 33", price: 8000, paid: 4000 },
-      { id: uid(), venueId: "v1", hallId: "h1", date: d(1), start: "19:00", end: "23:00", customer: "Aydın Ailesi", phone: "0542 222 33 44", price: 8000, paid: 8000 },
-      { id: uid(), venueId: "v1", hallId: "h2", date: d(1), start: "14:00", end: "18:00", customer: "Demir Ailesi", phone: "0533 444 55 66", price: 6000, paid: 6000 },
-      { id: uid(), venueId: "v2", hallId: "h4", date: d(4), start: "12:00", end: "16:00", customer: "Kaya Ailesi", phone: "0505 777 88 99", price: 7200, paid: 0 },
-    ],
+    venues: [],
+    reservations: [],
   };
 }
 
