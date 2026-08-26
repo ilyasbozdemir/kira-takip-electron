@@ -1,6 +1,6 @@
 {
   "name": "venue-keeper-cloud",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "Belediye Düğün Salonu Kiralama, Takvim, Raporlama ve Evrak Yönetim Sistemi",
   "main": "dist-electron/main.js",
   "author": "İlyas Bozdemir",
