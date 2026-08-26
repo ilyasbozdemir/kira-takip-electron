@@ -26,6 +26,7 @@ export const electronAPI = {
       price: number;
       paid: number;
       note?: string;
+      decisionInfo?: string;
     }) => ipcRenderer.invoke("db:add-reservation", res),
     deleteReservation: (id: string) => ipcRenderer.invoke("db:delete-reservation", id),
     updatePaid: (id: string, paid: number) => ipcRenderer.invoke("db:update-paid", { id, paid }),

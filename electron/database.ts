@@ -286,6 +286,7 @@ export function addReservation(res: {
   price: number;
   paid: number;
   note?: string;
+  decisionInfo?: string;
 }): { success: boolean; id?: string; error?: string } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
 

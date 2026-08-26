@@ -29,7 +29,9 @@ export function UpdateBanner() {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   const handleDownload = async () => {

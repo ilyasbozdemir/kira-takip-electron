@@ -189,9 +189,9 @@ export default function App() {
   const [newEventTypeInput, setNewEventTypeInput] = useState("");
 
   const allEventTypes = useMemo(() => {
-    const dbTypes = store.reservations.map((r) => r.eventType).filter(Boolean);
+    const dbTypes = store.reservations.map((r) => r.eventType).filter((x): x is string => Boolean(x));
     const set = new Set([...eventTypes, ...dbTypes]);
-    return Array.from(set).sort((a, b) => a.localeCompare(b, "tr"));
+    return Array.from(set).sort((a, b) => (a || "").localeCompare(b || "", "tr"));
   }, [eventTypes, store.reservations]);
 
   const customerSuggestions = useMemo(() => {

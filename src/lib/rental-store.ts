@@ -12,6 +12,7 @@ export type Venue = {
   id: string;
   name: string;
   district: string;
+  category?: string;
   halls: Hall[];
 };
 

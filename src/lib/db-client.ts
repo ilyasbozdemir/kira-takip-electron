@@ -32,7 +32,9 @@ export function useSQLiteStore() {
       const unsubscribe = window.electronAPI.onDbUpdated(() => {
         fetchStore();
       });
-      return () => unsubscribe();
+      return () => {
+        unsubscribe();
+      };
     }
   }, [fetchStore]);
 
@@ -127,6 +129,7 @@ export function useSQLiteStore() {
       price: number;
       paid: number;
       note?: string;
+      decisionInfo?: string;
     }): Promise<{ success: boolean; error?: string }> => {
       if (window.electronAPI?.db?.addReservation) {
         const result = await window.electronAPI.db.addReservation(res);

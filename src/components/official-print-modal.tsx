@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileText, Printer, ShieldCheck } from "lucide-react";
-import { Hall, Reservation, Venue } from "../types";
+import { Hall, Reservation, Venue } from "../lib/rental-store";
 
 interface OfficialPrintModalProps {
   open: boolean;
