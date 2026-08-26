@@ -1,5 +1,5 @@
 {
-  "name": "venue-keeper-cloud",
+  "name": "isletme-kira-takibi-app",
   "version": "1.0.0-beta.1",
   "description": "Profesyonel Mekan, Tesis, Salon Kiralama, Takvim, Raporlama ve Evrak Yönetim Sistemi",
   "main": "dist-electron/main.js",
@@ -7,9 +7,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build && electron-builder --config electron/electron-builder.yml",
     "build:vite": "vite build",
-    "pack:win": "electron-builder --win"
+    "pack:win": "electron-builder --win --config electron/electron-builder.yml"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
@@ -65,6 +65,7 @@
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
+    "app-builder-lib": "^25.1.8",
     "electron": "^34.2.0",
     "electron-builder": "^25.1.8",
     "typescript": "^5.7.3",
