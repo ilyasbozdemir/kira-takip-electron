@@ -31,4 +31,17 @@ jobs:
       - name: Build & Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run build
+        run: npx electron-builder --win --config electron/electron-builder.yml --publish always
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/**/*.exe
+            release/**/*.blockmap
+            release/**/latest.yml
+          draft: false
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
