@@ -91,7 +91,7 @@ function extractFilePathFromArgs(args: string[]): string | null {
 function createWindow() {
   win = new BrowserWindow({
     title: "VenueKeeper App Pro - Mekan, Salon ve Etkinlik Yönetim Sistemi",
-    icon: path.join(process.env.VITE_PUBLIC || "", "favicon.ico"),
+    icon: path.join(process.env.VITE_PUBLIC || "", "app-logo.png"),
     width: 1350,
     height: 900,
     minWidth: 1024,

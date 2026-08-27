@@ -43,7 +43,7 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
         {/* Branding Header */}
         <div className="text-center space-y-3">
           <div className="mx-auto h-20 w-20 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex items-center justify-center overflow-hidden">
-            <img src="/app-logo.jpg" alt="VenueKeeper Logo" className="h-full w-full object-cover" />
+            <img src="/app-logo.png" alt="VenueKeeper Logo" className="h-full w-full object-cover" />
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">

@@ -946,7 +946,7 @@ export default function App() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 border border-indigo-500/30 flex items-center justify-center bg-slate-900 shrink-0">
                       <img
-                        src="/app-logo.jpg"
+                        src="/app-logo.png"
                         alt="VenueKeeper Logo"
                         className="h-full w-full object-cover"
                       />
