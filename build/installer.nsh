@@ -6,10 +6,6 @@
   WriteRegStr HKCU "Software\Classes\.vke\ShellNew" "ItemName" "VenueKeeper Proje Dosyası"
   WriteRegStr HKCU "Software\Classes\.vke\ShellNew" "IconPath" '"$INSTDIR\VenueKeeper App Pro.exe",0'
 
-  ; --- .evrak Uzantısı ---
-  WriteRegStr HKCU "Software\Classes\.evrak" "" "VenueKeeperAppPro.Document"
-  WriteRegStr HKCU "Software\Classes\.evrak" "Content Type" "application/x-vke"
-
   ; --- ProgID Tanımı ve Açma Komutu ---
   WriteRegStr HKCU "Software\Classes\VenueKeeperAppPro.Document" "" "VenueKeeper App Pro Çalışma Dosyası"
   WriteRegStr HKCU "Software\Classes\VenueKeeperAppPro.Document\DefaultIcon" "" '"$INSTDIR\VenueKeeper App Pro.exe",0'
@@ -21,7 +17,6 @@
 
 !macro customUnInstall
   DeleteRegKey HKCU "Software\Classes\.vke"
-  DeleteRegKey HKCU "Software\Classes\.evrak"
   DeleteRegKey HKCU "Software\Classes\VenueKeeperAppPro.Document"
   System::Call 'Shell32::SHChangeNotify(i 0x8000000, i 0, i 0, i 0)'
 !macroend

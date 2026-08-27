@@ -11,11 +11,6 @@ fileAssociations:
     description: Venue Keeper Salon ve Evrak Yönetim Dosyası
     icon: build/icon.ico
     role: Editor
-  - ext: evrak
-    name: Evraktron Compatible Document
-    description: Evraktron Uyumlu Evrak Dosyası
-    icon: build/icon.ico
-    role: Editor
 
 win:
   target:
