@@ -31,7 +31,7 @@ jobs:
       - name: Build & Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win --config electron/electron-builder.yml --publish always
+        run: pnpm run build:vite && npx electron-builder --win --config electron/electron-builder.yml --publish always
 
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
