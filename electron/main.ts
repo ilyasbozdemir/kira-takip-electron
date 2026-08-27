@@ -16,6 +16,7 @@ import {
   updatePaid,
   getCurrentDbPath,
 } from "./database";
+import { workspaceManager } from "./database/workspace";
 
 const { autoUpdater } = pkg;
 
@@ -56,7 +57,14 @@ if (!gotTheLock) {
       openedFilePath = initialFilePath;
       initDatabase(initialFilePath);
     } else {
-      openedFilePath = null;
+      const defaultDbPath = path.join(app.getPath("userData"), "venuekeeper-default.vke");
+      if (!fs.existsSync(defaultDbPath)) {
+        try {
+          workspaceManager.create(defaultDbPath, "Mekan & Tesis Yönetimi");
+        } catch {}
+      }
+      openedFilePath = defaultDbPath;
+      initDatabase(defaultDbPath);
     }
 
     createWindow();

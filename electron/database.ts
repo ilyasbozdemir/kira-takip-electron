@@ -126,10 +126,10 @@ function runMigrations(database: Database.Database) {
             price REAL DEFAULT 0,
             paid REAL DEFAULT 0,
             note TEXT,
+            decision_info TEXT DEFAULT '',
             FOREIGN KEY(venue_id) REFERENCES venues(id) ON DELETE RESTRICT,
             FOREIGN KEY(hall_id) REFERENCES halls(id) ON DELETE RESTRICT
           );
-
           CREATE TABLE IF NOT EXISTS settings (
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -148,6 +148,15 @@ function runMigrations(database: Database.Database) {
         `);
       },
     },
+    {
+      version: 3,
+      name: "003_decision_info_column",
+      up: (d: Database.Database) => {
+        try {
+          d.exec("ALTER TABLE reservations ADD COLUMN decision_info TEXT DEFAULT ''");
+        } catch {}
+      },
+    },
   ];
 
   for (const m of migrations) {
@@ -160,6 +169,12 @@ function runMigrations(database: Database.Database) {
       })();
     }
   }
+}
+
+function saveWorkspaceIfActive() {
+  try {
+    workspaceManager.save();
+  } catch {}
 }
 
 export function getCurrentDbPath(): string | null {
@@ -204,6 +219,7 @@ export function getStoreData(): StoreData {
     price: r.price,
     paid: r.paid,
     note: r.note || "",
+    decisionInfo: r.decision_info || r.decisionInfo || "",
   }));
 
   return { venues, reservations };
@@ -213,6 +229,7 @@ export function addVenue(name: string, district: string, category: string = "Gen
   if (!db && currentDbPath) initDatabase(currentDbPath);
   const newId = uid();
   db!.prepare("INSERT INTO venues (id, name, district, category) VALUES (?, ?, ?, ?)").run(newId, name, district, category);
+  saveWorkspaceIfActive();
   return { id: newId, name, district, category, halls: [] };
 }
 
@@ -231,6 +248,7 @@ export function deleteVenue(venueId: string): { success: boolean; error?: string
   }
 
   db!.prepare("DELETE FROM venues WHERE id = ?").run(venueId);
+  saveWorkspaceIfActive();
   return { success: true };
 }
 
@@ -245,6 +263,7 @@ export function addHall(venueId: string, hall: { name: string; floor: string; ca
     hall.capacity || 100,
     hall.hourlyPrice || 0
   );
+  saveWorkspaceIfActive();
   return { id: newId, venueId, ...hall };
 }
 
@@ -262,6 +281,7 @@ export function deleteHall(venueId: string, hallId: string): { success: boolean;
   }
 
   db!.prepare("DELETE FROM halls WHERE id = ?").run(hallId);
+  saveWorkspaceIfActive();
   return { success: true };
 }
 
@@ -300,7 +320,7 @@ export function addReservation(res: {
 
   const newId = uid();
   db!.prepare(
-    "INSERT INTO reservations (id, venue_id, hall_id, date, start_time, end_time, customer, phone, event_type, price, paid, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO reservations (id, venue_id, hall_id, date, start_time, end_time, customer, phone, event_type, price, paid, note, decision_info) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     newId,
     res.venueId,
@@ -313,8 +333,10 @@ export function addReservation(res: {
     res.eventType || "Genel Etkinlik",
     res.price,
     res.paid || 0,
-    res.note || ""
+    res.note || "",
+    res.decisionInfo || ""
   );
+  saveWorkspaceIfActive();
 
   return { success: true, id: newId };
 }
@@ -322,10 +344,12 @@ export function addReservation(res: {
 export function deleteReservation(id: string): { success: boolean } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   db!.prepare("DELETE FROM reservations WHERE id = ?").run(id);
+  saveWorkspaceIfActive();
   return { success: true };
 }
 
 export function updatePaid(id: string, paid: number) {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   db!.prepare("UPDATE reservations SET paid = ? WHERE id = ?").run(paid, id);
+  saveWorkspaceIfActive();
 }
