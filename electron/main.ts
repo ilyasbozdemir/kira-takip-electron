@@ -101,7 +101,15 @@ function createWindow() {
       preload: path.join(_dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
+      devTools: true,
     },
+  });
+
+  win.webContents.on("before-input-event", (event, input) => {
+    if ((input.key === "F12" || (input.control && input.shift && input.key.toLowerCase() === "i")) && input.type === "keyDown") {
+      win?.webContents.toggleDevTools();
+      event.preventDefault();
+    }
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -155,7 +163,7 @@ function buildAppMenu() {
             const res = await dialog.showOpenDialog(win, {
               title: "VenueKeeper Veritabanı Dosyası Aç",
               filters: [
-                { name: "VenueKeeper Dosyası (*.vke, *.evrak, *.db)", extensions: ["vke", "evrak", "db", "sqlite"] },
+                { name: "VenueKeeper Dosyası (*.vke, *.db)", extensions: ["vke", "db", "sqlite"] },
                 { name: "Tüm Dosyalar", extensions: ["*"] },
               ],
               properties: ["openFile"],
@@ -192,10 +200,10 @@ function buildAppMenu() {
     {
       label: "Görünüm",
       submenu: [
-        { label: "Yeniden Yükle", role: "reload" },
+        { label: "Yeniden Yükle", role: "reload", accelerator: "F5" },
         { label: "Tam Ekran Yap", role: "togglefullscreen" },
         { type: "separator" },
-        { label: "Geliştirici Araçları", role: "toggleDevTools" },
+        { label: "Geliştirici Araçları (F12)", role: "toggleDevTools", accelerator: "F12" },
       ],
     },
     {
