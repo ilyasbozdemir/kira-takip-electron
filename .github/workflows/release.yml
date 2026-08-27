@@ -28,7 +28,18 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build & Publish Release
+      - name: Build Desktop Executable
+        run: pnpm run build:vite && npx electron-builder --win --config electron/electron-builder.yml --publish never
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          files: |
+            release/**/*.exe
+            release/**/*.blockmap
+            release/**/latest.yml
+          draft: false
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm run build:vite && npx electron-builder --win --config electron/electron-builder.yml --publish always
