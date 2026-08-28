@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { NavSection, Store } from "@/lib/rental-store";
+import { APP_ROUTES } from "@/constants/routeConstants";
 
 interface AppSidebarProps {
   theme: "dark" | "light";
