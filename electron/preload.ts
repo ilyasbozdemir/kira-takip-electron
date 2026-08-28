@@ -31,6 +31,9 @@ export const electronAPI = {
     deleteReservation: (id: string) => ipcRenderer.invoke("db:delete-reservation", id),
     updatePaid: (id: string, paid: number) => ipcRenderer.invoke("db:update-paid", { id, paid }),
     switchDatabase: (filePath: string) => ipcRenderer.invoke("db:switch-path", filePath),
+    getSetting: (key: string) => ipcRenderer.invoke("db:get-setting", key),
+    setSetting: (key: string, value: string) => ipcRenderer.invoke("db:set-setting", { key, value }),
+    getAllSettings: () => ipcRenderer.invoke("db:get-all-settings"),
   },
 
   // File & Custom Extension IPCs

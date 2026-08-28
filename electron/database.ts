@@ -355,3 +355,37 @@ export function updatePaid(id: string, paid: number) {
   db!.prepare("UPDATE reservations SET paid = ? WHERE id = ?").run(paid, id);
   saveWorkspaceIfActive();
 }
+
+export function getSetting(key: string): string | null {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return null;
+  try {
+    const row = db.prepare("SELECT value FROM TANIM_Ayar WHERE key = ?").get(key) as { value: string } | undefined;
+    return row ? row.value : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setSetting(key: string, value: string): void {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return;
+  db.prepare("INSERT OR REPLACE INTO TANIM_Ayar (key, value) VALUES (?, ?)").run(key, value);
+  saveWorkspaceIfActive();
+}
+
+export function getAllSettings(): Record<string, string> {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return {};
+  try {
+    const rows = db.prepare("SELECT key, value FROM TANIM_Ayar").all() as { key: string; value: string }[];
+    const settings: Record<string, string> = {};
+    for (const r of rows) {
+      settings[r.key] = r.value;
+    }
+    return settings;
+  } catch {
+    return {};
+  }
+}
+

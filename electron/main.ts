@@ -15,6 +15,9 @@ import {
   deleteReservation,
   updatePaid,
   getCurrentDbPath,
+  getSetting,
+  setSetting,
+  getAllSettings,
 } from "./database";
 import { workspaceManager } from "./database/workspace";
 
@@ -286,6 +289,19 @@ ipcMain.handle("db:delete-reservation", (_event, id: string) => {
 ipcMain.handle("db:update-paid", (_event, { id, paid }) => {
   updatePaid(id, paid);
   return true;
+});
+
+ipcMain.handle("db:get-setting", (_event, key: string) => {
+  return getSetting(key);
+});
+
+ipcMain.handle("db:set-setting", (_event, { key, value }: { key: string; value: string }) => {
+  setSetting(key, value);
+  return true;
+});
+
+ipcMain.handle("db:get-all-settings", () => {
+  return getAllSettings();
 });
 
 ipcMain.handle("db:switch-path", (_event, filePath: string) => {
