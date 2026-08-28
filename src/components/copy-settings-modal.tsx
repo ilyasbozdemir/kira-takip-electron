@@ -16,6 +16,7 @@ import { toast } from "sonner";
 interface CopySettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  theme?: "dark" | "light";
 }
 
 const TEMPLATE_KEY = "venue-keeper-copy-template";
@@ -29,9 +30,11 @@ Kalan Bakiye: {REMAINING}
 
 İyi günler dileriz.`;
 
-export function CopySettingsModal(
-  { open, onOpenChange }: CopySettingsModalProps,
-) {
+export function CopySettingsModal({
+  open,
+  onOpenChange,
+  theme = "dark",
+}: CopySettingsModalProps) {
   const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
   const [copied, setCopied] = useState(false);
 
@@ -74,13 +77,27 @@ export function CopySettingsModal(
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100">
+      <DialogContent
+        className={
+          theme === "dark"
+            ? "sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100"
+            : "sm:max-w-[550px] bg-white border-slate-200 text-slate-900 shadow-2xl"
+        }
+      >
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-slate-100">
-            <MessageSquare className="h-5 w-5 text-indigo-400" />{" "}
+          <DialogTitle
+            className={`flex items-center gap-2 text-xl font-bold ${
+              theme === "dark" ? "text-slate-100" : "text-slate-900"
+            }`}
+          >
+            <MessageSquare className="h-5 w-5 text-indigo-500" />{" "}
             Kopyalama & Mesaj Şablonu Ayarları
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription
+            className={`text-xs ${
+              theme === "dark" ? "text-slate-400" : "text-slate-600"
+            }`}
+          >
             Rezervasyonlarda WhatsApp veya SMS ile bilgi gönderirken
             kullanılacak hızlı kopyalama şablonunu düzenleyin.
           </DialogDescription>
@@ -88,20 +105,44 @@ export function CopySettingsModal(
 
         <div className="space-y-3 py-2">
           <div>
-            <Label className="text-slate-300">Mesaj Şablonu Metni</Label>
+            <Label
+              className={`text-xs font-semibold ${
+                theme === "dark" ? "text-slate-300" : "text-slate-700"
+              }`}
+            >
+              Mesaj Şablonu Metni
+            </Label>
             <Textarea
               rows={8}
               value={template}
               onChange={(e) => setTemplate(e.target.value)}
-              className="bg-slate-950 border-slate-800 text-slate-100 font-mono text-xs mt-1"
+              className={`mt-1 font-mono text-xs ${
+                theme === "dark"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+              }`}
             />
           </div>
 
-          <div className="bg-slate-950/60 p-3 rounded-lg border border-slate-800 text-xs text-slate-400 space-y-1">
-            <p className="font-semibold text-slate-300">
+          <div
+            className={`p-3 rounded-lg border text-xs space-y-1 ${
+              theme === "dark"
+                ? "bg-slate-950/60 border-slate-800 text-slate-400"
+                : "bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            <p
+              className={`font-semibold ${
+                theme === "dark" ? "text-slate-300" : "text-slate-800"
+              }`}
+            >
               Kullanılabilir Değişkenler:
             </p>
-            <div className="grid grid-cols-2 gap-1 text-[11px] font-mono text-indigo-300">
+            <div
+              className={`grid grid-cols-2 gap-1 text-[11px] font-mono ${
+                theme === "dark" ? "text-indigo-300" : "text-indigo-700 font-medium"
+              }`}
+            >
               <span>{`{CUSTOMER}`} : Müşteri Adı</span>
               <span>{`{VENUE}`} : Mekan/Tesis Adı</span>
               <span>{`{HALL}`} : Salon Adı</span>
@@ -122,7 +163,11 @@ export function CopySettingsModal(
               variant="outline"
               size="sm"
               onClick={handleReset}
-              className="border-slate-800 text-slate-400 hover:text-slate-200"
+              className={
+                theme === "dark"
+                  ? "border-slate-800 text-slate-400 hover:text-slate-200"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-100"
+              }
             >
               <RefreshCw className="h-3.5 w-3.5 mr-1" /> Sıfırla
             </Button>
@@ -131,11 +176,17 @@ export function CopySettingsModal(
               variant="outline"
               size="sm"
               onClick={handleTestCopy}
-              className="border-slate-800 text-indigo-400 hover:bg-slate-800"
+              className={
+                theme === "dark"
+                  ? "border-slate-800 text-indigo-400 hover:bg-slate-800"
+                  : "border-slate-300 text-indigo-600 hover:bg-indigo-50"
+              }
             >
-              {copied
-                ? <Check className="h-3.5 w-3.5 mr-1 text-emerald-400" />
-                : <Copy className="h-3.5 w-3.5 mr-1" />}
+              {copied ? (
+                <Check className="h-3.5 w-3.5 mr-1 text-emerald-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5 mr-1" />
+              )}
               Örnek Kopyala
             </Button>
           </div>

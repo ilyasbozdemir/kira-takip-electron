@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Mail, Send, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -128,9 +127,11 @@ export function MailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={theme === "dark"
-          ? "sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100"
-          : "sm:max-w-[550px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
+        className={
+          theme === "dark"
+            ? "sm:max-w-[550px] bg-slate-900 border-slate-800 text-slate-100"
+            : "sm:max-w-[550px] bg-white border-slate-200 text-slate-900 shadow-2xl"
+        }
       >
         <DialogHeader>
           <DialogTitle className={`flex items-center gap-2 text-xl font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
@@ -148,7 +149,9 @@ export function MailDialog({
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "send"
                 ? "border-indigo-500 text-indigo-500 font-semibold"
-                : theme === "dark" ? "border-transparent text-slate-400 hover:text-slate-200" : "border-transparent text-slate-600 hover:text-slate-900"
+                : theme === "dark"
+                ? "border-transparent text-slate-400 hover:text-slate-200"
+                : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
             E-posta Gönder
@@ -158,7 +161,9 @@ export function MailDialog({
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "settings"
                 ? "border-indigo-500 text-indigo-500 font-semibold"
-                : theme === "dark" ? "border-transparent text-slate-400 hover:text-slate-200" : "border-transparent text-slate-600 hover:text-slate-900"
+                : theme === "dark"
+                ? "border-transparent text-slate-400 hover:text-slate-200"
+                : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
             SMTP Sunucu Ayarları
@@ -168,31 +173,43 @@ export function MailDialog({
         {activeTab === "send" ? (
           <div className="space-y-4 py-2">
             <div>
-              <Label className={theme === "dark" ? "text-slate-300" : "text-slate-700"}>Alıcı E-posta</Label>
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Alıcı E-posta</Label>
               <Input
                 placeholder="ornek@musteri.com"
                 value={to}
                 onChange={(e) => setTo(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                className={`mt-1 text-xs ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                }`}
               />
             </div>
             <div>
-              <Label className="text-slate-300">Konu</Label>
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Konu</Label>
               <Input
                 placeholder="Konu başlığı..."
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                className={`mt-1 text-xs ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                }`}
               />
             </div>
             <div>
-              <Label className="text-slate-300">Mesaj İçeriği</Label>
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Mesaj İçeriği</Label>
               <Textarea
                 rows={5}
                 placeholder="Mesajınızı buraya yazın..."
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                className={`mt-1 text-xs ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                }`}
               />
             </div>
           </div>
@@ -200,88 +217,104 @@ export function MailDialog({
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-slate-300">SMTP Sunucu (Host)</Label>
+                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>SMTP Sunucu (Host)</Label>
                 <Input
                   placeholder="smtp.gmail.com"
                   value={host}
                   onChange={(e) => setHost(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                  }`}
                 />
               </div>
               <div>
-                <Label className="text-slate-300">Port</Label>
+                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Port</Label>
                 <Input
                   placeholder="587"
                   value={port}
                   onChange={(e) => setPort(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                  }`}
                 />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-slate-300">E-posta (User)</Label>
+                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>E-posta (User)</Label>
                 <Input
                   placeholder="belediye@gmail.com"
                   value={user}
                   onChange={(e) => setUser(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                  }`}
                 />
               </div>
               <div>
-                <Label className="text-slate-300">Şifre / Uygulama Şifresi</Label>
+                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Şifre / Uygulama Şifresi</Label>
                 <Input
                   type="password"
                   placeholder="••••••••••••"
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                  }`}
                 />
               </div>
             </div>
             <div>
-              <Label className="text-slate-300">Gönderen Adı</Label>
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Gönderen Adı</Label>
               <Input
-                placeholder="Belediye Düğün Salonu İşletmesi"
+                placeholder="Mekan & Tesis Yönetimi"
                 value={senderName}
                 onChange={(e) => setSenderName(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-slate-100 mt-1"
+                className={`mt-1 text-xs ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                }`}
               />
             </div>
-            <div className="flex items-center justify-between pt-2">
-              <Label className="text-slate-300 cursor-pointer">SSL / TLS Güvenli Bağlantı</Label>
-              <Switch checked={secure} onCheckedChange={setSecure} />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={saveSettings}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 mt-2"
-            >
-              <CheckCircle2 className="h-4 w-4 mr-2 text-emerald-400" /> SMTP Ayarlarını Kaydet
-            </Button>
           </div>
         )}
 
-        <DialogFooter className="mt-4 flex justify-between">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="text-slate-400 hover:text-slate-200">
+        <DialogFooter className="mt-4">
+          <Button
+            variant="ghost"
+            onClick={() => onOpenChange(false)}
+            className={theme === "dark" ? "text-slate-400 hover:text-slate-200" : "text-slate-600 hover:text-slate-900"}
+          >
             Kapat
           </Button>
-          {activeTab === "send" && (
+
+          {activeTab === "send" ? (
             <Button
               onClick={handleSendEmail}
               disabled={sending}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium shadow-md"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium gap-2"
             >
-              {sending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Gönderiliyor...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4 mr-2" /> E-posta Gönder
-                </>
-              )}
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {sending ? "Gönderiliyor..." : "E-posta Gönder"}
+            </Button>
+          ) : (
+            <Button
+              onClick={() => {
+                saveSettings();
+                setActiveTab("send");
+              }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+            >
+              SMTP Ayarlarını Kaydet
             </Button>
           )}
         </DialogFooter>

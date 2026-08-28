@@ -789,7 +789,7 @@ export function App(): React.JSX.Element {
               <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5">
                 <span>{institutionName}</span>
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono">
-                  v1.0.0-beta.14
+                  v1.0.0-beta.16
                 </Badge>
               </h1>
               <p
@@ -1278,6 +1278,7 @@ export function App(): React.JSX.Element {
       <CopySettingsModal
         open={copyModalOpen}
         onOpenChange={setCopyModalOpen}
+        theme={theme}
       />
 
       <DeleteConfirmModal
