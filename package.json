@@ -1,6 +1,6 @@
 {
   "name": "isletme-kira-takibi-app",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "Profesyonel Mekan, Tesis, Salon Kiralama, Takvim, Raporlama ve Evrak Yönetim Sistemi",
   "main": "dist-electron/main.js",
   "author": "İlyas Bozdemir",
@@ -10,8 +10,7 @@
     "build": "tsc && vite build && electron-builder --config electron/electron-builder.yml",
     "build:vite": "vite build",
     "pack:win": "electron-builder --win --config electron/electron-builder.yml",
-    "rebuild": "electron-rebuild -f -w better-sqlite3",
-    "postinstall": "electron-rebuild -f -w better-sqlite3"
+    "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",

@@ -1,5 +1,5 @@
-appId: com.venuekeeper.app
-productName: VenueKeeper App Pro
+appId: com.isletmetakip.app
+productName: İşletmeTakipAppPro
 directories:
   output: release/${version}
 files:
@@ -7,8 +7,8 @@ files:
   - dist-electron/**/*
 fileAssociations:
   - ext: vke
-    name: Venue Keeper Enterprise Document
-    description: Venue Keeper Salon ve Evrak Yönetim Dosyası
+    name: Isletme Takip Enterprise Document
+    description: İşletme & Salon Kiralama Takip Çalışma Dosyası
     icon: build/icon.ico
     role: Editor
 
@@ -22,7 +22,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: VenueKeeper App Pro
+  shortcutName: İşletmeTakipAppPro
   include: build/installer.nsh
 
 publish:
