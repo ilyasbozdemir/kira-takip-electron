@@ -29,10 +29,14 @@ interface AppModalsProps {
   setResCustomer: (v: string) => void;
   pricingMode: any;
   setPricingMode: (v: any) => void;
+  timeSlotSession?: "Gece" | "Gündüz" | "Tüm Gün";
+  handleTimeSlotChange?: (session: "Gece" | "Gündüz" | "Tüm Gün") => void;
   resStart: string;
   setResStart: (v: string) => void;
   resEnd: string;
   setResEnd: (v: string) => void;
+  guestCount?: number | "";
+  setGuestCount?: (v: number | "") => void;
   resPhone: string;
   setResPhone: (v: string) => void;
   resPrice: number | "";
@@ -173,10 +177,14 @@ export function AppModals({
   setResCustomer,
   pricingMode,
   setPricingMode,
+  timeSlotSession,
+  handleTimeSlotChange,
   resStart,
   setResStart,
   resEnd,
   setResEnd,
+  guestCount,
+  setGuestCount,
   resPhone,
   setResPhone,
   resPrice,
@@ -299,10 +307,14 @@ export function AppModals({
         setResCustomer={setResCustomer}
         pricingMode={pricingMode}
         setPricingMode={setPricingMode}
+        timeSlotSession={timeSlotSession}
+        handleTimeSlotChange={handleTimeSlotChange}
         resStart={resStart}
         setResStart={setResStart}
         resEnd={resEnd}
         setResEnd={setResEnd}
+        guestCount={guestCount}
+        setGuestCount={setGuestCount}
         resPhone={resPhone}
         setResPhone={setResPhone}
         resPrice={resPrice}

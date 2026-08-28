@@ -16,9 +16,12 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
   );
   const [resCustomer, setResCustomer] = useState("");
   const [resPhone, setResPhone] = useState("");
-  const [pricingMode, setPricingMode] = useState<PricingMode>("hourly");
-  const [resStart, setResStart] = useState("10:00");
-  const [resEnd, setResEnd] = useState("14:00");
+  // Default to daily/session fixed lump-sum pricing as requested
+  const [pricingMode, setPricingMode] = useState<PricingMode>("daily");
+  const [timeSlotSession, setTimeSlotSession] = useState<"Gece" | "Gündüz" | "Tüm Gün">("Gece");
+  const [resStart, setResStart] = useState("18:00");
+  const [resEnd, setResEnd] = useState("23:30");
+  const [guestCount, setGuestCount] = useState<number | "">(0);
   const [resPrice, setResPrice] = useState<number | "">(0);
   const [resPaid, setResPaid] = useState<number | "">(0);
   const [resStatus, setResStatus] = useState("confirmed");
@@ -34,7 +37,22 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     }
   }, [defaultTariffBasis, resDecisionInfo]);
 
-  // Price Calculation Logic
+  // Handle Time Slot Session Selection (Gece, Gündüz, Tüm Gün)
+  const handleTimeSlotChange = (session: "Gece" | "Gündüz" | "Tüm Gün") => {
+    setTimeSlotSession(session);
+    if (session === "Gece") {
+      setResStart("18:00");
+      setResEnd("23:30");
+    } else if (session === "Gündüz") {
+      setResStart("10:00");
+      setResEnd("16:00");
+    } else if (session === "Tüm Gün") {
+      setResStart("09:00");
+      setResEnd("23:30");
+    }
+  };
+
+  // Price Calculation & Default Setting Logic
   useEffect(() => {
     if (!resVenueId || !resHallId) return;
     const venue = store.venues.find((v) => v.id === resVenueId);
@@ -45,6 +63,7 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
       const hrs = hoursBetween(resStart, resEnd);
       setResPrice(hrs * hall.hourlyPrice);
     } else {
+      // Fixed Lump-Sum Daily/Session rental price
       if (resPrice === 0 || resPrice === "") {
         setResPrice(hall.hourlyPrice);
       }
@@ -85,6 +104,14 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     }
 
     try {
+      const formattedNote = [
+        resNote.trim(),
+        guestCount ? `Kişi Sayısı: ${guestCount}` : null,
+        `Seans: ${timeSlotSession}`,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+
       await sqliteStore.addReservation({
         venueId: resVenueId,
         hallId: resHallId,
@@ -100,7 +127,7 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
         receiptNo: resReceiptNo.trim() || undefined,
         paymentMethod: resPaymentMethod || "Nakit",
         decisionInfo: resDecisionInfo.trim() || undefined,
-        note: resNote.trim() || undefined,
+        note: formattedNote || undefined,
       });
 
       setResCustomer("");
@@ -127,10 +154,15 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     setResPhone,
     pricingMode,
     setPricingMode,
+    timeSlotSession,
+    setTimeSlotSession,
+    handleTimeSlotChange,
     resStart,
     setResStart,
     resEnd,
     setResEnd,
+    guestCount,
+    setGuestCount,
     resPrice,
     setResPrice,
     resPaid,

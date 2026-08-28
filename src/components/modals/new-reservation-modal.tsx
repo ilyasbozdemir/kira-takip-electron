@@ -1,11 +1,31 @@
 import React from "react";
-import { AlertTriangle, Scale } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { money, toKey, type Venue } from "@/lib/rental-store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { AlertTriangle, Calendar, Check, Clock, User, Users } from "lucide-react";
+import {
+  hoursBetween,
+  money,
+  type PricingMode,
+  type Store,
+  toKey,
+} from "@/lib/rental-store";
 
 interface NewReservationModalProps {
   open: boolean;
@@ -20,12 +40,16 @@ interface NewReservationModalProps {
   setResEventType: (v: string) => void;
   resCustomer: string;
   setResCustomer: (v: string) => void;
-  pricingMode: "hourly" | "daily";
-  setPricingMode: (v: "hourly" | "daily") => void;
+  pricingMode: PricingMode;
+  setPricingMode: (v: PricingMode) => void;
+  timeSlotSession?: "Gece" | "Gündüz" | "Tüm Gün";
+  handleTimeSlotChange?: (session: "Gece" | "Gündüz" | "Tüm Gün") => void;
   resStart: string;
   setResStart: (v: string) => void;
   resEnd: string;
   setResEnd: (v: string) => void;
+  guestCount?: number | "";
+  setGuestCount?: (v: number | "") => void;
   resPhone: string;
   setResPhone: (v: string) => void;
   resPrice: number | "";
@@ -42,7 +66,7 @@ interface NewReservationModalProps {
   setResDecisionInfo: (v: string) => void;
   resNote: string;
   setResNote: (v: string) => void;
-  store: { venues: Venue[] };
+  store: Store;
   allEventTypes: string[];
   customerSuggestions: string[];
   phoneSuggestions: string[];
@@ -66,10 +90,14 @@ export function NewReservationModal({
   setResCustomer,
   pricingMode,
   setPricingMode,
+  timeSlotSession = "Gece",
+  handleTimeSlotChange,
   resStart,
   setResStart,
   resEnd,
   setResEnd,
+  guestCount = 0,
+  setGuestCount,
   resPhone,
   setResPhone,
   resPrice,
@@ -94,19 +122,25 @@ export function NewReservationModal({
   timeSlots,
   handleCreateReservation,
 }: NewReservationModalProps): React.JSX.Element {
+  const currentVenue = store.venues.find((x) => x.id === resVenueId);
+  const currentHall = currentVenue?.halls.find((x) => x.id === resHallId);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={theme === "dark"
-          ? "sm:max-w-[520px] bg-slate-900 border-slate-800 text-slate-100"
-          : "sm:max-w-[520px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
+        className={
+          theme === "dark"
+            ? "sm:max-w-[560px] bg-slate-900 border-slate-800 text-slate-100"
+            : "sm:max-w-[560px] bg-white border-slate-200 text-slate-900 shadow-2xl"
+        }
       >
         <DialogHeader>
           <DialogTitle
-            className={`text-lg font-bold ${
+            className={`text-lg font-bold flex items-center gap-2 ${
               theme === "dark" ? "text-slate-100" : "text-slate-900"
             }`}
           >
+            <Calendar className="h-5 w-5 text-indigo-500" />
             Yeni Etkinlik & Salon Kiralama
           </DialogTitle>
           <DialogDescription
@@ -114,7 +148,7 @@ export function NewReservationModal({
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Tarih: <strong className="text-indigo-500">{selectedDay}</strong>
+            Seçili Tarih: <strong className="text-indigo-500 font-semibold">{selectedDay}</strong>
           </DialogDescription>
         </DialogHeader>
 
@@ -134,15 +168,16 @@ export function NewReservationModal({
           </div>
         )}
 
-        <form onSubmit={handleCreateReservation} className="space-y-4 py-2">
+        <form onSubmit={handleCreateReservation} className="space-y-3 py-1">
+          {/* Venue & Hall Select */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Mekan / Tesis
+                Mekan / Tesis *
               </Label>
               <Select
                 value={resVenueId}
@@ -155,7 +190,7 @@ export function NewReservationModal({
                 }}
               >
                 <SelectTrigger
-                  className={`mt-1 text-xs ${
+                  className={`mt-1 text-xs font-medium ${
                     theme === "dark"
                       ? "bg-slate-950 border-slate-800 text-slate-200"
                       : "bg-slate-50 border-slate-300 text-slate-900"
@@ -164,9 +199,11 @@ export function NewReservationModal({
                   <SelectValue placeholder="Mekan seçin" />
                 </SelectTrigger>
                 <SelectContent
-                  className={theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-200"
-                    : "bg-white border-slate-200 text-slate-900"}
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
                 >
                   {store.venues.map((v) => (
                     <SelectItem key={v.id} value={v.id}>
@@ -179,15 +216,15 @@ export function NewReservationModal({
 
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Salon
+                Salon *
               </Label>
               <Select value={resHallId} onValueChange={setResHallId}>
                 <SelectTrigger
-                  className={`mt-1 text-xs ${
+                  className={`mt-1 text-xs font-medium ${
                     theme === "dark"
                       ? "bg-slate-950 border-slate-800 text-slate-200"
                       : "bg-slate-50 border-slate-300 text-slate-900"
@@ -196,24 +233,29 @@ export function NewReservationModal({
                   <SelectValue placeholder="Salon seçin" />
                 </SelectTrigger>
                 <SelectContent
-                  className={theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-200"
-                    : "bg-white border-slate-200 text-slate-900"}
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
                 >
-                  {(store.venues.find((x) => x.id === resVenueId)?.halls ?? []).map((h) => (
-                    <SelectItem key={h.id} value={h.id}>
-                      {h.name} ({money(h.hourlyPrice)}/s)
-                    </SelectItem>
-                  ))}
+                  {(store.venues.find((x) => x.id === resVenueId)?.halls ?? []).map(
+                    (h) => (
+                      <SelectItem key={h.id} value={h.id}>
+                        {h.name} ({money(h.hourlyPrice)})
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
             </div>
           </div>
 
+          {/* Event Type & Customer Name */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
@@ -221,7 +263,7 @@ export function NewReservationModal({
               </Label>
               <Select value={resEventType} onValueChange={setResEventType}>
                 <SelectTrigger
-                  className={`mt-1 text-xs ${
+                  className={`mt-1 text-xs font-medium ${
                     theme === "dark"
                       ? "bg-slate-950 border-slate-800 text-slate-200"
                       : "bg-slate-50 border-slate-300 text-slate-900"
@@ -230,9 +272,11 @@ export function NewReservationModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent
-                  className={theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-200"
-                    : "bg-white border-slate-200 text-slate-900"}
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
                 >
                   {allEventTypes.map((t) => (
                     <SelectItem key={t} value={t}>
@@ -245,7 +289,7 @@ export function NewReservationModal({
 
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
@@ -254,7 +298,7 @@ export function NewReservationModal({
               <Input
                 required
                 list="customer-suggestions"
-                placeholder="örn: Yılmaz Ailesi / XYZ A.Ş."
+                placeholder="örn: Yılmaz Ailesi / Ahmet Yılmaz"
                 value={resCustomer}
                 onChange={(e) => setResCustomer(e.target.value)}
                 className={`mt-1 text-xs ${
@@ -264,33 +308,164 @@ export function NewReservationModal({
                 }`}
               />
               <datalist id="customer-suggestions">
-                {customerSuggestions.map((c) => <option key={c} value={c} />)}
+                {customerSuggestions.map((c) => (
+                  <option key={c} value={c} />
+                ))}
               </datalist>
             </div>
           </div>
 
-          <div>
-            <Label className="text-xs font-medium">
-              Tarife Tipi & Ücret Hesaplama
-            </Label>
-            <div className="grid grid-cols-2 gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => setPricingMode("hourly")}
-                className={`py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-                  pricingMode === "hourly"
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                    : theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                    : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+          {/* EXACT 4-COLUMN ROW: ZAMAN, BAŞLANGIÇ SAATİ, BİTİŞ SAATİ, KİŞİ SAYISI */}
+          <div className="grid grid-cols-4 gap-2 pt-1">
+            <div>
+              <Label
+                className={`text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                ⏱️ Saatlik Tarife (Saat x Fiyat)
-              </button>
+                ZAMAN
+              </Label>
+              <Select
+                value={timeSlotSession}
+                onValueChange={(v) => handleTimeSlotChange && handleTimeSlotChange(v as any)}
+              >
+                <SelectTrigger
+                  className={`h-8 text-xs font-bold ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-indigo-400"
+                      : "bg-slate-50 border-slate-300 text-indigo-600 font-semibold"
+                  }`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
+                >
+                  <SelectItem value="Gece">Gece</SelectItem>
+                  <SelectItem value="Gündüz">Gündüz</SelectItem>
+                  <SelectItem value="Tüm Gün">Tüm Gün</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label
+                className={`text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                BAŞLANGIÇ
+              </Label>
+              <Select value={resStart} onValueChange={setResStart}>
+                <SelectTrigger
+                  className={`h-8 text-xs font-medium ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-200"
+                      : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  className={`max-h-48 ${
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }`}
+                >
+                  {timeSlots.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label
+                className={`text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                BİTİŞ
+              </Label>
+              <Select value={resEnd} onValueChange={setResEnd}>
+                <SelectTrigger
+                  className={`h-8 text-xs font-medium ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-200"
+                      : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  className={`max-h-48 ${
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }`}
+                >
+                  {timeSlots.map((t) => (
+                    <SelectItem key={t} value={t}>
+                      {t}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label
+                className={`text-[10px] font-extrabold uppercase tracking-wider block mb-1 ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                KİŞİ SAYISI
+              </Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={guestCount}
+                onChange={(e) =>
+                  setGuestCount &&
+                  setGuestCount(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                className={`h-8 text-xs font-semibold ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-600"
+                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Pricing Mode Toggle: Lump-Sum (Daily/Session) vs Hourly */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <Label
+                className={`text-xs font-semibold ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                Kiralama & Ücret Tarifesi *
+              </Label>
+              <span className="text-[10px] text-indigo-400 font-mono">
+                {pricingMode === "daily"
+                  ? "Sabit Paket (1 saat de dursa aynı ücret)"
+                  : `${hoursBetween(resStart, resEnd)} Saat x Saatlik Fiyat`}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => setPricingMode("daily")}
-                className={`py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
                   pricingMode === "daily"
                     ? "bg-amber-600 text-white border-amber-600 shadow-xs"
                     : theme === "dark"
@@ -298,89 +473,33 @@ export function NewReservationModal({
                     : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
                 }`}
               >
-                ☀️ Günlük / Seanslık Sabit (İndi-Bindi)
+                ☀️ Günlük / Seanslık Sabit Ücret
+              </button>
+              <button
+                type="button"
+                onClick={() => setPricingMode("hourly")}
+                className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                  pricingMode === "hourly"
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                    : theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                    : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+                }`}
+              >
+                ⏱️ Saatlik Sayaç (Saat x Fiyat)
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Contact Phone & Price Fields */}
+          <div className="grid grid-cols-3 gap-2">
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Başlangıç Saati
-              </Label>
-              <Select value={resStart} onValueChange={setResStart}>
-                <SelectTrigger
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-200"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  className={`max-h-48 ${
-                    theme === "dark"
-                      ? "bg-slate-900 border-slate-800 text-slate-200"
-                      : "bg-white border-slate-200 text-slate-900"
-                  }`}
-                >
-                  {timeSlots.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label
-                className={`text-xs font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Bitiş Saati
-              </Label>
-              <Select value={resEnd} onValueChange={setResEnd}>
-                <SelectTrigger
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-200"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  className={`max-h-48 ${
-                    theme === "dark"
-                      ? "bg-slate-900 border-slate-800 text-slate-200"
-                      : "bg-white border-slate-200 text-slate-900"
-                  }`}
-                >
-                  {timeSlots.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label
-                className={`text-xs font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Telefon No *
+                Telefon *
               </Label>
               <Input
                 required
@@ -395,22 +514,50 @@ export function NewReservationModal({
                 }`}
               />
               <datalist id="phone-suggestions">
-                {phoneSuggestions.map((p) => <option key={p} value={p} />)}
+                {phoneSuggestions.map((p) => (
+                  <option key={p} value={p} />
+                ))}
               </datalist>
             </div>
 
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Hesaplanan Toplam Ücret (TL)
+                Toplam Ücret (TL) *
               </Label>
               <Input
                 type="number"
+                required
                 value={resPrice}
-                onChange={(e) => setResPrice(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) =>
+                  setResPrice(e.target.value === "" ? "" : Number(e.target.value))
+                }
+                className={`mt-1 text-xs font-bold ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-emerald-400"
+                    : "bg-slate-50 border-slate-300 text-emerald-700"
+                }`}
+              />
+            </div>
+
+            <div>
+              <Label
+                className={`text-xs font-semibold ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                Ödenen Peşinat (TL)
+              </Label>
+              <Input
+                type="number"
+                placeholder="0"
+                value={resPaid}
+                onChange={(e) =>
+                  setResPaid(e.target.value === "" ? "" : Number(e.target.value))
+                }
                 className={`mt-1 text-xs font-bold ${
                   theme === "dark"
                     ? "bg-slate-950 border-slate-800 text-slate-100"
@@ -420,72 +567,18 @@ export function NewReservationModal({
             </div>
           </div>
 
+          {/* Decision Info & Receipt No */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Alınan Peşinat (TL)
+                Makbuz / İntizam No
               </Label>
               <Input
-                type="number"
-                value={resPaid}
-                onChange={(e) => setResPaid(e.target.value ? Number(e.target.value) : "")}
-                className={`mt-1 text-xs font-bold ${
-                  theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-emerald-400"
-                    : "bg-slate-50 border-slate-300 text-emerald-600"
-                }`}
-              />
-            </div>
-
-            <div>
-              <Label
-                className={`text-xs font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Rezervasyon Statüsü (Şerh)
-              </Label>
-              <Select value={resStatus} onValueChange={setResStatus}>
-                <SelectTrigger
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-200"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  className={theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-200"
-                    : "bg-white border-slate-200 text-slate-900"}
-                >
-                  <SelectItem value="option">
-                    ⚠️ Opsiyonlu / Şerhli (Ön Kayıt)
-                  </SelectItem>
-                  <SelectItem value="confirmed">
-                    ✅ Kesinleşti (Kesin Kayıt)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label
-                className={`text-xs font-medium ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Ödeme Makbuzu / Dekont No
-              </Label>
-              <Input
-                placeholder="örn: MKB-2026-0042"
+                placeholder="örn: MK-2026-0042"
                 value={resReceiptNo}
                 onChange={(e) => setResReceiptNo(e.target.value)}
                 className={`mt-1 text-xs ${
@@ -498,18 +591,15 @@ export function NewReservationModal({
 
             <div>
               <Label
-                className={`text-xs font-medium ${
+                className={`text-xs font-semibold ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
                 Ödeme Yöntemi
               </Label>
-              <Select
-                value={resPaymentMethod}
-                onValueChange={setResPaymentMethod}
-              >
+              <Select value={resPaymentMethod} onValueChange={setResPaymentMethod}>
                 <SelectTrigger
-                  className={`mt-1 text-xs ${
+                  className={`mt-1 text-xs font-medium ${
                     theme === "dark"
                       ? "bg-slate-950 border-slate-800 text-slate-200"
                       : "bg-slate-50 border-slate-300 text-slate-900"
@@ -518,14 +608,16 @@ export function NewReservationModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent
-                  className={theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-200"
-                    : "bg-white border-slate-200 text-slate-900"}
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
                 >
                   <SelectItem value="Nakit">Nakit</SelectItem>
-                  <SelectItem value="Havale/EFT">Havale / EFT</SelectItem>
-                  <SelectItem value="Kredi Kartı">Kredi Kartı</SelectItem>
-                  <SelectItem value="Dekont">Resmi Dekont</SelectItem>
+                  <SelectItem value="Banka Havalesi / EFT">Banka Havalesi / EFT</SelectItem>
+                  <SelectItem value="Kredi Kartı / Pos">Kredi Kartı / Pos</SelectItem>
+                  <SelectItem value="Vezne Tahsilat">Vezne Tahsilat</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -533,15 +625,15 @@ export function NewReservationModal({
 
           <div>
             <Label
-              className={`text-xs font-medium flex items-center gap-1.5 ${
+              className={`text-xs font-semibold ${
                 theme === "dark" ? "text-slate-300" : "text-slate-700"
               }`}
             >
-              <Scale className="h-3.5 w-3.5 text-amber-500" /> Resmi Tarife & Encümen Kararı Dayanağı
+              Resmi Encümen Kararı / Tarife Dayanağı
             </Label>
             <Input
               list="decision-suggestions"
-              placeholder="örn: Belediye Encümeni Kararı: 15/01/2026 - No: 42 (2464 Sayılı Kanun Md. 97)"
+              placeholder="örn: Belediye Encümeni Kararı: 15/01/2026 - Karar No: 42"
               value={resDecisionInfo}
               onChange={(e) => setResDecisionInfo(e.target.value)}
               className={`mt-1 text-xs ${
@@ -551,44 +643,51 @@ export function NewReservationModal({
               }`}
             />
             <datalist id="decision-suggestions">
-              {decisionSuggestions.map((d) => <option key={d} value={d} />)}
+              {decisionSuggestions.map((d) => (
+                <option key={d} value={d} />
+              ))}
             </datalist>
           </div>
 
           <div>
             <Label
-              className={`text-xs font-medium ${
+              className={`text-xs font-semibold ${
                 theme === "dark" ? "text-slate-300" : "text-slate-700"
               }`}
             >
-              Açıklama / Notlar
+              Özel Notlar & Ek Istekler
             </Label>
-            <Input
-              placeholder="Etkinlik detayları veya hatırlatmalar..."
+            <Textarea
+              rows={2}
+              placeholder="Orkestra, ses-ışık düzeni, ikram detayları vb."
               value={resNote}
               onChange={(e) => setResNote(e.target.value)}
               className={`mt-1 text-xs ${
                 theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-600"
+                  : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
               }`}
             />
           </div>
 
-          <DialogFooter className="mt-4">
+          <DialogFooter className="mt-3">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               onClick={() => onOpenChange(false)}
-              className="text-xs"
+              className={`text-xs ${
+                theme === "dark"
+                  ? "border-slate-800 text-slate-300 hover:bg-slate-800"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-100"
+              }`}
             >
               İptal
             </Button>
             <Button
               type="submit"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4"
             >
-              Etkinliği Kaydet (SQLite)
+              <Check className="h-4 w-4 mr-1" /> Kaydı Oluştur & Kaydet
             </Button>
           </DialogFooter>
         </form>

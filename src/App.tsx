@@ -262,10 +262,15 @@ export function App(): React.JSX.Element {
     setResPhone,
     pricingMode,
     setPricingMode,
+    timeSlotSession,
+    setTimeSlotSession,
+    handleTimeSlotChange,
     resStart,
     setResStart,
     resEnd,
     setResEnd,
+    guestCount,
+    setGuestCount,
     resPrice,
     setResPrice,
     resPaid,
@@ -665,10 +670,14 @@ export function App(): React.JSX.Element {
         setResCustomer={setResCustomer}
         pricingMode={pricingMode}
         setPricingMode={setPricingMode}
+        timeSlotSession={timeSlotSession}
+        handleTimeSlotChange={handleTimeSlotChange}
         resStart={resStart}
         setResStart={setResStart}
         resEnd={resEnd}
         setResEnd={setResEnd}
+        guestCount={guestCount}
+        setGuestCount={setGuestCount}
         resPhone={resPhone}
         setResPhone={setResPhone}
         resPrice={resPrice}
