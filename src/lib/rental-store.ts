@@ -6,6 +6,7 @@ export type Hall = {
   floor: string;
   capacity: number;
   hourlyPrice: number;
+  color?: string;
 };
 
 export type Personnel = {
@@ -27,6 +28,7 @@ export type Venue = {
   managerName?: string;
   managerPhone?: string;
   managerTitle?: string;
+  color?: string;
   halls: Hall[];
 };
 

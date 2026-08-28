@@ -601,6 +601,8 @@ export default function App() {
   const [newVenueManagerPhone, setNewVenueManagerPhone] = useState("");
   const [newVenueManagerTitle, setNewVenueManagerTitle] = useState("Tesis Sorumlusu");
 
+  const [newVenueColor, setNewVenueColor] = useState("#6366f1");
+
   // Personnel Modal State
   const [personnelModalOpen, setPersonnelModalOpen] = useState(false);
   const [personnelName, setPersonnelName] = useState("");
@@ -615,6 +617,7 @@ export default function App() {
   const [newHallFloor, setNewHallFloor] = useState("");
   const [newHallCapacity, setNewHallCapacity] = useState(300);
   const [newHallHourlyPrice, setNewHallHourlyPrice] = useState(1500);
+  const [newHallColor, setNewHallColor] = useState("#8b5cf6");
 
   const handleOpenFileDialog = async () => {
     if (window.electronAPI?.openFileDialog) {
@@ -790,6 +793,7 @@ export default function App() {
       managerName: newVenueManagerName,
       managerPhone: newVenueManagerPhone,
       managerTitle: newVenueManagerTitle,
+      color: newVenueColor,
     });
     toast.success("Yeni mekan ve sorumlu personel bilgileri tanımlandı.");
     setNewVenueName("");
@@ -833,6 +837,7 @@ export default function App() {
       floor: newHallFloor || "Zemin Kat",
       capacity: Number(newHallCapacity) || 100,
       hourlyPrice: Number(newHallHourlyPrice) || 1000,
+      color: newHallColor,
     });
     toast.success("Salon eklendi.");
     setNewHallName("");
@@ -1893,19 +1898,23 @@ export default function App() {
                                       <div className="space-y-1 mt-1 overflow-y-auto no-scrollbar flex-1 w-full">
                                         {dayResList.slice(0, 2).map((r) => {
                                           const h = hallById(r.hallId);
-                                          const colorClass = getEventTypeColor(
-                                            r.eventType,
-                                          );
+                                          const v = store.venues.find((x) => x.id === r.venueId);
+                                          const customColor = h?.color || v?.color || "#6366f1";
+                                          const colorClass = getEventTypeColor(r.eventType);
                                           return (
                                             <div
                                               key={r.id}
-                                              className={`text-[10px] leading-tight p-1 rounded border truncate font-medium ${colorClass}`}
+                                              className={`text-[10px] leading-tight p-1 rounded border truncate font-medium flex items-center gap-1 ${colorClass}`}
                                               title={`${r.customer} (${r.start} - ${h?.name})`}
                                             >
-                                              <span className="font-mono font-bold mr-1">
+                                              <span
+                                                className="h-2 w-2 rounded-full shrink-0 shadow-xs"
+                                                style={{ backgroundColor: customColor }}
+                                              />
+                                              <span className="font-mono font-bold shrink-0">
                                                 {r.start}
                                               </span>
-                                              {r.customer}
+                                              <span className="truncate">{r.customer}</span>
                                             </div>
                                           );
                                         })}
@@ -4239,6 +4248,49 @@ export default function App() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label
+                  className={`text-xs font-medium block mb-1.5 ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
+                  🎨 Mekan Takvim Etkinlik Rengi
+                </Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { name: "İndigo", hex: "#6366f1" },
+                    { name: "Zümrüt", hex: "#10b981" },
+                    { name: "Kehribar", hex: "#f59e0b" },
+                    { name: "Gül", hex: "#ef4444" },
+                    { name: "Mor", hex: "#8b5cf6" },
+                    { name: "Gök Mavisi", hex: "#0284c7" },
+                    { name: "Teal", hex: "#14b8a6" },
+                    { name: "Pembe", hex: "#ec4899" },
+                    { name: "Kayrak", hex: "#64748b" },
+                  ].map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setNewVenueColor(c.hex)}
+                      className={`h-6 w-6 rounded-full border-2 transition-all cursor-pointer ${
+                        newVenueColor === c.hex
+                          ? "border-white scale-110 shadow-md ring-2 ring-indigo-400"
+                          : "border-transparent opacity-80 hover:opacity-100 hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: c.hex }}
+                      title={c.name}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={newVenueColor}
+                    onChange={(e) => setNewVenueColor(e.target.value)}
+                    className="h-6 w-8 rounded cursor-pointer border border-slate-700 bg-transparent"
+                    title="Özel Renk Seç"
+                  />
+                </div>
+              </div>
+
               <DialogFooter>
                 <Button
                   type="submit"
@@ -4466,6 +4518,49 @@ export default function App() {
                   />
                 </div>
               </div>
+              <div>
+                <Label
+                  className={`text-xs font-medium block mb-1.5 ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
+                  🎨 Salon Takvim Etkinlik Rengi
+                </Label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {[
+                    { name: "Mor", hex: "#8b5cf6" },
+                    { name: "İndigo", hex: "#6366f1" },
+                    { name: "Zümrüt", hex: "#10b981" },
+                    { name: "Kehribar", hex: "#f59e0b" },
+                    { name: "Gül", hex: "#ef4444" },
+                    { name: "Gök Mavisi", hex: "#0284c7" },
+                    { name: "Teal", hex: "#14b8a6" },
+                    { name: "Pembe", hex: "#ec4899" },
+                    { name: "Kayrak", hex: "#64748b" },
+                  ].map((c) => (
+                    <button
+                      key={c.hex}
+                      type="button"
+                      onClick={() => setNewHallColor(c.hex)}
+                      className={`h-6 w-6 rounded-full border-2 transition-all cursor-pointer ${
+                        newHallColor === c.hex
+                          ? "border-white scale-110 shadow-md ring-2 ring-indigo-400"
+                          : "border-transparent opacity-80 hover:opacity-100 hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: c.hex }}
+                      title={c.name}
+                    />
+                  ))}
+                  <input
+                    type="color"
+                    value={newHallColor}
+                    onChange={(e) => setNewHallColor(e.target.value)}
+                    className="h-6 w-8 rounded cursor-pointer border border-slate-700 bg-transparent"
+                    title="Özel Renk Seç"
+                  />
+                </div>
+              </div>
+
               <DialogFooter>
                 <Button
                   type="submit"

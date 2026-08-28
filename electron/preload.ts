@@ -5,12 +5,12 @@ export const electronAPI = {
   db: {
     getCurrentPath: () => ipcRenderer.invoke("db:get-current-path"),
     getStore: () => ipcRenderer.invoke("db:get-store"),
-    addVenue: (data: { name: string; district: string; category?: string }) =>
+    addVenue: (data: { name: string; district: string; category?: string; address?: string; mapUrl?: string; managerName?: string; managerPhone?: string; managerTitle?: string; color?: string }) =>
       ipcRenderer.invoke("db:add-venue", data),
     deleteVenue: (venueId: string) => ipcRenderer.invoke("db:delete-venue", venueId),
     addHall: (data: {
       venueId: string;
-      hall: { name: string; floor: string; capacity: number; hourlyPrice: number };
+      hall: { name: string; floor: string; capacity: number; hourlyPrice: number; color?: string };
     }) => ipcRenderer.invoke("db:add-hall", data),
     deleteHall: (venueId: string, hallId: string) =>
       ipcRenderer.invoke("db:delete-hall", { venueId, hallId }),

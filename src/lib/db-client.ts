@@ -39,15 +39,15 @@ export function useSQLiteStore() {
   }, [fetchStore]);
 
   const addVenue = useCallback(
-    async (venueData: { name: string; district: string; category?: string; address?: string; mapUrl?: string; managerName?: string; managerPhone?: string; managerTitle?: string } | string, district?: string, category: string = "Genel") => {
-      const data = typeof venueData === "string" ? { name: venueData, district: district || "", category } : venueData;
+    async (venueData: { name: string; district: string; category?: string; address?: string; mapUrl?: string; managerName?: string; managerPhone?: string; managerTitle?: string; color?: string } | string, district?: string, category: string = "Genel") => {
+      const data = typeof venueData === "string" ? { name: venueData, district: district || "", category, color: "#6366f1" } : venueData;
       if (window.electronAPI?.db?.addVenue) {
         await window.electronAPI.db.addVenue(data);
         await fetchStore();
       } else {
         setStore((s) => ({
           ...s,
-          venues: [...s.venues, { id: Math.random().toString(36).slice(2), ...data, halls: [] }],
+          venues: [...s.venues, { id: Math.random().toString(36).slice(2), ...data, color: data.color || "#6366f1", halls: [] }],
         }));
       }
     },

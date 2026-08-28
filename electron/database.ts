@@ -131,10 +131,12 @@ function ensureDynamicColumns(d: Database.Database) {
     { name: "managerName", def: "TEXT DEFAULT ''" },
     { name: "managerPhone", def: "TEXT DEFAULT ''" },
     { name: "managerTitle", def: "TEXT DEFAULT ''" },
+    { name: "color", def: "TEXT DEFAULT '#6366f1'" },
     { name: "isDeleted", def: "INTEGER DEFAULT 0" },
   ]);
 
   ensureCols("TANIM_Salon", [
+    { name: "color", def: "TEXT DEFAULT '#8b5cf6'" },
     { name: "isDeleted", def: "INTEGER DEFAULT 0" },
   ]);
 
@@ -159,10 +161,10 @@ function ensureDynamicColumns(d: Database.Database) {
       DROP VIEW IF EXISTS settings;
 
       CREATE VIEW venues AS 
-      SELECT id, name, district, category, address, mapUrl AS map_url, managerName AS manager_name, managerPhone AS manager_phone, managerTitle AS manager_title FROM TANIM_Mekan WHERE isDeleted = 0;
+      SELECT id, name, district, category, address, mapUrl AS map_url, managerName AS manager_name, managerPhone AS manager_phone, managerTitle AS manager_title, color FROM TANIM_Mekan WHERE isDeleted = 0;
 
       CREATE VIEW halls AS 
-      SELECT id, venueId AS venue_id, name, floor, capacity, hourlyPrice AS hourly_price FROM TANIM_Salon WHERE isDeleted = 0;
+      SELECT id, venueId AS venue_id, name, floor, capacity, hourlyPrice AS hourly_price, color FROM TANIM_Salon WHERE isDeleted = 0;
 
       CREATE VIEW reservations AS 
       SELECT id, venueId AS venue_id, hallId AS hall_id, date, startTime AS start_time, endTime AS end_time, customer, phone, eventType AS event_type, price, paid, note, decisionInfo AS decision_info, status, receiptNo AS receipt_no, paymentMethod AS payment_method FROM DATA_Rezervasyon WHERE isDeleted = 0;
@@ -377,6 +379,7 @@ export function getStoreData(): StoreData {
     managerName: v.managerName || "",
     managerPhone: v.managerPhone || "",
     managerTitle: v.managerTitle || "",
+    color: v.color || "#6366f1",
     halls: rawHalls
       .filter((h) => h.venue_id === v.id)
       .map((h) => ({
@@ -386,6 +389,7 @@ export function getStoreData(): StoreData {
         floor: h.floor,
         capacity: h.capacity,
         hourlyPrice: h.hourly_price,
+        color: h.color || "#8b5cf6",
       })),
   }));
 
@@ -420,11 +424,12 @@ export function addVenue(venueData: {
   managerName?: string;
   managerPhone?: string;
   managerTitle?: string;
+  color?: string;
 }): Venue {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   const newId = uid();
   db!.prepare(
-    "INSERT INTO TANIM_Mekan (id, name, district, category, address, mapUrl, managerName, managerPhone, managerTitle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO TANIM_Mekan (id, name, district, category, address, mapUrl, managerName, managerPhone, managerTitle, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     newId,
     venueData.name,
@@ -434,7 +439,8 @@ export function addVenue(venueData: {
     venueData.mapUrl || "",
     venueData.managerName || "",
     venueData.managerPhone || "",
-    venueData.managerTitle || ""
+    venueData.managerTitle || "",
+    venueData.color || "#6366f1"
   );
   saveWorkspaceIfActive();
   return { id: newId, ...venueData, halls: [] };
@@ -459,16 +465,17 @@ export function deleteVenue(venueId: string): { success: boolean; error?: string
   return { success: true };
 }
 
-export function addHall(venueId: string, hall: { name: string; floor: string; capacity: number; hourlyPrice: number }): Hall {
+export function addHall(venueId: string, hall: { name: string; floor: string; capacity: number; hourlyPrice: number; color?: string }): Hall {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   const newId = uid();
-  db!.prepare("INSERT INTO halls (id, venue_id, name, floor, capacity, hourly_price) VALUES (?, ?, ?, ?, ?, ?)").run(
+  db!.prepare("INSERT INTO TANIM_Salon (id, venueId, name, floor, capacity, hourlyPrice, color) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
     newId,
     venueId,
     hall.name,
     hall.floor || "Zemin Kat",
     hall.capacity || 100,
-    hall.hourlyPrice || 0
+    hall.hourlyPrice || 0,
+    hall.color || "#8b5cf6"
   );
   saveWorkspaceIfActive();
   return { id: newId, venueId, ...hall };
