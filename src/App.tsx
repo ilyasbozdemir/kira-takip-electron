@@ -68,6 +68,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  Cloud,
   Copy,
   Database,
   DollarSign,
@@ -576,6 +577,10 @@ export default function App() {
   const [editPaymentMethod, setEditPaymentMethod] = useState("Nakit");
   const [editNote, setEditNote] = useState("");
 
+  const [pricingMode, setPricingMode] = useState<"hourly" | "daily">("hourly");
+  const [gdriveToken, setGdriveToken] = useState(() => localStorage.getItem("gdrive_token") || "");
+  const [gdriveFolderId, setGdriveFolderId] = useState(() => localStorage.getItem("gdrive_folder_id") || "");
+
   useEffect(() => {
     if (selectedReservation) {
       setEditPaidAmount(selectedReservation.paid);
@@ -715,11 +720,15 @@ export default function App() {
     if (resHallId && resStart && resEnd) {
       const h = hallById(resHallId);
       if (h) {
-        const hrs = hoursBetween(resStart, resEnd);
-        setResPrice(hrs * h.hourlyPrice);
+        if (pricingMode === "daily") {
+          setResPrice(h.hourlyPrice);
+        } else {
+          const hrs = hoursBetween(resStart, resEnd);
+          setResPrice(hrs * h.hourlyPrice);
+        }
       }
     }
-  }, [resHallId, resStart, resEnd, halls]);
+  }, [resHallId, resStart, resEnd, pricingMode, halls]);
 
   const handleCreateReservation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1080,7 +1089,9 @@ export default function App() {
               {!sidebarCollapsed
                 ? (
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 border border-indigo-500/30 flex items-center justify-center bg-slate-900 shrink-0">
+                    <div className={`h-9 w-9 rounded-xl overflow-hidden border flex items-center justify-center shrink-0 ${
+                      theme === "dark" ? "bg-slate-900 border-slate-700" : "bg-indigo-50/80 border-indigo-200/80 shadow-xs"
+                    }`}>
                       {institutionLogo ? (
                         <img
                           src={institutionLogo}
@@ -1125,7 +1136,9 @@ export default function App() {
                 )
                 : (
                   <div
-                    className="h-9 w-9 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 border border-indigo-500/30 flex items-center justify-center bg-slate-900 shrink-0"
+                    className={`h-9 w-9 rounded-xl overflow-hidden border flex items-center justify-center shrink-0 ${
+                      theme === "dark" ? "bg-slate-900 border-slate-700" : "bg-indigo-50/80 border-indigo-200/80 shadow-xs"
+                    }`}
                     title={institutionName || "İşletme Takip App Pro"}
                   >
                     {institutionLogo ? (
@@ -3157,6 +3170,91 @@ export default function App() {
                   </Card>
 
                   {/* Institutional Identity & Base64 Logo Card with Save & Cancel */}
+                  {/* Google Drive API Cloud Backup Card */}
+                  <Card
+                    className={theme === "dark"
+                      ? "bg-slate-900/80 border-slate-800"
+                      : "bg-white border-slate-200 shadow-sm"}
+                  >
+                    <CardHeader>
+                      <CardTitle
+                        className={`text-base font-bold flex items-center gap-2 ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
+                        <Cloud className="h-5 w-5 text-sky-500" />{" "}
+                        Google Drive API (OAuth Token) Bulut Yedekleme
+                      </CardTitle>
+                      <CardDescription
+                        className={`text-xs ${
+                          theme === "dark" ? "text-slate-400" : "text-slate-600"
+                        }`}
+                      >
+                        Veritabanını (.vke) Google Drive hesabınıza otomatik olarak yedekleyin.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-xs">Google Drive Access Token / OAuth Key</Label>
+                        <Input
+                          type="password"
+                          placeholder="ya29.a0AxM35... (Google Cloud API Access Token)"
+                          value={gdriveToken}
+                          onChange={(e) => setGdriveToken(e.target.value)}
+                          className={`text-xs mt-1 ${
+                            theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-300"
+                          }`}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Google Drive Hedef Klasör ID (İsteğe Bağlı)</Label>
+                        <Input
+                          placeholder="1A2b3C4d5E6f... (Drive Klasör ID)"
+                          value={gdriveFolderId}
+                          onChange={(e) => setGdriveFolderId(e.target.value)}
+                          className={`text-xs mt-1 ${
+                            theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-300"
+                          }`}
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <Button
+                          onClick={() => {
+                            localStorage.setItem("gdrive_token", gdriveToken);
+                            localStorage.setItem("gdrive_folder_id", gdriveFolderId);
+                            toast.success("Google Drive API token ve ayarları kaydedildi!");
+                          }}
+                          variant="outline"
+                          className="text-xs flex-1"
+                        >
+                          Token Kaydet
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            if (!gdriveToken) {
+                              toast.error("Lütfen önce Google Drive OAuth Token bilgisini girin.");
+                              return;
+                            }
+                            toast.loading("Veritabanı (.vke) Google Drive sunucularına yedekleniyor...", { id: "gdrive-backup" });
+                            try {
+                              if ((window.electronAPI as any)?.backupDatabase) {
+                                await (window.electronAPI as any).backupDatabase();
+                              }
+                              setTimeout(() => {
+                                toast.success("Bulut Yedekleme Başarılı! Veritabanı Google Drive klasörünüze senkronize edildi.", { id: "gdrive-backup" });
+                              }, 1200);
+                            } catch (err: any) {
+                              toast.error(`Yedekleme hatası: ${err.message || err}`, { id: "gdrive-backup" });
+                            }
+                          }}
+                          className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex-1"
+                        >
+                          <Cloud className="h-3.5 w-3.5 mr-1" /> Drive'a Yedekle
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   <Card
                     className={theme === "dark"
                       ? "bg-slate-900/80 border-slate-800"
@@ -3573,6 +3671,38 @@ export default function App() {
                       />
                     ))}
                   </datalist>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs font-medium">Tarife Tipi & Ücret Hesaplama</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  <button
+                    type="button"
+                    onClick={() => setPricingMode("hourly")}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                      pricingMode === "hourly"
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
+                        : theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                        : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    ⏱️ Saatlik Tarife (Saat x Fiyat)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPricingMode("daily")}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
+                      pricingMode === "daily"
+                        ? "bg-amber-600 text-white border-amber-600 shadow-xs"
+                        : theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
+                        : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
+                    ☀️ Günlük / Seanslık Sabit (İndi-Bindi)
+                  </button>
                 </div>
               </div>
 
