@@ -13,11 +13,25 @@ export type Hall = {
   hourlyPrice: number;
 };
 
+export type Personnel = {
+  id: string;
+  name: string;
+  title?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+};
+
 export type Venue = {
   id: string;
   name: string;
   district: string;
   category?: string;
+  address?: string;
+  mapUrl?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerTitle?: string;
   halls: Hall[];
 };
 
@@ -45,6 +59,7 @@ export type Reservation = {
 export type StoreData = {
   venues: Venue[];
   reservations: Reservation[];
+  personnel?: Personnel[];
 };
 
 let db: Database.Database | null = null;
@@ -179,6 +194,29 @@ function runMigrations(database: Database.Database) {
         } catch {}
       },
     },
+    {
+      version: 5,
+      name: "005_venue_address_manager_personnel",
+      up: (d: Database.Database) => {
+        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN address TEXT DEFAULT ''"); } catch {}
+        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN mapUrl TEXT DEFAULT ''"); } catch {}
+        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN managerName TEXT DEFAULT ''"); } catch {}
+        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN managerPhone TEXT DEFAULT ''"); } catch {}
+        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN managerTitle TEXT DEFAULT ''"); } catch {}
+        try {
+          d.exec(`
+            CREATE TABLE IF NOT EXISTS TANIM_Personel (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              title TEXT DEFAULT 'Tesis Sorumlusu',
+              phone TEXT DEFAULT '',
+              email TEXT DEFAULT '',
+              notes TEXT DEFAULT ''
+            );
+          `);
+        } catch {}
+      },
+    },
   ];
 
   for (const m of migrations) {
@@ -203,19 +241,67 @@ export function getCurrentDbPath(): string | null {
   return currentDbPath;
 }
 
+export function getPersonnelList(): Personnel[] {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return [];
+  try {
+    const rows = db.prepare("SELECT * FROM TANIM_Personel").all() as any[];
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      title: r.title || "Tesis Sorumlusu",
+      phone: r.phone || "",
+      email: r.email || "",
+      notes: r.notes || "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export function addPersonnel(personnel: { name: string; title?: string; phone?: string; email?: string; notes?: string }): Personnel {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  const newId = uid();
+  db!.prepare(
+    "INSERT INTO TANIM_Personel (id, name, title, phone, email, notes) VALUES (?, ?, ?, ?, ?, ?)"
+  ).run(
+    newId,
+    personnel.name,
+    personnel.title || "Tesis Sorumlusu",
+    personnel.phone || "",
+    personnel.email || "",
+    personnel.notes || ""
+  );
+  saveWorkspaceIfActive();
+  return { id: newId, ...personnel };
+}
+
+export function deletePersonnel(id: string): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare("DELETE FROM TANIM_Personel WHERE id = ?").run(id);
+  saveWorkspaceIfActive();
+  return { success: true };
+}
+
 export function getStoreData(): StoreData {
   if (!db && currentDbPath) initDatabase(currentDbPath);
-  if (!db) return { venues: [], reservations: [] };
+  if (!db) return { venues: [], reservations: [], personnel: [] };
 
-  const rawVenues = db.prepare("SELECT * FROM venues").all() as any[];
+  const rawVenues = db.prepare("SELECT * FROM TANIM_Mekan WHERE isDeleted = 0").all() as any[];
   const rawHalls = db.prepare("SELECT * FROM halls").all() as any[];
   const rawReservations = db.prepare("SELECT * FROM reservations").all() as any[];
+  const personnel = getPersonnelList();
 
   const venues: Venue[] = rawVenues.map((v) => ({
     id: v.id,
     name: v.name,
     district: v.district,
     category: v.category,
+    address: v.address || "",
+    mapUrl: v.mapUrl || "",
+    managerName: v.managerName || "",
+    managerPhone: v.managerPhone || "",
+    managerTitle: v.managerTitle || "",
     halls: rawHalls
       .filter((h) => h.venue_id === v.id)
       .map((h) => ({
@@ -247,15 +333,36 @@ export function getStoreData(): StoreData {
     paymentMethod: r.payment_method || r.paymentMethod || "Nakit",
   }));
 
-  return { venues, reservations };
+  return { venues, reservations, personnel };
 }
 
-export function addVenue(name: string, district: string, category: string = "Genel"): Venue {
+export function addVenue(venueData: {
+  name: string;
+  district: string;
+  category?: string;
+  address?: string;
+  mapUrl?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerTitle?: string;
+}): Venue {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   const newId = uid();
-  db!.prepare("INSERT INTO venues (id, name, district, category) VALUES (?, ?, ?, ?)").run(newId, name, district, category);
+  db!.prepare(
+    "INSERT INTO TANIM_Mekan (id, name, district, category, address, mapUrl, managerName, managerPhone, managerTitle) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+  ).run(
+    newId,
+    venueData.name,
+    venueData.district,
+    venueData.category || "Genel",
+    venueData.address || "",
+    venueData.mapUrl || "",
+    venueData.managerName || "",
+    venueData.managerPhone || "",
+    venueData.managerTitle || ""
+  );
   saveWorkspaceIfActive();
-  return { id: newId, name, district, category, halls: [] };
+  return { id: newId, ...venueData, halls: [] };
 }
 
 export function deleteVenue(venueId: string): { success: boolean; error?: string } {

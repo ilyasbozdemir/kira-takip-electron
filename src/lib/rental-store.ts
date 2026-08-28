@@ -8,11 +8,25 @@ export type Hall = {
   hourlyPrice: number;
 };
 
+export type Personnel = {
+  id: string;
+  name: string;
+  title?: string;
+  phone?: string;
+  email?: string;
+  notes?: string;
+};
+
 export type Venue = {
   id: string;
   name: string;
   district: string;
   category?: string;
+  address?: string;
+  mapUrl?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerTitle?: string;
   halls: Hall[];
 };
 
@@ -40,6 +54,7 @@ export type Reservation = {
 export type Store = {
   venues: Venue[];
   reservations: Reservation[];
+  personnel?: Personnel[];
 };
 
 const KEY = "belediye-kiralama-v2";

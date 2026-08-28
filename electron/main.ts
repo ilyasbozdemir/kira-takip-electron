@@ -20,6 +20,9 @@ import {
   getAllSettings,
   updateReservationStatus,
   updateReservationDetails,
+  getPersonnelList,
+  addPersonnel,
+  deletePersonnel,
 } from "./database";
 import { workspaceManager } from "./database/workspace";
 
@@ -263,8 +266,23 @@ ipcMain.handle("db:get-store", () => {
   return getStoreData();
 });
 
-ipcMain.handle("db:add-venue", (_event, { name, district, category }) => {
-  return addVenue(name, district, category);
+ipcMain.handle("db:add-venue", (_event, venueArg, district, category) => {
+  if (typeof venueArg === "string") {
+    return addVenue({ name: venueArg, district: district || "", category: category || "Genel" });
+  }
+  return addVenue(venueArg);
+});
+
+ipcMain.handle("db:get-personnel", () => {
+  return getPersonnelList();
+});
+
+ipcMain.handle("db:add-personnel", (_event, p) => {
+  return addPersonnel(p);
+});
+
+ipcMain.handle("db:delete-personnel", (_event, id: string) => {
+  return deletePersonnel(id);
 });
 
 ipcMain.handle("db:delete-venue", (_event, venueId: string) => {

@@ -141,6 +141,8 @@ export default function App() {
     updatePaid,
     updateReservationStatus,
     updateReservationDetails,
+    addPersonnel,
+    removePersonnel,
   } = useSQLiteStore();
 
   const today = new Date();
@@ -585,6 +587,19 @@ export default function App() {
   const [newVenueName, setNewVenueName] = useState("");
   const [newVenueDistrict, setNewVenueDistrict] = useState("");
   const [newVenueCategory, setNewVenueCategory] = useState("Kongre & Balo");
+  const [newVenueAddress, setNewVenueAddress] = useState("");
+  const [newVenueMapUrl, setNewVenueMapUrl] = useState("");
+  const [newVenueManagerName, setNewVenueManagerName] = useState("");
+  const [newVenueManagerPhone, setNewVenueManagerPhone] = useState("");
+  const [newVenueManagerTitle, setNewVenueManagerTitle] = useState("Tesis Sorumlusu");
+
+  // Personnel Modal State
+  const [personnelModalOpen, setPersonnelModalOpen] = useState(false);
+  const [personnelName, setPersonnelName] = useState("");
+  const [personnelTitle, setPersonnelTitle] = useState("Tesis Sorumlusu");
+  const [personnelPhone, setPersonnelPhone] = useState("");
+  const [personnelEmail, setPersonnelEmail] = useState("");
+  const [personnelNotes, setPersonnelNotes] = useState("");
 
   // New Hall Form State
   const [targetVenueId, setTargetVenueId] = useState("");
@@ -754,11 +769,45 @@ export default function App() {
       toast.error("Mekan adı ve konumu zorunludur.");
       return;
     }
-    await addVenue(newVenueName, newVenueDistrict, newVenueCategory);
-    toast.success("Yeni mekan tanımlandı.");
+    await addVenue({
+      name: newVenueName,
+      district: newVenueDistrict,
+      category: newVenueCategory,
+      address: newVenueAddress,
+      mapUrl: newVenueMapUrl,
+      managerName: newVenueManagerName,
+      managerPhone: newVenueManagerPhone,
+      managerTitle: newVenueManagerTitle,
+    });
+    toast.success("Yeni mekan ve sorumlu personel bilgileri tanımlandı.");
     setNewVenueName("");
     setNewVenueDistrict("");
+    setNewVenueAddress("");
+    setNewVenueMapUrl("");
+    setNewVenueManagerName("");
+    setNewVenueManagerPhone("");
     setVenueModalOpen(false);
+  };
+
+  const handleCreatePersonnel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!personnelName) {
+      toast.error("Personel ad soyad zorunludur.");
+      return;
+    }
+    await addPersonnel({
+      name: personnelName,
+      title: personnelTitle,
+      phone: personnelPhone,
+      email: personnelEmail,
+      notes: personnelNotes,
+    });
+    toast.success("Yeni personel kadroya eklendi.");
+    setPersonnelName("");
+    setPersonnelPhone("");
+    setPersonnelEmail("");
+    setPersonnelNotes("");
+    setPersonnelModalOpen(false);
   };
 
   const handleCreateHall = async (e: React.FormEvent) => {
@@ -935,6 +984,20 @@ export default function App() {
               {theme === "dark"
                 ? <Sun className="h-3.5 w-3.5" />
                 : <Moon className="h-3.5 w-3.5" />}
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPersonnelModalOpen(true)}
+              className={`text-xs h-7.5 font-semibold px-2.5 ${
+                theme === "dark"
+                  ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
+                  : "bg-white border-slate-300 text-slate-800 hover:bg-slate-100"
+              }`}
+              title="Kurum Personel Kadrosu ve Tesis Sorumluları"
+            >
+              <Users className="h-3.5 w-3.5 mr-1 text-sky-400" /> Personel Kadrosu
             </Button>
 
             <Button
@@ -2267,14 +2330,66 @@ export default function App() {
                               {v.name}
                             </CardTitle>
                             <CardDescription
-                              className={`text-xs mt-0.5 ${
+                              className={`text-xs mt-0.5 space-y-1 ${
                                 theme === "dark"
                                   ? "text-slate-400"
                                   : "text-slate-600"
                               }`}
                             >
-                              Konum: {v.district} • Kategori:{" "}
-                              {v.category || "Genel"}
+                              <div>
+                                Konum: <strong className="text-indigo-400">{v.district}</strong> • Kategori:{" "}
+                                {v.category || "Genel"}
+                              </div>
+                              {v.address && (
+                                <div className="text-[11px] flex items-start gap-1 font-sans">
+                                  <MapPin className="h-3 w-3 text-indigo-400 shrink-0 mt-0.5" />
+                                  <span>{v.address}</span>
+                                </div>
+                              )}
+                              {v.mapUrl && (
+                                <div>
+                                  <a
+                                    href={v.mapUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => {
+                                      if (window.electronAPI?.openExternalLink) {
+                                        e.preventDefault();
+                                        window.electronAPI.openExternalLink(v.mapUrl!);
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1 text-[11px] text-sky-400 font-semibold hover:underline"
+                                  >
+                                    <MapPin className="h-3 w-3 text-sky-400" /> 🗺️ Google Maps'te Aç
+                                  </a>
+                                </div>
+                              )}
+                              {v.managerName && (
+                                <div className={`p-2 rounded-lg border text-[11px] flex items-center justify-between mt-2 ${
+                                  theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-800"
+                                }`}>
+                                  <div>
+                                    <span className="font-bold">👤 Sorumlu:</span> {v.managerName}
+                                    <span className="text-[10px] text-slate-400 ml-1">({v.managerTitle || "Tesis Sorumlusu"})</span>
+                                  </div>
+                                  {v.managerPhone && (
+                                    <a
+                                      href={`https://wa.me/90${v.managerPhone.replace(/\D/g, "")}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={(e) => {
+                                        if (window.electronAPI?.openExternalLink) {
+                                          e.preventDefault();
+                                          window.electronAPI.openExternalLink(`https://wa.me/90${v.managerPhone!.replace(/\D/g, "")}`);
+                                        }
+                                      }}
+                                      className="font-mono font-bold text-emerald-500 hover:underline flex items-center gap-1"
+                                    >
+                                      📞 {v.managerPhone}
+                                    </a>
+                                  )}
+                                </div>
+                              )}
                             </CardDescription>
                           </div>
                           <Button
@@ -3580,7 +3695,7 @@ export default function App() {
                     theme === "dark" ? "text-slate-300" : "text-slate-700"
                   }`}
                 >
-                  Konum / İlçe
+                  Konum / İlçe *
                 </Label>
                 <Input
                   required
@@ -3593,6 +3708,138 @@ export default function App() {
                       : "bg-slate-50 border-slate-300 text-slate-900"
                   }`}
                 />
+              </div>
+
+              <div>
+                <Label
+                  className={`text-xs font-medium ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
+                  Açık Adres Açıklaması (İsteğe Bağlı)
+                </Label>
+                <Textarea
+                  rows={2}
+                  placeholder="örn: Atatürk Mah. Cumhuriyet Cad. No:142 Kadıköy / İstanbul"
+                  value={newVenueAddress}
+                  onChange={(e) => setNewVenueAddress(e.target.value)}
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100"
+                      : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <Label
+                  className={`text-xs font-medium ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
+                  Google Maps / Konum Linki (İsteğe Bağlı)
+                </Label>
+                <Input
+                  type="url"
+                  placeholder="https://maps.google.com/..."
+                  value={newVenueMapUrl}
+                  onChange={(e) => setNewVenueMapUrl(e.target.value)}
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100"
+                      : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                />
+              </div>
+
+              {store.personnel && store.personnel.length > 0 && (
+                <div>
+                  <Label
+                    className={`text-xs font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Kayıtlı Personel Kadrosundan Seç
+                  </Label>
+                  <Select
+                    onValueChange={(pId) => {
+                      const p = store.personnel?.find((x) => x.id === pId);
+                      if (p) {
+                        setNewVenueManagerName(p.name);
+                        setNewVenueManagerTitle(p.title || "Tesis Sorumlusu");
+                        setNewVenueManagerPhone(p.phone || "");
+                      }
+                    }}
+                  >
+                    <SelectTrigger
+                      className={`mt-1 text-xs ${
+                        theme === "dark"
+                          ? "bg-slate-950 border-slate-800 text-slate-200"
+                          : "bg-slate-50 border-slate-300 text-slate-900"
+                      }`}
+                    >
+                      <SelectValue placeholder="Kadro dışı / Manuel Gir" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className={theme === "dark"
+                        ? "bg-slate-900 border-slate-800 text-slate-200"
+                        : "bg-white border-slate-200 text-slate-900"}
+                    >
+                      {store.personnel.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          👤 {p.name} ({p.title || "Personel"}) - 📞 {p.phone || "Tel Yok"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="pt-2 border-t border-slate-800/40 space-y-3">
+                <p className="text-[11px] font-bold text-indigo-400">
+                  🏢 Tesis / İşletme Sorumlusu İletişim Bilgileri
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[11px]">Sorumlu Adı Soyadı</Label>
+                    <Input
+                      placeholder="örn: Ahmet Yılmaz"
+                      value={newVenueManagerName}
+                      onChange={(e) => setNewVenueManagerName(e.target.value)}
+                      className={`mt-1 text-xs ${
+                        theme === "dark"
+                          ? "bg-slate-950 border-slate-800 text-slate-100"
+                          : "bg-slate-50 border-slate-300 text-slate-900"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Görevi / Unvanı</Label>
+                    <Input
+                      placeholder="örn: Tesis Sorumlusu"
+                      value={newVenueManagerTitle}
+                      onChange={(e) => setNewVenueManagerTitle(e.target.value)}
+                      className={`mt-1 text-xs ${
+                        theme === "dark"
+                          ? "bg-slate-950 border-slate-800 text-slate-100"
+                          : "bg-slate-50 border-slate-300 text-slate-900"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[11px]">Sorumlu İletişim Telefonu</Label>
+                  <Input
+                    placeholder="0532 000 00 00"
+                    value={newVenueManagerPhone}
+                    onChange={(e) => setNewVenueManagerPhone(e.target.value)}
+                    className={`mt-1 text-xs ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-100"
+                        : "bg-slate-50 border-slate-300 text-slate-900"
+                    }`}
+                  />
+                </div>
               </div>
               <div>
                 <Label
@@ -3650,6 +3897,123 @@ export default function App() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Personnel Management Dialog */}
+        <Dialog open={personnelModalOpen} onOpenChange={setPersonnelModalOpen}>
+          <DialogContent
+            className={theme === "dark"
+              ? "sm:max-w-[560px] bg-slate-900 border-slate-800 text-slate-100"
+              : "sm:max-w-[560px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
+          >
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold flex items-center gap-2">
+                <Users className="h-5 w-5 text-sky-400" />
+                Personel Kadrosu & Tesis Sorumluları Yönetimi
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4 py-2">
+              {/* Add New Personnel Form */}
+              <form onSubmit={handleCreatePersonnel} className={`p-3 rounded-xl border space-y-3 ${
+                theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"
+              }`}>
+                <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider">➕ Yeni Personel Tanımla</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[11px]">Ad Soyad *</Label>
+                    <Input
+                      required
+                      placeholder="örn: Mehmet Akif"
+                      value={personnelName}
+                      onChange={(e) => setPersonnelName(e.target.value)}
+                      className={`mt-1 text-xs ${
+                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">Görevi / Unvanı</Label>
+                    <Input
+                      placeholder="örn: Tesis Amiri / Zabıta Memuru"
+                      value={personnelTitle}
+                      onChange={(e) => setPersonnelTitle(e.target.value)}
+                      className={`mt-1 text-xs ${
+                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-[11px]">Telefon No</Label>
+                    <Input
+                      placeholder="0532 000 00 00"
+                      value={personnelPhone}
+                      onChange={(e) => setPersonnelPhone(e.target.value)}
+                      className={`mt-1 text-xs ${
+                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">E-posta</Label>
+                    <Input
+                      type="email"
+                      placeholder="mehmet@belediye.bel.tr"
+                      value={personnelEmail}
+                      onChange={(e) => setPersonnelEmail(e.target.value)}
+                      className={`mt-1 text-xs ${
+                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <Button type="submit" size="sm" className="bg-sky-600 hover:bg-sky-500 text-white text-xs w-full font-semibold">
+                  Kadroya Ekle
+                </Button>
+              </form>
+
+              {/* Personnel List */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Kayıtlı Personeller ({store.personnel?.length || 0})
+                </h4>
+                {(!store.personnel || store.personnel.length === 0) ? (
+                  <p className="text-xs text-slate-500 italic p-3 text-center">Henüz tanımlanmış personel bulunmamaktadır.</p>
+                ) : (
+                  <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1">
+                    {store.personnel.map((p) => (
+                      <div key={p.id} className={`p-3 rounded-lg border flex items-center justify-between text-xs ${
+                        theme === "dark" ? "bg-slate-900/60 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-900"
+                      }`}>
+                        <div>
+                          <div className="font-bold flex items-center gap-2">
+                            <span>👤 {p.name}</span>
+                            <Badge variant="outline" className="text-[10px] bg-sky-500/10 border-sky-500/30 text-sky-400">
+                              {p.title || "Personel"}
+                            </Badge>
+                          </div>
+                          <div className="text-[11px] text-slate-400 flex items-center gap-3 mt-1 font-mono">
+                            {p.phone && <span>📞 {p.phone}</span>}
+                            {p.email && <span>✉️ {p.email}</span>}
+                          </div>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => removePersonnel(p.id)}
+                          className="h-7 w-7 text-slate-400 hover:text-rose-400"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 

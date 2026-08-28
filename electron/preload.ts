@@ -36,6 +36,9 @@ export const electronAPI = {
     getSetting: (key: string) => ipcRenderer.invoke("db:get-setting", key),
     setSetting: (key: string, value: string) => ipcRenderer.invoke("db:set-setting", { key, value }),
     getAllSettings: () => ipcRenderer.invoke("db:get-all-settings"),
+    getPersonnel: () => ipcRenderer.invoke("db:get-personnel"),
+    addPersonnel: (p: { name: string; title?: string; phone?: string; email?: string; notes?: string }) => ipcRenderer.invoke("db:add-personnel", p),
+    deletePersonnel: (id: string) => ipcRenderer.invoke("db:delete-personnel", id),
   },
 
   // File & Custom Extension IPCs

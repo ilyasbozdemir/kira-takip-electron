@@ -39,14 +39,15 @@ export function useSQLiteStore() {
   }, [fetchStore]);
 
   const addVenue = useCallback(
-    async (name: string, district: string, category: string = "Genel") => {
+    async (venueData: { name: string; district: string; category?: string; address?: string; mapUrl?: string; managerName?: string; managerPhone?: string; managerTitle?: string } | string, district?: string, category: string = "Genel") => {
+      const data = typeof venueData === "string" ? { name: venueData, district: district || "", category } : venueData;
       if (window.electronAPI?.db?.addVenue) {
-        await window.electronAPI.db.addVenue({ name, district, category });
+        await window.electronAPI.db.addVenue(data);
         await fetchStore();
       } else {
         setStore((s) => ({
           ...s,
-          venues: [...s.venues, { id: Math.random().toString(36).slice(2), name, district, halls: [] }],
+          venues: [...s.venues, { id: Math.random().toString(36).slice(2), ...data, halls: [] }],
         }));
       }
     },
@@ -202,6 +203,36 @@ export function useSQLiteStore() {
     [fetchStore]
   );
 
+  const addPersonnel = useCallback(
+    async (personnel: { name: string; title?: string; phone?: string; email?: string; notes?: string }) => {
+      if (window.electronAPI?.db?.addPersonnel) {
+        await window.electronAPI.db.addPersonnel(personnel);
+        await fetchStore();
+      } else {
+        setStore((s) => ({
+          ...s,
+          personnel: [...(s.personnel || []), { id: Math.random().toString(36).slice(2), ...personnel }],
+        }));
+      }
+    },
+    [fetchStore]
+  );
+
+  const removePersonnel = useCallback(
+    async (id: string) => {
+      if (window.electronAPI?.db?.deletePersonnel) {
+        await window.electronAPI.db.deletePersonnel(id);
+        await fetchStore();
+      } else {
+        setStore((s) => ({
+          ...s,
+          personnel: (s.personnel || []).filter((p) => p.id !== id),
+        }));
+      }
+    },
+    [fetchStore]
+  );
+
   return {
     store,
     ready,
@@ -216,5 +247,7 @@ export function useSQLiteStore() {
     updatePaid,
     updateReservationStatus,
     updateReservationDetails,
+    addPersonnel,
+    removePersonnel,
   };
 }

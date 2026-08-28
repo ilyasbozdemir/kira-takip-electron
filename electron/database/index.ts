@@ -16,7 +16,12 @@ export const TANIM_MekanSchema: TableSchema = defineTable({
     { name: 'id', type: 'TEXT', constraints: ['PRIMARY KEY'] },
     { name: 'name', type: 'TEXT', constraints: ['NOT NULL'] },
     { name: 'district', type: 'TEXT', constraints: ['NOT NULL'] },
-    { name: 'category', type: 'TEXT', defaultValue: "'Genel'" }
+    { name: 'category', type: 'TEXT', defaultValue: "'Genel'" },
+    { name: 'address', type: 'TEXT', defaultValue: "''" },
+    { name: 'mapUrl', type: 'TEXT', defaultValue: "''" },
+    { name: 'managerName', type: 'TEXT', defaultValue: "''" },
+    { name: 'managerPhone', type: 'TEXT', defaultValue: "''" },
+    { name: 'managerTitle', type: 'TEXT', defaultValue: "''" }
   ]
 })
 
@@ -78,9 +83,12 @@ export const TANIM_PersonelSchema: TableSchema = defineTable({
   description: 'Personel ve Kullanıcı Tanımları',
   hasAudit: false,
   columns: [
-    { name: 'id', type: 'INTEGER', constraints: ['PRIMARY KEY AUTOINCREMENT'] },
+    { name: 'id', type: 'TEXT', constraints: ['PRIMARY KEY'] },
     { name: 'name', type: 'TEXT', constraints: ['NOT NULL'] },
-    { name: 'role', type: 'TEXT', defaultValue: "'Personel'" }
+    { name: 'title', type: 'TEXT', defaultValue: "'Tesis Sorumlusu'" },
+    { name: 'phone', type: 'TEXT', defaultValue: "''" },
+    { name: 'email', type: 'TEXT', defaultValue: "''" },
+    { name: 'notes', type: 'TEXT', defaultValue: "''" }
   ]
 })
 
@@ -154,7 +162,7 @@ export function initializeDatabase(db: Database.Database): void {
     // Legacy Compatibility Views & Triggers
     db.exec(`
       CREATE VIEW IF NOT EXISTS venues AS 
-      SELECT id, name, district, category FROM TANIM_Mekan WHERE isDeleted = 0;
+      SELECT id, name, district, category, address, mapUrl AS map_url, managerName AS manager_name, managerPhone AS manager_phone, managerTitle AS manager_title FROM TANIM_Mekan WHERE isDeleted = 0;
 
       CREATE VIEW IF NOT EXISTS halls AS 
       SELECT id, venueId AS venue_id, name, floor, capacity, hourlyPrice AS hourly_price FROM TANIM_Salon WHERE isDeleted = 0;
@@ -166,7 +174,8 @@ export function initializeDatabase(db: Database.Database): void {
       SELECT key, value FROM TANIM_Ayar;
 
       CREATE TRIGGER IF NOT EXISTS trg_insert_venues INSTEAD OF INSERT ON venues BEGIN
-        INSERT INTO TANIM_Mekan (id, name, district, category) VALUES (NEW.id, NEW.name, NEW.district, COALESCE(NEW.category, 'Genel'));
+        INSERT INTO TANIM_Mekan (id, name, district, category, address, mapUrl, managerName, managerPhone, managerTitle) 
+        VALUES (NEW.id, NEW.name, NEW.district, COALESCE(NEW.category, 'Genel'), COALESCE(NEW.address, ''), COALESCE(NEW.map_url, ''), COALESCE(NEW.manager_name, ''), COALESCE(NEW.manager_phone, ''), COALESCE(NEW.manager_title, ''));
       END;
 
       CREATE TRIGGER IF NOT EXISTS trg_delete_venues INSTEAD OF DELETE ON venues BEGIN
