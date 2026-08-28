@@ -689,6 +689,7 @@ export function App(): React.JSX.Element {
         theme={theme}
         store={store}
         selectedDay={selectedDay}
+        setSelectedDay={setSelectedDay}
         resModalOpen={resModalOpen}
         setResModalOpen={setResModalOpen}
         resVenueId={resVenueId}

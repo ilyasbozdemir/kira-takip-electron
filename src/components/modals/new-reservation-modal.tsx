@@ -32,6 +32,7 @@ interface NewReservationModalProps {
   onOpenChange: (open: boolean) => void;
   theme: "dark" | "light";
   selectedDay: string;
+  setSelectedDay?: (v: string) => void;
   resVenueId: string;
   setResVenueId: (v: string) => void;
   resHallId: string;
@@ -80,6 +81,7 @@ export function NewReservationModal({
   onOpenChange,
   theme,
   selectedDay,
+  setSelectedDay,
   resVenueId,
   setResVenueId,
   resHallId,
@@ -148,13 +150,34 @@ export function NewReservationModal({
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Seçili Tarih: <strong className="text-indigo-500 font-semibold">{selectedDay}</strong>
+            Tesis, salon, tarih, seans ve müşteri bilgilerini girerek yeni tahsis kaydı oluşturun.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleCreateReservation} className="space-y-3 py-1">
-          {/* Venue & Hall Select */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Date, Venue & Hall Select (3-Column Grid) */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <Label
+                className={`text-xs font-semibold ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                Etkinlik Tarihi *
+              </Label>
+              <Input
+                type="date"
+                required
+                value={selectedDay}
+                onChange={(e) => setSelectedDay?.(e.target.value)}
+                className={`mt-1 text-xs font-medium ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-200"
+                    : "bg-slate-50 border-slate-300 text-slate-900"
+                }`}
+              />
+            </div>
+
             <div>
               <Label
                 className={`text-xs font-semibold ${

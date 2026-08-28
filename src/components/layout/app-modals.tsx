@@ -16,6 +16,7 @@ interface AppModalsProps {
   theme: "dark" | "light";
   store: Store;
   selectedDay: string;
+  setSelectedDay?: (day: string) => void;
   // New Reservation Props
   resModalOpen: boolean;
   setResModalOpen: (open: boolean) => void;
@@ -299,6 +300,7 @@ export function AppModals({
         onOpenChange={setResModalOpen}
         theme={theme}
         selectedDay={selectedDay}
+        setSelectedDay={setSelectedDay}
         resVenueId={resVenueId}
         setResVenueId={setResVenueId}
         resHallId={resHallId}
