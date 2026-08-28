@@ -467,6 +467,37 @@ export function addVenue(venueData: {
   return { id: newId, ...venueData, halls: [] };
 }
 
+export function updateVenue(venueData: {
+  id: string;
+  name: string;
+  district: string;
+  category?: string;
+  address?: string;
+  mapUrl?: string;
+  managerName?: string;
+  managerPhone?: string;
+  managerTitle?: string;
+  color?: string;
+}): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare(
+    "UPDATE TANIM_Mekan SET name = ?, district = ?, category = ?, address = ?, mapUrl = ?, managerName = ?, managerPhone = ?, managerTitle = ?, color = ? WHERE id = ?"
+  ).run(
+    venueData.name,
+    venueData.district,
+    venueData.category || "Genel",
+    venueData.address || "",
+    venueData.mapUrl || "",
+    venueData.managerName || "",
+    venueData.managerPhone || "",
+    venueData.managerTitle || "",
+    venueData.color || "#6366f1",
+    venueData.id
+  );
+  saveWorkspaceIfActive();
+  return { success: true };
+}
+
 export function deleteVenue(venueId: string): { success: boolean; error?: string } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   
@@ -500,6 +531,29 @@ export function addHall(venueId: string, hall: { name: string; floor: string; ca
   );
   saveWorkspaceIfActive();
   return { id: newId, venueId, ...hall };
+}
+
+export function updateHall(hallData: {
+  id: string;
+  name: string;
+  floor: string;
+  capacity: number;
+  hourlyPrice: number;
+  color?: string;
+}): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare(
+    "UPDATE TANIM_Salon SET name = ?, floor = ?, capacity = ?, hourlyPrice = ?, color = ? WHERE id = ?"
+  ).run(
+    hallData.name,
+    hallData.floor || "Zemin Kat",
+    hallData.capacity || 100,
+    hallData.hourlyPrice || 0,
+    hallData.color || "#8b5cf6",
+    hallData.id
+  );
+  saveWorkspaceIfActive();
+  return { success: true };
 }
 
 export function deleteHall(venueId: string, hallId: string): { success: boolean; error?: string } {

@@ -87,6 +87,18 @@ export const sqliteStore = {
     }
     await this.loadFromDb();
   },
+  async updateVenue(v: any) {
+    if ((window.electronAPI?.db as any)?.updateVenue) {
+      await (window.electronAPI?.db as any).updateVenue(v);
+    } else {
+      const idx = currentStoreData.venues.findIndex((x) => x.id === v.id);
+      if (idx !== -1) {
+        currentStoreData.venues[idx] = { ...currentStoreData.venues[idx], ...v };
+        localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+      }
+    }
+    await this.loadFromDb();
+  },
   async addHall(data: any) {
     if (window.electronAPI?.db?.addHall) {
       await window.electronAPI.db.addHall(data);
@@ -94,6 +106,21 @@ export const sqliteStore = {
       const v = currentStoreData.venues.find((x) => x.id === data.venueId);
       if (v) v.halls.push({ ...data, id: Math.random().toString(36).slice(2) });
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async updateHall(h: any) {
+    if ((window.electronAPI?.db as any)?.updateHall) {
+      await (window.electronAPI?.db as any).updateHall(h);
+    } else {
+      for (const v of currentStoreData.venues) {
+        const hIdx = v.halls.findIndex((x) => x.id === h.id);
+        if (hIdx !== -1) {
+          v.halls[hIdx] = { ...v.halls[hIdx], ...h };
+          localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+          break;
+        }
+      }
     }
     await this.loadFromDb();
   },

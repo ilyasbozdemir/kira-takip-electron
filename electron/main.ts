@@ -9,8 +9,10 @@ import {
   initDatabase,
   getStoreData,
   addVenue,
+  updateVenue,
   deleteVenue,
   addHall,
+  updateHall,
   deleteHall,
   addReservation,
   deleteReservation,
@@ -256,14 +258,19 @@ app.on("window-all-closed", () => {
 });
 
 /* ========================================================================== */
-/* SQLITE & FILE IPC HANDLERS                                                */
+/* WINDOW CONTROLS & UTILITY IPC HANDLERS                                   */
 /* ========================================================================== */
 
-ipcMain.handle("win:minimize", () => {
+function safeHandle(channel: string, listener: (...args: any[]) => any) {
+  ipcMain.removeHandler(channel);
+  ipcMain.handle(channel, listener);
+}
+
+safeHandle("win:minimize", () => {
   if (win) win.minimize();
 });
 
-ipcMain.handle("win:maximize", () => {
+safeHandle("win:maximize", () => {
   if (win) {
     if (win.isMaximized()) {
       win.unmaximize();
@@ -273,27 +280,63 @@ ipcMain.handle("win:maximize", () => {
   }
 });
 
-ipcMain.handle("win:close", () => {
+safeHandle("win:close", () => {
   if (win) win.close();
 });
 
-ipcMain.handle("win:is-maximized", () => {
+safeHandle("win:is-maximized", () => {
   return win ? win.isMaximized() : false;
 });
 
-ipcMain.handle("db:get-current-path", () => {
+safeHandle("get-app-version", () => {
+  return app.getVersion();
+});
+
+safeHandle("get-local-ip", () => {
+  const nets = os.networkInterfaces();
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name] || []) {
+      if (net.family === "IPv4" && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return "127.0.0.1";
+});
+
+safeHandle("db:get-current-path", () => {
   return getCurrentDbPath();
 });
 
-ipcMain.handle("db:get-store", () => {
+safeHandle("db:get-store", () => {
   return getStoreData();
 });
 
-ipcMain.handle("db:add-venue", (_event, venueArg, district, category) => {
+safeHandle("db:add-venue", (_event, venueArg, district, category) => {
   if (typeof venueArg === "string") {
     return addVenue({ name: venueArg, district: district || "", category: category || "Genel" });
   }
   return addVenue(venueArg);
+});
+
+safeHandle("db:update-venue", (_event, data) => {
+  return updateVenue(data);
+});
+
+safeHandle("db:delete-venue", (_event, venueId: string) => {
+  return deleteVenue(venueId);
+});
+
+safeHandle("db:add-hall", (_event, data) => {
+  return addHall(data.venueId, data.hall);
+});
+
+safeHandle("db:update-hall", (_event, data) => {
+  return updateHall(data);
+});
+
+safeHandle("db:delete-hall", (_event, data) => {
+  return deleteHall(data.venueId, data.hallId);
 });
 
 ipcMain.handle("db:get-personnel", () => {
