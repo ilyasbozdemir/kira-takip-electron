@@ -66,20 +66,31 @@ export const money = (n: number) =>
 
 /** "14:30" -> 870 dakika */
 export const toMin = (t: string) => {
+  if (t === "24:00") return 24 * 60;
   const [h, m] = t.split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
 };
 
-export const hoursBetween = (start: string, end: string) =>
-  Math.max(0, (toMin(end) - toMin(start)) / 60);
+export const hoursBetween = (start: string, end: string) => {
+  let sMin = toMin(start);
+  let eMin = toMin(end);
+  if (eMin === 0 && sMin > 0) eMin = 24 * 60;
+  return Math.max(0, (eMin - sMin) / 60);
+};
 
 export const timeSlots = Array.from({ length: 33 }, (_, i) => {
-  const mins = 8 * 60 + i * 30; // 08:00 - 24:00
-  return `${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
+  const mins = 8 * 60 + i * 30; // 08:00 - 00:00
+  const hours = Math.floor(mins / 60) % 24;
+  return `${String(hours).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`;
 });
 
-export const overlaps = (aS: string, aE: string, bS: string, bE: string) =>
-  toMin(aS) < toMin(bE) && toMin(bS) < toMin(aE);
+export const overlaps = (aS: string, aE: string, bS: string, bE: string) => {
+  let aEnd = toMin(aE);
+  if (aEnd === 0 && toMin(aS) > 0) aEnd = 24 * 60;
+  let bEnd = toMin(bE);
+  if (bEnd === 0 && toMin(bS) > 0) bEnd = 24 * 60;
+  return toMin(aS) < bEnd && toMin(bS) < aEnd;
+};
 
 function seed(): Store {
   return {

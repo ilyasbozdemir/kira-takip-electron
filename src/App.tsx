@@ -1433,8 +1433,8 @@ export default function App() {
                         : "bg-white border-slate-200 shadow-sm"
                     }`}
                   >
-                    {/* Left: Month Navigator */}
-                    <div className="flex items-center gap-2">
+                    {/* Left: Detailed Month & Year Navigator with Quick Jump */}
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button
                         variant="outline"
                         size="icon"
@@ -1451,16 +1451,71 @@ export default function App() {
                               1,
                             ),
                           )}
+                        title="Önceki Ay"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
-                      <h2
-                        className={`text-base font-bold min-w-[150px] text-center ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
+
+                      {/* Month Dropdown */}
+                      <Select
+                        value={String(cursor.getMonth())}
+                        onValueChange={(val) =>
+                          setCursor(
+                            new Date(cursor.getFullYear(), Number(val), 1),
+                          )}
                       >
-                        {trMonths[cursor.getMonth()]} {cursor.getFullYear()}
-                      </h2>
+                        <SelectTrigger
+                          className={`w-[125px] text-xs h-8 font-semibold ${
+                            theme === "dark"
+                              ? "bg-slate-950 border-slate-800 text-slate-100"
+                              : "bg-slate-50 border-slate-300 text-slate-900"
+                          }`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent
+                          className={theme === "dark"
+                            ? "bg-slate-900 border-slate-800 text-slate-200"
+                            : "bg-white border-slate-200 text-slate-900"}
+                        >
+                          {trMonths.map((m, idx) => (
+                            <SelectItem key={idx} value={String(idx)}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Year Dropdown */}
+                      <Select
+                        value={String(cursor.getFullYear())}
+                        onValueChange={(val) =>
+                          setCursor(
+                            new Date(Number(val), cursor.getMonth(), 1),
+                          )}
+                      >
+                        <SelectTrigger
+                          className={`w-[90px] text-xs h-8 font-semibold ${
+                            theme === "dark"
+                              ? "bg-slate-950 border-slate-800 text-slate-100"
+                              : "bg-slate-50 border-slate-300 text-slate-900"
+                          }`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent
+                          className={theme === "dark"
+                            ? "bg-slate-900 border-slate-800 text-slate-200"
+                            : "bg-white border-slate-200 text-slate-900"}
+                        >
+                          {Array.from({ length: 16 }, (_, i) => 2020 + i).map((y) => (
+                            <SelectItem key={y} value={String(y)}>
+                              {y}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
                       <Button
                         variant="outline"
                         size="icon"
@@ -1477,6 +1532,7 @@ export default function App() {
                               1,
                             ),
                           )}
+                        title="Sonraki Ay"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -1490,10 +1546,42 @@ export default function App() {
                           );
                           setSelectedDay(toKey(today));
                         }}
-                        className="text-indigo-500 hover:text-indigo-600 text-xs font-semibold ml-1"
+                        className="text-indigo-500 hover:text-indigo-600 text-xs font-semibold px-2 h-8"
+                        title="Bugünün tarihine git"
                       >
                         Bugüne Git
                       </Button>
+
+                      {/* İlgili Tarihe Git Date Picker */}
+                      <div className="flex items-center gap-1.5 ml-1 border-l pl-2 dark:border-slate-800 border-slate-300">
+                        <span
+                          className={`text-[11px] font-medium hidden sm:inline ${
+                            theme === "dark" ? "text-slate-400" : "text-slate-600"
+                          }`}
+                        >
+                          İlgili Tarihe Git:
+                        </span>
+                        <Input
+                          type="date"
+                          value={selectedDay}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val) {
+                              const [y, m, d] = val.split("-").map(Number);
+                              if (y && m && d) {
+                                setCursor(new Date(y, m - 1, 1));
+                                setSelectedDay(val);
+                                toast.info(`Tarihe gidildi: ${val}`);
+                              }
+                            }
+                          }}
+                          className={`text-xs h-8 w-[130px] font-mono ${
+                            theme === "dark"
+                              ? "bg-slate-950 border-slate-800 text-slate-100"
+                              : "bg-slate-50 border-slate-300 text-slate-900"
+                          }`}
+                        />
+                      </div>
                     </div>
 
                     {/* Center: View Mode Tabs */}
