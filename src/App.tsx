@@ -724,11 +724,14 @@ export default function App() {
     if (resHallId && resStart && resEnd) {
       const h = hallById(resHallId);
       if (h) {
-        if (pricingMode === "daily") {
-          setResPrice(h.hourlyPrice);
-        } else {
+        if (pricingMode === "hourly") {
           const hrs = hoursBetween(resStart, resEnd);
           setResPrice(hrs * h.hourlyPrice);
+        } else {
+          // In daily/seans/indi-bindi flat rate mode, do not multiply by hours!
+          if (resPrice === "" || resPrice === 0) {
+            setResPrice(h.hourlyPrice);
+          }
         }
       }
     }
@@ -4730,48 +4733,48 @@ export default function App() {
                 )}
 
                 {/* Customer Details */}
-                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Müşteri & İletişim Bilgileri</h4>
+                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>Müşteri & İletişim Bilgileri</h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Müşteri / Kurum:</span>
+                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Müşteri / Kurum:</span>
                       <span className="font-bold">{selectedReservation.customer}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-slate-500">Telefon No:</span>
+                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Telefon No:</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-indigo-400">{selectedReservation.phone}</span>
+                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{selectedReservation.phone}</span>
                         <a
                           href={`https://wa.me/90${selectedReservation.phone.replace(/\D/g, "")}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[10px] bg-emerald-600/20 text-emerald-400 px-2 py-0.5 rounded font-semibold hover:bg-emerald-600/30"
+                          className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-400 px-2 py-0.5 rounded font-bold hover:bg-emerald-200 dark:hover:bg-emerald-600/30 border border-emerald-300 dark:border-emerald-700/50"
                         >
                           WhatsApp
                         </a>
                       </div>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Etkinlik Türü:</span>
-                      <span className="font-semibold text-indigo-400">{selectedReservation.eventType}</span>
+                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Etkinlik Türü:</span>
+                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedReservation.eventType}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Venue & Hall Details */}
-                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Tesis & Salon Bilgileri</h4>
+                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>Tesis & Salon Bilgileri</h4>
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Mekan / Tesis:</span>
-                      <span className="font-bold">{store.venues.find((v) => v.id === selectedReservation.venueId)?.name || "-"}</span>
+                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Mekan / Tesis:</span>
+                      <span className="font-extrabold">{store.venues.find((v) => v.id === selectedReservation.venueId)?.name || "-"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Salon:</span>
-                      <span className="font-bold text-indigo-400">{hallById(selectedReservation.hallId)?.name || "-"}</span>
+                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Salon:</span>
+                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{hallById(selectedReservation.hallId)?.name || "-"}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Saat Aralığı:</span>
+                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Saat Aralığı:</span>
                       <span className="font-mono font-bold">{selectedReservation.start} - {selectedReservation.end} ({hoursBetween(selectedReservation.start, selectedReservation.end)} Saat)</span>
                     </div>
                   </div>
@@ -4788,10 +4791,10 @@ export default function App() {
                   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrText)}`;
 
                   return (
-                    <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                    <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
+                      <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center justify-between ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>
                         <span>👤 Tesis Sorumlusu & Doğrulama Karekodu</span>
-                        <QrCode className="h-3.5 w-3.5 text-indigo-400" />
+                        <QrCode className="h-3.5 w-3.5 text-indigo-500" />
                       </h4>
 
                       <div className="flex items-center gap-4">
@@ -4800,9 +4803,9 @@ export default function App() {
                         </div>
                         <div className="space-y-1.5 text-xs flex-1">
                           <div>
-                            <span className="text-slate-400">Yetkili Sorumlu:</span>
-                            <p className="font-bold text-slate-100">{manager?.name || "Yetkili Atanmadı"}</p>
-                            <p className="text-[10px] text-sky-400 font-semibold">{manager?.title || "Tesis Amiri"}</p>
+                            <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Yetkili Sorumlu:</span>
+                            <p className={`font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>{manager?.name || "Yetkili Atanmadı"}</p>
+                            <p className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold">{manager?.title || "Tesis Amiri"}</p>
                           </div>
                           {manager?.phone && (
                             <div className="flex items-center gap-2 pt-1 font-mono">
@@ -4816,7 +4819,7 @@ export default function App() {
                                     window.electronAPI.openExternalLink(`https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`);
                                   }
                                 }}
-                                className="text-emerald-400 font-bold hover:underline text-[11px]"
+                                className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline text-[11px]"
                               >
                                 📞 {manager.phone} (WhatsApp)
                               </a>
@@ -4829,21 +4832,45 @@ export default function App() {
                 })()}
 
                 {/* Financial & Receipt Section */}
-                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Finansal Döküm & Ödeme Makbuzu</h4>
+                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
+                  <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>Finansal Döküm & Ödeme Makbuzu</h4>
                   
-                  <div className="grid grid-cols-3 gap-2 text-center p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/80">
-                    <div>
-                      <div className="text-[10px] text-slate-400 uppercase">Toplam Ücret</div>
-                      <div className="text-xs font-bold text-slate-200">{money(selectedReservation.price)}</div>
+                  <div className={`grid grid-cols-3 gap-2 text-center p-2.5 rounded-xl border font-mono ${
+                    theme === "dark"
+                      ? "bg-slate-950/80 border-slate-800"
+                      : "bg-slate-50 border-slate-200/90 shadow-xs"
+                  }`}>
+                    <div className={`p-2 rounded-lg border ${
+                      theme === "dark" ? "bg-indigo-950/40 border-indigo-900/60" : "bg-indigo-50/80 border-indigo-200/80"
+                    }`}>
+                      <div className={`text-[10px] font-sans font-bold uppercase tracking-wider ${
+                        theme === "dark" ? "text-indigo-300" : "text-indigo-900"
+                      }`}>Toplam Ücret</div>
+                      <div className={`text-xs font-extrabold mt-0.5 ${
+                        theme === "dark" ? "text-indigo-200" : "text-indigo-700"
+                      }`}>{money(selectedReservation.price)}</div>
                     </div>
-                    <div>
-                      <div className="text-[10px] text-emerald-400 uppercase">Ödenen</div>
-                      <div className="text-xs font-bold text-emerald-400">{money(selectedReservation.paid)}</div>
+
+                    <div className={`p-2 rounded-lg border ${
+                      theme === "dark" ? "bg-emerald-950/40 border-emerald-900/60" : "bg-emerald-50/80 border-emerald-200/80"
+                    }`}>
+                      <div className={`text-[10px] font-sans font-bold uppercase tracking-wider ${
+                        theme === "dark" ? "text-emerald-300" : "text-emerald-900"
+                      }`}>Ödenen</div>
+                      <div className={`text-xs font-extrabold mt-0.5 ${
+                        theme === "dark" ? "text-emerald-300" : "text-emerald-700"
+                      }`}>{money(selectedReservation.paid)}</div>
                     </div>
-                    <div>
-                      <div className="text-[10px] text-rose-400 uppercase">Kalan Bakiye</div>
-                      <div className="text-xs font-bold text-rose-400">
+
+                    <div className={`p-2 rounded-lg border ${
+                      theme === "dark" ? "bg-rose-950/40 border-rose-900/60" : "bg-rose-50/80 border-rose-200/80"
+                    }`}>
+                      <div className={`text-[10px] font-sans font-bold uppercase tracking-wider ${
+                        theme === "dark" ? "text-rose-300" : "text-rose-900"
+                      }`}>Kalan Bakiye</div>
+                      <div className={`text-xs font-extrabold mt-0.5 ${
+                        theme === "dark" ? "text-rose-300" : "text-rose-700"
+                      }`}>
                         {money(selectedReservation.price - selectedReservation.paid)}
                       </div>
                     </div>
