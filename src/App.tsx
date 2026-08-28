@@ -171,6 +171,15 @@ export default function App() {
     localStorage.setItem("venuekeeper-theme", nextTheme);
   };
 
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [theme]);
+
   // Calendar View & Filter States
   const [calendarViewMode, setCalendarViewMode] = useState<"grid" | "timeline">(
     "grid",
@@ -189,9 +198,13 @@ export default function App() {
   const [newEventTypeInput, setNewEventTypeInput] = useState("");
 
   const allEventTypes = useMemo(() => {
-    const dbTypes = store.reservations.map((r) => r.eventType).filter((x): x is string => Boolean(x));
+    const dbTypes = store.reservations.map((r) => r.eventType).filter((
+      x,
+    ): x is string => Boolean(x));
     const set = new Set([...eventTypes, ...dbTypes]);
-    return Array.from(set).sort((a, b) => (a || "").localeCompare(b || "", "tr"));
+    return Array.from(set).sort((a, b) =>
+      (a || "").localeCompare(b || "", "tr")
+    );
   }, [eventTypes, store.reservations]);
 
   const customerSuggestions = useMemo(() => {
@@ -457,12 +470,39 @@ export default function App() {
     setDraftTariffBasis(defaultTariffBasis);
   }, [institutionName, institutionLogo, defaultTariffBasis]);
 
-  const handleSaveInstitutionSettings = () => {
+  useEffect(() => {
+    if (window.electronAPI?.db?.getSetting) {
+      window.electronAPI.db.getSetting("company_name").then((val) => {
+        if (val) {
+          setInstitutionName(val);
+          setDraftInstitutionName(val);
+        }
+      });
+      window.electronAPI.db.getSetting("company_logo").then((val) => {
+        if (val) {
+          setInstitutionLogo(val);
+          setDraftInstitutionLogo(val);
+        }
+      });
+    }
+  }, [currentFilePath]);
+
+  const handleSaveInstitutionSettings = async () => {
     setInstitutionName(draftInstitutionName);
     setInstitutionLogo(draftInstitutionLogo);
     localStorage.setItem("venuekeeper-institution-name", draftInstitutionName);
     localStorage.setItem("venuekeeper-institution-logo", draftInstitutionLogo);
-    toast.success("Kurumsal kimlik ve logo bilgileri kaydedildi!");
+    if (window.electronAPI?.db?.setSetting) {
+      await window.electronAPI.db.setSetting(
+        "company_name",
+        draftInstitutionName,
+      );
+      await window.electronAPI.db.setSetting(
+        "company_logo",
+        draftInstitutionLogo,
+      );
+    }
+    toast.success("Kurumsal kimlik ve logo bilgileri veritabanına kaydedildi!");
   };
 
   const handleCancelInstitutionSettings = () => {
@@ -3047,10 +3087,12 @@ export default function App() {
                     }`}
                   />
                   <datalist id="customer-suggestions">
-                    {customerSuggestions.map((c) => <option
-                      key={c}
-                      value={c}
-                    />)}
+                    {customerSuggestions.map((c) => (
+                      <option
+                        key={c}
+                        value={c}
+                      />
+                    ))}
                   </datalist>
                 </div>
               </div>
