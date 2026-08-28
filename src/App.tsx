@@ -3,21 +3,14 @@ import {
   BarChart3,
   Building2,
   Calendar as CalendarIcon,
-  Database,
-  Download,
-  FilePlus2,
   FolderOpen,
-  HelpCircle,
-  KeyRound,
   Layers,
   LayoutDashboard,
-  Menu,
   Minus,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
-  RefreshCw,
   Search,
   Settings,
   Square,
@@ -29,20 +22,23 @@ import {
 import { toast, Toaster } from "sonner";
 
 import {
-  allEventTypes,
   hoursBetween,
   money,
   type NavSection,
-  type PricingMode,
   type Reservation,
   timeSlots,
   toKey,
-  type Venue,
 } from "@/lib/rental-store";
 import { sqliteStore } from "@/lib/db-client";
 import { useSettingsStore } from "@/store/settingsStore";
 import { useWorkspaceStore } from "@/store/workspaceStore";
 import { useTabStore } from "@/store/tabStore";
+
+import { useEventTypes } from "@/hooks/useEventTypes";
+import { useReservationForm } from "@/hooks/useReservationForm";
+import { useVenueForm } from "@/hooks/useVenueForm";
+import { useHallForm } from "@/hooks/useHallForm";
+import { usePersonnelForm } from "@/hooks/usePersonnelForm";
 
 import { Footer } from "@/components/footer";
 import { MailDialog } from "@/components/mail-dialog";
@@ -107,86 +103,13 @@ export function App(): React.JSX.Element {
     recentFiles,
     openFile,
     createFile,
-    saveFileAs,
-    closeFile,
     fetchRecentFiles,
   } = useWorkspaceStore();
 
-  const { tabs, activeTabId, removeTab, setActiveTab } = useTabStore();
+  const { activeTabId, setActiveTab } = useTabStore();
 
   // Launcher Modal State
   const [showLauncherModal, setShowLauncherModal] = useState(false);
-
-  // Custom Event Types State
-  const [customEventTypes, setCustomEventTypes] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem("custom_event_types");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const mergedEventTypes = useMemo(() => {
-    const set = new Set([...allEventTypes, ...customEventTypes]);
-    return Array.from(set);
-  }, [customEventTypes]);
-
-  const [newEventTypeInput, setNewEventTypeInput] = useState("");
-
-  const handleAddCustomEventType = (typeName?: string) => {
-    const val = (typeName || newEventTypeInput).trim();
-    if (!val) return;
-    if (mergedEventTypes.includes(val)) {
-      toast.error(`"${val}" türü zaten mevcut.`);
-      return;
-    }
-    const updated = [...customEventTypes, val];
-    setCustomEventTypes(updated);
-    localStorage.setItem("custom_event_types", JSON.stringify(updated));
-    setNewEventTypeInput("");
-    toast.success(`"${val}" türü eklendi.`);
-  };
-
-  const handleRemoveEventType = (val: string) => {
-    const updated = customEventTypes.filter((t) => t !== val);
-    setCustomEventTypes(updated);
-    localStorage.setItem("custom_event_types", JSON.stringify(updated));
-    toast.info(`"${val}" türü listeden kaldırıldı.`);
-  };
-
-  const handleResetEventTypes = () => {
-    setCustomEventTypes([]);
-    localStorage.removeItem("custom_event_types");
-    toast.success("Etkinlik türleri varsayılan değerlere sıfırlandı.");
-  };
-
-  const getEventTypeColor = (type?: string): string => {
-    switch (type) {
-      case "Düğün & Davet":
-        return "bg-pink-500/10 border-pink-500/30 text-pink-600 dark:text-pink-400";
-      case "Nişan & Kına":
-        return "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400";
-      case "Sünnet Düğünü":
-        return "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400";
-      case "Konser & Tiyatro":
-        return "bg-purple-500/10 border-purple-500/30 text-purple-600 dark:text-purple-400";
-      case "Kongre & Seminer":
-        return "bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400";
-      case "Toplantı & Lansman":
-        return "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400";
-      case "Sergi & Fuar":
-        return "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
-      case "Mezuniyet & Balo":
-        return "bg-violet-500/10 border-violet-500/30 text-violet-600 dark:text-violet-400";
-      case "Spor & Turnuva":
-        return "bg-teal-500/10 border-teal-500/30 text-teal-600 dark:text-teal-400";
-      case "İftar & Yemek":
-        return "bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400";
-      default:
-        return "bg-slate-500/10 border-slate-500/30 text-slate-600 dark:text-slate-400";
-    }
-  };
 
   // SQLite Store State
   const [store, setStore] = useState(sqliteStore.getSnapshot());
@@ -219,7 +142,7 @@ export function App(): React.JSX.Element {
   const [searchTerm, setSearchTerm] = useState("");
   const [eventTypeFilter, setEventTypeFilter] = useState("all");
 
-  // Modals & Drawers Visibility State
+  // Modals Visibility State
   const [resModalOpen, setResModalOpen] = useState(false);
   const [venueModalOpen, setVenueModalOpen] = useState(false);
   const [hallModalOpen, setHallModalOpen] = useState(false);
@@ -228,7 +151,7 @@ export function App(): React.JSX.Element {
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
 
-  // Selected Item Drawer & Delete Confirmation
+  // Selected Reservation & Delete Targets
   const [selectedReservation, setSelectedReservation] = useState<
     Reservation | null
   >(null);
@@ -245,7 +168,7 @@ export function App(): React.JSX.Element {
     } | null
   >(null);
 
-  // Edit Drawer Form States
+  // Drawer Form States
   const [editReceiptNo, setEditReceiptNo] = useState("");
   const [editPaymentMethod, setEditPaymentMethod] = useState("Nakit");
   const [editPaidAmount, setEditPaidAmount] = useState<number | "">("");
@@ -292,21 +215,21 @@ export function App(): React.JSX.Element {
     );
     const text =
       `Sn. ${r.customer}, ${r.date} tarihindeki ${v?.name} - ${h?.name} ${r.eventType} salon kiralamanız kaydedilmiştir. Saat: ${r.start}-${r.end}. Toplam: ${
-        money(r.price)
+        money(
+          r.price,
+        )
       }. Bilgi için: 0532 000 0000`;
     navigator.clipboard.writeText(text);
     toast.success("Özet mesaj metni panoya kopyalandı!");
   };
 
-  // Google Drive Settings State
+  // Google Drive & Draft Settings State
   const [gdriveToken, setGdriveToken] = useState(() =>
     localStorage.getItem("gdrive_token") || ""
   );
   const [gdriveFolderId, setGdriveFolderId] = useState(() =>
     localStorage.getItem("gdrive_folder_id") || ""
   );
-
-  // Draft Settings State
   const [draftInstitutionName, setDraftInstitutionName] = useState(
     institutionName,
   );
@@ -368,112 +291,108 @@ export function App(): React.JSX.Element {
     toast.info("Logo kaldırıldı.");
   };
 
-  // Personnel Form State
-  const [personnelName, setPersonnelName] = useState("");
-  const [personnelTitle, setPersonnelTitle] = useState("");
-  const [personnelPhone, setPersonnelPhone] = useState("");
-  const [personnelEmail, setPersonnelEmail] = useState("");
-  const [personnelNotes, setPersonnelNotes] = useState("");
+  // Custom Hooks for Event Types, Reservation, Venue, Hall, and Personnel Forms
+  const {
+    mergedEventTypes,
+    newEventTypeInput,
+    setNewEventTypeInput,
+    handleAddCustomEventType,
+    handleRemoveEventType,
+    handleResetEventTypes,
+    getEventTypeColor,
+  } = useEventTypes();
 
-  const handleCreatePersonnel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!personnelName.trim()) {
-      toast.error("Lütfen personel adını girin.");
-      return;
-    }
-    try {
-      await sqliteStore.addPersonnel({
-        name: personnelName.trim(),
-        title: personnelTitle.trim() || undefined,
-        phone: personnelPhone.trim() || undefined,
-        email: personnelEmail.trim() || undefined,
-        notes: personnelNotes.trim() || undefined,
-      });
-      setPersonnelName("");
-      setPersonnelTitle("");
-      setPersonnelPhone("");
-      setPersonnelEmail("");
-      setPersonnelNotes("");
-      toast.success("Yeni personel başarıyla eklendi.");
-    } catch (err: any) {
-      toast.error(`Personel ekleme hatası: ${err.message || err}`);
-    }
-  };
+  const {
+    resVenueId,
+    setResVenueId,
+    resHallId,
+    setResHallId,
+    resEventType,
+    setResEventType,
+    resCustomer,
+    setResCustomer,
+    resPhone,
+    setResPhone,
+    pricingMode,
+    setPricingMode,
+    resStart,
+    setResStart,
+    resEnd,
+    setResEnd,
+    resPrice,
+    setResPrice,
+    resPaid,
+    setResPaid,
+    resStatus,
+    setResStatus,
+    resReceiptNo,
+    setResReceiptNo,
+    resPaymentMethod,
+    setResPaymentMethod,
+    resDecisionInfo,
+    setResDecisionInfo,
+    resNote,
+    setResNote,
+    customerSuggestions,
+    phoneSuggestions,
+    decisionSuggestions,
+    handleCreateReservation,
+  } = useReservationForm(store, defaultTariffBasis, selectedDay);
 
-  const removePersonnel = async (id: string) => {
-    try {
-      await sqliteStore.deletePersonnel(id);
-      toast.success("Personel kaydı silindi.");
-    } catch (err: any) {
-      toast.error(`Silme hatası: ${err.message || err}`);
-    }
-  };
+  const {
+    newVenueName,
+    setNewVenueName,
+    newVenueDistrict,
+    setNewVenueDistrict,
+    newVenueAddress,
+    setNewVenueAddress,
+    newVenueMapUrl,
+    setNewVenueMapUrl,
+    newVenueCategory,
+    setNewVenueCategory,
+    newVenueManagerName,
+    setNewVenueManagerName,
+    newVenueManagerTitle,
+    setNewVenueManagerTitle,
+    newVenueManagerPhone,
+    setNewVenueManagerPhone,
+    newVenueColor,
+    setNewVenueColor,
+    handleCreateVenue,
+  } = useVenueForm();
 
-  // New Reservation Form State
-  const [resVenueId, setResVenueId] = useState("");
-  const [resHallId, setResHallId] = useState("");
-  const [resEventType, setResEventType] = useState(
-    allEventTypes[0] || "Düğün & Davet",
-  );
-  const [resCustomer, setResCustomer] = useState("");
-  const [resPhone, setResPhone] = useState("");
-  const [pricingMode, setPricingMode] = useState<PricingMode>("hourly");
-  const [resStart, setResStart] = useState("10:00");
-  const [resEnd, setResEnd] = useState("14:00");
-  const [resPrice, setResPrice] = useState<number | "">(0);
-  const [resPaid, setResPaid] = useState<number | "">(0);
-  const [resStatus, setResStatus] = useState("confirmed");
-  const [resReceiptNo, setResReceiptNo] = useState("");
-  const [resPaymentMethod, setResPaymentMethod] = useState("Nakit");
-  const [resDecisionInfo, setResDecisionInfo] = useState("");
-  const [resNote, setResNote] = useState("");
+  const {
+    targetVenueId,
+    setTargetVenueId,
+    newHallName,
+    setNewHallName,
+    newHallFloor,
+    setNewHallFloor,
+    newHallCapacity,
+    setNewHallCapacity,
+    newHallHourlyPrice,
+    setNewHallHourlyPrice,
+    newHallColor,
+    setNewHallColor,
+    handleCreateHall,
+  } = useHallForm();
 
-  // Default Decision Info initialization
-  useEffect(() => {
-    if (!resDecisionInfo && defaultTariffBasis) {
-      setResDecisionInfo(defaultTariffBasis);
-    }
-  }, [defaultTariffBasis]);
+  const {
+    personnelName,
+    setPersonnelName,
+    personnelTitle,
+    setPersonnelTitle,
+    personnelPhone,
+    setPersonnelPhone,
+    personnelEmail,
+    setPersonnelEmail,
+    personnelNotes,
+    setPersonnelNotes,
+    handleCreatePersonnel,
+    removePersonnel,
+  } = usePersonnelForm();
 
-  // Price Calculation Logic
-  useEffect(() => {
-    if (!resVenueId || !resHallId) return;
-    const venue = store.venues.find((v) => v.id === resVenueId);
-    const hall = venue?.halls.find((h) => h.id === resHallId);
-    if (!hall) return;
-
-    if (pricingMode === "hourly") {
-      const hrs = hoursBetween(resStart, resEnd);
-      setResPrice(hrs * hall.hourlyPrice);
-    } else {
-      if (resPrice === 0 || resPrice === "") {
-        setResPrice(hall.hourlyPrice);
-      }
-    }
-  }, [resVenueId, resHallId, resStart, resEnd, pricingMode]);
-
-  // New Venue Form State
-  const [newVenueName, setNewVenueName] = useState("");
-  const [newVenueDistrict, setNewVenueDistrict] = useState("");
-  const [newVenueAddress, setNewVenueAddress] = useState("");
-  const [newVenueMapUrl, setNewVenueMapUrl] = useState("");
-  const [newVenueCategory, setNewVenueCategory] = useState("Kongre & Balo");
-  const [newVenueManagerName, setNewVenueManagerName] = useState("");
-  const [newVenueManagerTitle, setNewVenueManagerTitle] = useState(
-    "Tesis Sorumlusu",
-  );
-  const [newVenueManagerPhone, setNewVenueManagerPhone] = useState("");
-  const [newVenueColor, setNewVenueColor] = useState("#6366f1");
-
-  // New Hall Form State
-  const [targetVenueId, setTargetVenueId] = useState("");
-  const [newHallName, setNewHallName] = useState("");
-  const [newHallFloor, setNewHallFloor] = useState("1. Kat");
-  const [newHallCapacity, setNewHallCapacity] = useState(250);
-  const [newHallHourlyPrice, setNewHallHourlyPrice] = useState(1500);
-  const [newHallColor, setNewHallColor] = useState("#8b5cf6");
-
-  // Helpers
+  // Helper function for Hall lookups
   const hallById = (id: string) => {
     for (const v of store.venues) {
       const h = v.halls.find((x) => x.id === id);
@@ -549,126 +468,6 @@ export function App(): React.JSX.Element {
     return { totalCount, totalRev, totalPaid, totalHours, remaining };
   }, [store.reservations, cursor]);
 
-  // Customer Suggestions
-  const customerSuggestions = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of store.reservations) {
-      if (r.customer) set.add(r.customer);
-    }
-    return Array.from(set);
-  }, [store.reservations]);
-
-  const phoneSuggestions = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of store.reservations) {
-      if (r.phone) set.add(r.phone);
-    }
-    return Array.from(set);
-  }, [store.reservations]);
-
-  const decisionSuggestions = useMemo(() => {
-    const set = new Set<string>();
-    if (defaultTariffBasis) set.add(defaultTariffBasis);
-    for (const r of store.reservations) {
-      if (r.decisionInfo) set.add(r.decisionInfo);
-    }
-    return Array.from(set);
-  }, [store.reservations, defaultTariffBasis]);
-
-  // Form Handlers
-  const handleCreateReservation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resVenueId || !resHallId || !resCustomer || !resPhone) {
-      toast.error("Lütfen tüm zorunlu alanları doldurun.");
-      return;
-    }
-
-    try {
-      await sqliteStore.addReservation({
-        venueId: resVenueId,
-        hallId: resHallId,
-        eventType: resEventType,
-        customer: resCustomer,
-        phone: resPhone,
-        date: selectedDay,
-        start: resStart,
-        end: resEnd,
-        price: Number(resPrice) || 0,
-        paid: Number(resPaid) || 0,
-        status: resStatus,
-        receiptNo: resReceiptNo.trim() || undefined,
-        paymentMethod: resPaymentMethod || "Nakit",
-        decisionInfo: resDecisionInfo.trim() || undefined,
-        note: resNote.trim() || undefined,
-      });
-
-      setResCustomer("");
-      setResPhone("");
-      setResReceiptNo("");
-      setResNote("");
-      setResModalOpen(false);
-      toast.success(
-        "Etkinlik ve salon tahsis kaydı SQLite veritabanına eklendi!",
-      );
-    } catch (err: any) {
-      toast.error(`Kayıt hatası: ${err.message || err}`);
-    }
-  };
-
-  const handleCreateVenue = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newVenueName || !newVenueDistrict) {
-      toast.error("Lütfen mekan adı ve ilçe bilgisini girin.");
-      return;
-    }
-    try {
-      await sqliteStore.addVenue({
-        name: newVenueName,
-        district: newVenueDistrict,
-        category: newVenueCategory,
-        address: newVenueAddress.trim() || undefined,
-        mapUrl: newVenueMapUrl.trim() || undefined,
-        managerName: newVenueManagerName.trim() || undefined,
-        managerTitle: newVenueManagerTitle.trim() || undefined,
-        managerPhone: newVenueManagerPhone.trim() || undefined,
-        color: newVenueColor,
-      });
-      setNewVenueName("");
-      setNewVenueDistrict("");
-      setNewVenueAddress("");
-      setNewVenueMapUrl("");
-      setNewVenueManagerName("");
-      setNewVenueManagerPhone("");
-      setVenueModalOpen(false);
-      toast.success("Yeni mekan başarıyla tanımlandı!");
-    } catch (err: any) {
-      toast.error(`Mekan oluşturma hatası: ${err.message || err}`);
-    }
-  };
-
-  const handleCreateHall = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetVenueId || !newHallName) {
-      toast.error("Salon adı zorunludur.");
-      return;
-    }
-    try {
-      await sqliteStore.addHall({
-        venueId: targetVenueId,
-        name: newHallName,
-        capacity: Number(newHallCapacity),
-        hourlyPrice: Number(newHallHourlyPrice),
-        floor: newHallFloor,
-        color: newHallColor,
-      });
-      setNewHallName("");
-      setHallModalOpen(false);
-      toast.success("Salon mekana eklendi!");
-    } catch (err: any) {
-      toast.error(`Salon ekleme hatası: ${err.message || err}`);
-    }
-  };
-
   // Delete Action Handlers
   const promptDelete = (
     type: "venue" | "hall" | "reservation",
@@ -701,7 +500,6 @@ export function App(): React.JSX.Element {
     }
   };
 
-  // Status & Details Updates
   const updateReservationStatus = async (
     id: string,
     status: "confirmed" | "option",
@@ -783,7 +581,7 @@ export function App(): React.JSX.Element {
                   variant="outline"
                   className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono"
                 >
-                  v1.0.0-beta.17
+                  v1.0.0-beta.18
                 </Badge>
               </h1>
               <p
@@ -1174,10 +972,7 @@ export function App(): React.JSX.Element {
             )}
 
             {activeSection === "reports" && (
-              <ReportsScreen
-                theme={theme}
-                monthStats={monthStats}
-              />
+              <ReportsScreen theme={theme} monthStats={monthStats} />
             )}
 
             {activeSection === "settings" && (
