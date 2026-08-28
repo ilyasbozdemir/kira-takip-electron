@@ -1,9 +1,23 @@
 import React from "react";
-import { Check, Cloud, Mail, PartyPopper, Plus, Scale, User } from "lucide-react";
+import {
+  Check,
+  Cloud,
+  Mail,
+  PartyPopper,
+  Plus,
+  Scale,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 
 interface SettingsScreenProps {
@@ -72,14 +86,16 @@ export function SettingsScreen({
               theme === "dark" ? "text-slate-100" : "text-slate-900"
             }`}
           >
-            <Mail className="h-5 w-5 text-indigo-500" /> E-posta & SMTP Entegrasyonu
+            <Mail className="h-5 w-5 text-indigo-500" />{" "}
+            E-posta & SMTP Entegrasyonu
           </CardTitle>
           <CardDescription
             className={`text-xs ${
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Müşterilere rezervasyon dökümü ve bildirim e-postası göndermek için SMTP sunucusu.
+            Müşterilere rezervasyon dökümü ve bildirim e-postası göndermek için
+            SMTP sunucusu.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -193,7 +209,8 @@ export function SettingsScreen({
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Veritabanını (.vke) Google Drive hesabınıza otomatik olarak yedekleyin.
+            Veritabanını (.vke) Google Drive hesabınıza otomatik olarak
+            yedekleyin.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -294,7 +311,7 @@ export function SettingsScreen({
             }`}
           >
             <User className="h-5 w-5 text-indigo-500" />{" "}
-            Kurumsal Kimlik & Logo Yönetimi (Base64)
+            Kurumsal Kimlik & Logo Yönetimi
           </CardTitle>
           <CardDescription
             className={`text-xs ${
@@ -331,7 +348,7 @@ export function SettingsScreen({
                 theme === "dark" ? "text-slate-300" : "text-slate-700"
               }`}
             >
-              Kurum Logosu (Base64)
+              Kurum Logosu
             </Label>
             <div className="flex items-center gap-3">
               {draftInstitutionLogo
@@ -394,9 +411,7 @@ export function SettingsScreen({
           {/* Action Buttons: Kaydet & Vazgeç */}
           <div
             className={`flex items-center justify-end gap-2 pt-3 border-t ${
-              theme === "dark"
-                ? "border-slate-800/80"
-                : "border-slate-200"
+              theme === "dark" ? "border-slate-800/80" : "border-slate-200"
             }`}
           >
             <Button
@@ -467,9 +482,7 @@ export function SettingsScreen({
           {/* Action Buttons: Kaydet & Vazgeç */}
           <div
             className={`flex items-center justify-end gap-2 pt-3 border-t ${
-              theme === "dark"
-                ? "border-slate-800/80"
-                : "border-slate-200"
+              theme === "dark" ? "border-slate-800/80" : "border-slate-200"
             }`}
           >
             <Button
