@@ -18,6 +18,8 @@ import {
   getSetting,
   setSetting,
   getAllSettings,
+  updateReservationStatus,
+  updateReservationDetails,
 } from "./database";
 import { workspaceManager } from "./database/workspace";
 
@@ -288,6 +290,16 @@ ipcMain.handle("db:delete-reservation", (_event, id: string) => {
 
 ipcMain.handle("db:update-paid", (_event, { id, paid }) => {
   updatePaid(id, paid);
+  return true;
+});
+
+ipcMain.handle("db:update-reservation-status", (_event, { id, status }: { id: string; status: string }) => {
+  updateReservationStatus(id, status);
+  return true;
+});
+
+ipcMain.handle("db:update-reservation-details", (_event, { id, details }: { id: string; details: any }) => {
+  updateReservationDetails(id, details);
   return true;
 });
 

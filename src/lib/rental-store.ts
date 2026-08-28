@@ -16,6 +16,8 @@ export type Venue = {
   halls: Hall[];
 };
 
+export type ReservationStatus = "option" | "confirmed" | "cancelled";
+
 export type Reservation = {
   id: string;
   venueId: string;
@@ -30,6 +32,9 @@ export type Reservation = {
   paid: number;
   note?: string;
   decisionInfo?: string;
+  status?: ReservationStatus | string;
+  receiptNo?: string;
+  paymentMethod?: string;
 };
 
 export type Store = {

@@ -64,6 +64,7 @@ import {
   Calendar as CalendarIcon,
   CalendarDays,
   Check,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
@@ -138,6 +139,8 @@ export default function App() {
     addReservation,
     removeReservation,
     updatePaid,
+    updateReservationStatus,
+    updateReservationDetails,
   } = useSQLiteStore();
 
   const today = new Date();
@@ -558,6 +561,25 @@ export default function App() {
   const [resPaid, setResPaid] = useState<number | "">(0);
   const [resNote, setResNote] = useState("");
   const [resDecisionInfo, setResDecisionInfo] = useState(defaultTariffBasis);
+  const [resStatus, setResStatus] = useState<string>("confirmed"); // "option" | "confirmed"
+  const [resReceiptNo, setResReceiptNo] = useState("");
+  const [resPaymentMethod, setResPaymentMethod] = useState("Nakit");
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
+
+  // Edit receipt & payment details state for selected reservation panel
+  const [editPaidAmount, setEditPaidAmount] = useState<number | "">("");
+  const [editReceiptNo, setEditReceiptNo] = useState("");
+  const [editPaymentMethod, setEditPaymentMethod] = useState("Nakit");
+  const [editNote, setEditNote] = useState("");
+
+  useEffect(() => {
+    if (selectedReservation) {
+      setEditPaidAmount(selectedReservation.paid);
+      setEditReceiptNo(selectedReservation.receiptNo || "");
+      setEditPaymentMethod(selectedReservation.paymentMethod || "Nakit");
+      setEditNote(selectedReservation.note || "");
+    }
+  }, [selectedReservation]);
 
   // New Venue Form State
   const [newVenueName, setNewVenueName] = useState("");
@@ -704,14 +726,23 @@ export default function App() {
       paid: Number(resPaid) || 0,
       note: resNote,
       decisionInfo: resDecisionInfo,
+      status: resStatus,
+      receiptNo: resReceiptNo,
+      paymentMethod: resPaymentMethod,
     });
 
     if (res.success) {
-      toast.success("Etkinlik rezervasyonu SQLite veritabanına kaydedildi.");
+      toast.success(
+        resStatus === "option"
+          ? "Opsiyonlu (şerhli) etkinlik kaydı oluşturuldu."
+          : "Kesinleşmiş etkinlik kaydı oluşturuldu.",
+      );
       setResModalOpen(false);
       setResCustomer("");
       setResPhone("");
       setResNote("");
+      setResReceiptNo("");
+      setResStatus("confirmed");
     } else {
       toast.error(res.error || "Çakışma Hatası!");
     }
@@ -1821,10 +1852,13 @@ export default function App() {
                                     return (
                                       <div
                                         key={r.id}
-                                        onClick={() => setSelectedDay(r.date)}
+                                        onClick={() => {
+                                          setSelectedDay(r.date);
+                                          setSelectedReservation(r);
+                                        }}
                                         className={`p-3 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${
                                           r.date === selectedDay
-                                            ? "border-indigo-500 bg-indigo-950/20"
+                                            ? "border-indigo-500 bg-indigo-950/20 shadow-xs"
                                             : theme === "dark"
                                             ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
                                             : "bg-slate-50 border-slate-200 hover:bg-slate-100"
@@ -1840,15 +1874,26 @@ export default function App() {
                                             </span>
                                           </div>
                                           <div>
-                                            <p
-                                              className={`text-xs font-bold ${
-                                                theme === "dark"
-                                                  ? "text-slate-100"
-                                                  : "text-slate-900"
-                                              }`}
-                                            >
-                                              {r.customer}
-                                            </p>
+                                            <div className="flex items-center gap-2">
+                                              <p
+                                                className={`text-xs font-bold ${
+                                                  theme === "dark"
+                                                    ? "text-slate-100"
+                                                    : "text-slate-900"
+                                                }`}
+                                              >
+                                                {r.customer}
+                                              </p>
+                                              {r.status === "option" ? (
+                                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 border-amber-500/40 text-amber-500 font-bold">
+                                                  ⚠️ Şerhli
+                                                </Badge>
+                                              ) : (
+                                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 border-emerald-500/40 text-emerald-500 font-semibold">
+                                                  ✅ Kesin
+                                                </Badge>
+                                              )}
+                                            </div>
                                             <p
                                               className={`text-[11px] ${
                                                 theme === "dark"
@@ -1991,23 +2036,35 @@ export default function App() {
                               return (
                                 <div
                                   key={r.id}
-                                  className={`p-4 rounded-xl border space-y-3 ${
+                                  onClick={() => setSelectedReservation(r)}
+                                  className={`p-4 rounded-xl border space-y-3 cursor-pointer transition-all ${
                                     theme === "dark"
-                                      ? "bg-slate-950 border-slate-800"
-                                      : "bg-slate-50 border-slate-200 shadow-2xs"
+                                      ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
+                                      : "bg-slate-50 border-slate-200 hover:bg-slate-100 shadow-2xs"
                                   }`}
                                 >
                                   <div className="flex items-start justify-between">
                                     <div>
-                                      <h4
-                                        className={`text-sm font-bold ${
-                                          theme === "dark"
-                                            ? "text-slate-100"
-                                            : "text-slate-900"
-                                        }`}
-                                      >
-                                        {r.customer}
-                                      </h4>
+                                      <div className="flex items-center gap-2">
+                                        <h4
+                                          className={`text-sm font-bold ${
+                                            theme === "dark"
+                                              ? "text-slate-100"
+                                              : "text-slate-900"
+                                          }`}
+                                        >
+                                          {r.customer}
+                                        </h4>
+                                        {r.status === "option" ? (
+                                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 border-amber-500/40 text-amber-500 font-bold">
+                                            ⚠️ Şerhli (Opsiyon)
+                                          </Badge>
+                                        ) : (
+                                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 border-emerald-500/40 text-emerald-500 font-semibold">
+                                            ✅ Kesin
+                                          </Badge>
+                                        )}
+                                      </div>
                                       <div className="flex items-center gap-2 mt-1">
                                         <Badge
                                           variant="outline"
@@ -2029,12 +2086,14 @@ export default function App() {
                                     <Button
                                       size="icon"
                                       variant="ghost"
-                                      onClick={() =>
+                                      onClick={(e) => {
+                                        e.stopPropagation();
                                         promptDelete(
                                           "reservation",
                                           r.id,
                                           `${r.customer} (${r.date})`,
-                                        )}
+                                        );
+                                      }}
                                       className="h-7 w-7 text-slate-500 hover:text-rose-500"
                                     >
                                       <Trash2 className="h-3.5 w-3.5" />
@@ -3303,25 +3362,113 @@ export default function App() {
                 </div>
               </div>
 
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Alınan Peşinat (TL)
-                </Label>
-                <Input
-                  type="number"
-                  value={resPaid}
-                  onChange={(e) =>
-                    setResPaid(e.target.value ? Number(e.target.value) : "")}
-                  className={`mt-1 text-xs font-bold ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-emerald-400"
-                      : "bg-slate-50 border-slate-300 text-emerald-600"
-                  }`}
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label
+                    className={`text-xs font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Alınan Peşinat (TL)
+                  </Label>
+                  <Input
+                    type="number"
+                    value={resPaid}
+                    onChange={(e) =>
+                      setResPaid(e.target.value ? Number(e.target.value) : "")}
+                    className={`mt-1 text-xs font-bold ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-emerald-400"
+                        : "bg-slate-50 border-slate-300 text-emerald-600"
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <Label
+                    className={`text-xs font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Rezervasyon Statüsü (Şerh)
+                  </Label>
+                  <Select value={resStatus} onValueChange={setResStatus}>
+                    <SelectTrigger
+                      className={`mt-1 text-xs ${
+                        theme === "dark"
+                          ? "bg-slate-950 border-slate-800 text-slate-200"
+                          : "bg-slate-50 border-slate-300 text-slate-900"
+                      }`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className={theme === "dark"
+                        ? "bg-slate-900 border-slate-800 text-slate-200"
+                        : "bg-white border-slate-200 text-slate-900"}
+                    >
+                      <SelectItem value="option">
+                        ⚠️ Opsiyonlu / Şerhli (Ön Kayıt)
+                      </SelectItem>
+                      <SelectItem value="confirmed">
+                        ✅ Kesinleşti (Kesin Kayıt)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label
+                    className={`text-xs font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Ödeme Makbuzu / Dekont No
+                  </Label>
+                  <Input
+                    placeholder="örn: MKB-2026-0042"
+                    value={resReceiptNo}
+                    onChange={(e) => setResReceiptNo(e.target.value)}
+                    className={`mt-1 text-xs ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-100"
+                        : "bg-slate-50 border-slate-300 text-slate-900"
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <Label
+                    className={`text-xs font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Ödeme Yöntemi
+                  </Label>
+                  <Select value={resPaymentMethod} onValueChange={setResPaymentMethod}>
+                    <SelectTrigger
+                      className={`mt-1 text-xs ${
+                        theme === "dark"
+                          ? "bg-slate-950 border-slate-800 text-slate-200"
+                          : "bg-slate-50 border-slate-300 text-slate-900"
+                      }`}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent
+                      className={theme === "dark"
+                        ? "bg-slate-900 border-slate-800 text-slate-200"
+                        : "bg-white border-slate-200 text-slate-900"}
+                    >
+                      <SelectItem value="Nakit">Nakit</SelectItem>
+                      <SelectItem value="Havale/EFT">Havale / EFT</SelectItem>
+                      <SelectItem value="Kredi Kartı">Kredi Kartı</SelectItem>
+                      <SelectItem value="Dekont">Resmi Dekont</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>
@@ -3347,6 +3494,26 @@ export default function App() {
                 <datalist id="decision-suggestions">
                   {decisionSuggestions.map((d) => <option key={d} value={d} />)}
                 </datalist>
+              </div>
+
+              <div>
+                <Label
+                  className={`text-xs font-medium ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
+                  Açıklama / Notlar
+                </Label>
+                <Input
+                  placeholder="Etkinlik detayları veya hatırlatmalar..."
+                  value={resNote}
+                  onChange={(e) => setResNote(e.target.value)}
+                  className={`mt-1 text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100"
+                      : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                />
               </div>
 
               <DialogFooter className="mt-4">
@@ -3671,6 +3838,276 @@ export default function App() {
           defaultTariffBasis={defaultTariffBasis}
           theme={theme}
         />
+
+        {/* 9. Selected Reservation Details Drawer Panel (Sağ Detay Paneli) */}
+        {selectedReservation && (
+          <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <div
+              className={`w-full max-w-lg h-full overflow-y-auto p-6 shadow-2xl flex flex-col justify-between border-l transition-colors ${
+                theme === "dark"
+                  ? "bg-slate-900 border-slate-800 text-slate-100"
+                  : "bg-white border-slate-200 text-slate-900"
+              }`}
+            >
+              <div className="space-y-5">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2.5">
+                    <CalendarDays className="h-5 w-5 text-indigo-500" />
+                    <div>
+                      <h3 className="text-base font-bold">Etkinlik & Tahsis Detayları</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Tarih: <strong className="text-indigo-400">{selectedReservation.date}</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSelectedReservation(null)}
+                    className="h-8 w-8 text-slate-400 hover:text-slate-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Status Alert Banner */}
+                {selectedReservation.status === "option" ? (
+                  <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-300 space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider">⚠️ Opsiyonlu / Şerhli (Ön Kayıt)</h4>
+                        <p className="text-xs mt-1 text-amber-800 dark:text-amber-400 leading-relaxed">
+                          Bu salon kiralamasına <strong>şerh düşülmüştür</strong>. Kesinleşmiş yer ayırtması değildir.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={async () => {
+                        await updateReservationStatus(selectedReservation.id, "confirmed");
+                        setSelectedReservation((prev) => prev ? { ...prev, status: "confirmed" } : null);
+                        toast.success("Etkinlik yer ayırtması kesinleştirildi!");
+                      }}
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-9 shadow-md"
+                    >
+                      <Check className="h-4 w-4 mr-1.5" /> Kesinleştir (Kesin Yer Ayırt)
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 space-y-3">
+                    <div className="flex items-start gap-2.5">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider">✅ Kesinleşmiş Rezervasyon</h4>
+                        <p className="text-xs mt-1 text-emerald-800 dark:text-emerald-400">
+                          Bu etkinlik salon tahsis kaydı kesinleşmiştir.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        await updateReservationStatus(selectedReservation.id, "option");
+                        setSelectedReservation((prev) => prev ? { ...prev, status: "option" } : null);
+                        toast.info("Etkinlik opsiyonlu (şerhli) duruma getirildi.");
+                      }}
+                      className="w-full text-xs h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 font-semibold"
+                    >
+                      ⚠️ Şerh Düş (Opsiyonel Duruma Al)
+                    </Button>
+                  </div>
+                )}
+
+                {/* Customer Details */}
+                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Müşteri & İletişim Bilgileri</h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Müşteri / Kurum:</span>
+                      <span className="font-bold">{selectedReservation.customer}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500">Telefon No:</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-indigo-400">{selectedReservation.phone}</span>
+                        <a
+                          href={`https://wa.me/90${selectedReservation.phone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] bg-emerald-600/20 text-emerald-400 px-2 py-0.5 rounded font-semibold hover:bg-emerald-600/30"
+                        >
+                          WhatsApp
+                        </a>
+                      </div>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Etkinlik Türü:</span>
+                      <span className="font-semibold text-indigo-400">{selectedReservation.eventType}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Venue & Hall Details */}
+                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Tesis & Salon Bilgileri</h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Mekan / Tesis:</span>
+                      <span className="font-bold">{store.venues.find((v) => v.id === selectedReservation.venueId)?.name || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Salon:</span>
+                      <span className="font-bold text-indigo-400">{hallById(selectedReservation.hallId)?.name || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Saat Aralığı:</span>
+                      <span className="font-mono font-bold">{selectedReservation.start} - {selectedReservation.end} ({hoursBetween(selectedReservation.start, selectedReservation.end)} Saat)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial & Receipt Section */}
+                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Finansal Döküm & Ödeme Makbuzu</h4>
+                  
+                  <div className="grid grid-cols-3 gap-2 text-center p-2.5 rounded-lg bg-slate-900/40 border border-slate-800/80">
+                    <div>
+                      <div className="text-[10px] text-slate-400 uppercase">Toplam Ücret</div>
+                      <div className="text-xs font-bold text-slate-200">{money(selectedReservation.price)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-emerald-400 uppercase">Ödenen</div>
+                      <div className="text-xs font-bold text-emerald-400">{money(selectedReservation.paid)}</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-rose-400 uppercase">Kalan Bakiye</div>
+                      <div className="text-xs font-bold text-rose-400">
+                        {money(selectedReservation.price - selectedReservation.paid)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Receipt & Payment Method Form Fields */}
+                  <div className="space-y-2.5 pt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-[11px] text-slate-400">Makbuz / Dekont No</Label>
+                        <Input
+                          value={editReceiptNo}
+                          placeholder="MKB-2026-0000"
+                          onChange={(e) => setEditReceiptNo(e.target.value)}
+                          className={`text-xs h-8 ${theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-300 text-slate-900"}`}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-[11px] text-slate-400">Ödeme Yöntemi</Label>
+                        <Select value={editPaymentMethod} onValueChange={setEditPaymentMethod}>
+                          <SelectTrigger className={`text-xs h-8 ${theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-300 text-slate-900"}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className={theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-900"}>
+                            <SelectItem value="Nakit">Nakit</SelectItem>
+                            <SelectItem value="Havale/EFT">Havale / EFT</SelectItem>
+                            <SelectItem value="Kredi Kartı">Kredi Kartı</SelectItem>
+                            <SelectItem value="Dekont">Resmi Dekont</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-[11px] text-slate-400">Tahsil Edilen Peşinat (TL)</Label>
+                      <Input
+                        type="number"
+                        value={editPaidAmount}
+                        onChange={(e) => setEditPaidAmount(e.target.value ? Number(e.target.value) : "")}
+                        className={`text-xs h-8 font-bold text-emerald-400 ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"}`}
+                      />
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        await updateReservationDetails(selectedReservation.id, {
+                          receiptNo: editReceiptNo,
+                          paymentMethod: editPaymentMethod,
+                          paid: Number(editPaidAmount) || 0,
+                        });
+                        setSelectedReservation((prev) => prev ? { ...prev, receiptNo: editReceiptNo, paymentMethod: editPaymentMethod, paid: Number(editPaidAmount) || 0 } : null);
+                        toast.success("Makbuz ve ödeme bilgileri güncellendi!");
+                      }}
+                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs h-8 shadow-xs"
+                    >
+                      <Check className="h-3.5 w-3.5 mr-1" /> Ödeme & Makbuz Bilgilerini Güncelle
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Decision Info & Note */}
+                <div className={`p-4 rounded-xl border space-y-2 text-xs ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                  <div>
+                    <span className="text-slate-500 font-semibold block">Encümen / Meclis Kararı Dayanağı:</span>
+                    <span className="text-slate-300 italic">{selectedReservation.decisionInfo || "Girilmedi"}</span>
+                  </div>
+                  {selectedReservation.note && (
+                    <div className="pt-2 border-t border-slate-800">
+                      <span className="text-slate-500 font-semibold block">Özel Notlar:</span>
+                      <p className="text-slate-300 leading-relaxed">{selectedReservation.note}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Footer */}
+              <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-2 mt-4">
+                <div className="grid grid-cols-3 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedPrintReservation(selectedReservation);
+                      setPrintModalOpen(true);
+                    }}
+                    className={`text-xs h-8 font-semibold ${theme === "dark" ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-slate-300 text-slate-800"}`}
+                  >
+                    <Printer className="h-3.5 w-3.5 mr-1" /> Evrak Yazdır
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopySMS(selectedReservation)}
+                    className={`text-xs h-8 font-semibold ${theme === "dark" ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-slate-300 text-slate-800"}`}
+                  >
+                    <MessageSquare className="h-3.5 w-3.5 mr-1" /> SMS / WhatsApp
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickMail(selectedReservation)}
+                    className={`text-xs h-8 font-semibold ${theme === "dark" ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-slate-300 text-slate-800"}`}
+                  >
+                    <Mail className="h-3.5 w-3.5 mr-1" /> E-posta
+                  </Button>
+                </div>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    const id = selectedReservation.id;
+                    const name = selectedReservation.customer;
+                    setSelectedReservation(null);
+                    promptDelete("reservation", id, name);
+                  }}
+                  className="w-full text-xs h-8 font-semibold"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Bu Etkinlik Kaydını Sil
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -21,6 +21,8 @@ export type Venue = {
   halls: Hall[];
 };
 
+export type ReservationStatus = "option" | "confirmed" | "cancelled";
+
 export type Reservation = {
   id: string;
   venueId: string;
@@ -35,6 +37,9 @@ export type Reservation = {
   paid: number;
   note?: string;
   decisionInfo?: string; // Encümen / Meclis Kararı / Resmi Tarife Dayanağı
+  status?: ReservationStatus | string;
+  receiptNo?: string;
+  paymentMethod?: string;
 };
 
 export type StoreData = {
@@ -159,6 +164,21 @@ function runMigrations(database: Database.Database) {
         } catch {}
       },
     },
+    {
+      version: 4,
+      name: "004_status_receipt_columns",
+      up: (d: Database.Database) => {
+        try {
+          d.exec("ALTER TABLE DATA_Rezervasyon ADD COLUMN status TEXT DEFAULT 'confirmed'");
+        } catch {}
+        try {
+          d.exec("ALTER TABLE DATA_Rezervasyon ADD COLUMN receiptNo TEXT DEFAULT ''");
+        } catch {}
+        try {
+          d.exec("ALTER TABLE DATA_Rezervasyon ADD COLUMN paymentMethod TEXT DEFAULT 'Nakit'");
+        } catch {}
+      },
+    },
   ];
 
   for (const m of migrations) {
@@ -222,6 +242,9 @@ export function getStoreData(): StoreData {
     paid: r.paid,
     note: r.note || "",
     decisionInfo: r.decision_info || r.decisionInfo || "",
+    status: r.status || "confirmed",
+    receiptNo: r.receipt_no || r.receiptNo || "",
+    paymentMethod: r.payment_method || r.paymentMethod || "Nakit",
   }));
 
   return { venues, reservations };
@@ -288,12 +311,17 @@ export function deleteHall(venueId: string, hallId: string): { success: boolean;
 }
 
 function toMin(t: string) {
+  if (t === "24:00") return 24 * 60;
   const [h, m] = t.split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
 }
 
 function overlaps(aS: string, aE: string, bS: string, bE: string) {
-  return toMin(aS) < toMin(bE) && toMin(bS) < toMin(aE);
+  let aEnd = toMin(aE);
+  if (aEnd === 0 && toMin(aS) > 0) aEnd = 24 * 60;
+  let bEnd = toMin(bE);
+  if (bEnd === 0 && toMin(bS) > 0) bEnd = 24 * 60;
+  return toMin(aS) < bEnd && toMin(bS) < aEnd;
 }
 
 export function addReservation(res: {
@@ -309,6 +337,9 @@ export function addReservation(res: {
   paid: number;
   note?: string;
   decisionInfo?: string;
+  status?: string;
+  receiptNo?: string;
+  paymentMethod?: string;
 }): { success: boolean; id?: string; error?: string } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
 
@@ -322,7 +353,7 @@ export function addReservation(res: {
 
   const newId = uid();
   db!.prepare(
-    "INSERT INTO reservations (id, venue_id, hall_id, date, start_time, end_time, customer, phone, event_type, price, paid, note, decision_info) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO reservations (id, venue_id, hall_id, date, start_time, end_time, customer, phone, event_type, price, paid, note, decision_info, status, receipt_no, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     newId,
     res.venueId,
@@ -336,11 +367,40 @@ export function addReservation(res: {
     res.price,
     res.paid || 0,
     res.note || "",
-    res.decisionInfo || ""
+    res.decisionInfo || "",
+    res.status || "confirmed",
+    res.receiptNo || "",
+    res.paymentMethod || "Nakit"
   );
   saveWorkspaceIfActive();
 
   return { success: true, id: newId };
+}
+
+export function updateReservationStatus(id: string, status: string): void {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare("UPDATE DATA_Rezervasyon SET status = ? WHERE id = ?").run(status, id);
+  saveWorkspaceIfActive();
+}
+
+export function updateReservationDetails(id: string, details: { receiptNo?: string; paymentMethod?: string; paid?: number; status?: string; note?: string }): void {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (details.receiptNo !== undefined) {
+    db!.prepare("UPDATE DATA_Rezervasyon SET receiptNo = ? WHERE id = ?").run(details.receiptNo, id);
+  }
+  if (details.paymentMethod !== undefined) {
+    db!.prepare("UPDATE DATA_Rezervasyon SET paymentMethod = ? WHERE id = ?").run(details.paymentMethod, id);
+  }
+  if (details.paid !== undefined) {
+    db!.prepare("UPDATE DATA_Rezervasyon SET paid = ? WHERE id = ?").run(details.paid, id);
+  }
+  if (details.status !== undefined) {
+    db!.prepare("UPDATE DATA_Rezervasyon SET status = ? WHERE id = ?").run(details.status, id);
+  }
+  if (details.note !== undefined) {
+    db!.prepare("UPDATE DATA_Rezervasyon SET note = ? WHERE id = ?").run(details.note, id);
+  }
+  saveWorkspaceIfActive();
 }
 
 export function deleteReservation(id: string): { success: boolean } {

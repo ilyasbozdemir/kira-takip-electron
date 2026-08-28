@@ -52,7 +52,10 @@ export const DATA_RezervasyonSchema: TableSchema = defineTable({
     { name: 'price', type: 'REAL', defaultValue: '0' },
     { name: 'paid', type: 'REAL', defaultValue: '0' },
     { name: 'note', type: 'TEXT' },
-    { name: 'decisionInfo', type: 'TEXT', defaultValue: "''" }
+    { name: 'decisionInfo', type: 'TEXT', defaultValue: "''" },
+    { name: 'status', type: 'TEXT', defaultValue: "'confirmed'" },
+    { name: 'receiptNo', type: 'TEXT', defaultValue: "''" },
+    { name: 'paymentMethod', type: 'TEXT', defaultValue: "'Nakit'" }
   ],
   indexes: [
     { columns: ['hallId', 'date'] },
@@ -157,7 +160,7 @@ export function initializeDatabase(db: Database.Database): void {
       SELECT id, venueId AS venue_id, name, floor, capacity, hourlyPrice AS hourly_price FROM TANIM_Salon WHERE isDeleted = 0;
 
       CREATE VIEW IF NOT EXISTS reservations AS 
-      SELECT id, venueId AS venue_id, hallId AS hall_id, date, startTime AS start_time, endTime AS end_time, customer, phone, eventType AS event_type, price, paid, note, decisionInfo AS decision_info FROM DATA_Rezervasyon WHERE isDeleted = 0;
+      SELECT id, venueId AS venue_id, hallId AS hall_id, date, startTime AS start_time, endTime AS end_time, customer, phone, eventType AS event_type, price, paid, note, decisionInfo AS decision_info, status, receiptNo AS receipt_no, paymentMethod AS payment_method FROM DATA_Rezervasyon WHERE isDeleted = 0;
 
       CREATE VIEW IF NOT EXISTS settings AS 
       SELECT key, value FROM TANIM_Ayar;
@@ -179,8 +182,8 @@ export function initializeDatabase(db: Database.Database): void {
       END;
 
       CREATE TRIGGER IF NOT EXISTS trg_insert_reservations INSTEAD OF INSERT ON reservations BEGIN
-        INSERT INTO DATA_Rezervasyon (id, venueId, hallId, date, startTime, endTime, customer, phone, eventType, price, paid, note, decisionInfo) 
-        VALUES (NEW.id, NEW.venue_id, NEW.hall_id, NEW.date, NEW.start_time, NEW.end_time, NEW.customer, NEW.phone, COALESCE(NEW.event_type, 'Genel Etkinlik'), COALESCE(NEW.price, 0), COALESCE(NEW.paid, 0), NEW.note, NEW.decisionInfo);
+        INSERT INTO DATA_Rezervasyon (id, venueId, hallId, date, startTime, endTime, customer, phone, eventType, price, paid, note, decisionInfo, status, receiptNo, paymentMethod) 
+        VALUES (NEW.id, NEW.venue_id, NEW.hall_id, NEW.date, NEW.start_time, NEW.end_time, NEW.customer, NEW.phone, COALESCE(NEW.event_type, 'Genel Etkinlik'), COALESCE(NEW.price, 0), COALESCE(NEW.paid, 0), NEW.note, NEW.decisionInfo, COALESCE(NEW.status, 'confirmed'), COALESCE(NEW.receipt_no, ''), COALESCE(NEW.payment_method, 'Nakit'));
       END;
 
       CREATE TRIGGER IF NOT EXISTS trg_delete_reservations INSTEAD OF DELETE ON reservations BEGIN
@@ -188,7 +191,12 @@ export function initializeDatabase(db: Database.Database): void {
       END;
 
       CREATE TRIGGER IF NOT EXISTS trg_update_reservations INSTEAD OF UPDATE ON reservations BEGIN
-        UPDATE DATA_Rezervasyon SET paid = NEW.paid WHERE id = NEW.id;
+        UPDATE DATA_Rezervasyon SET 
+          paid = NEW.paid,
+          status = COALESCE(NEW.status, DATA_Rezervasyon.status),
+          receiptNo = COALESCE(NEW.receipt_no, DATA_Rezervasyon.receiptNo),
+          paymentMethod = COALESCE(NEW.payment_method, DATA_Rezervasyon.paymentMethod)
+        WHERE id = NEW.id;
       END;
     `)
 

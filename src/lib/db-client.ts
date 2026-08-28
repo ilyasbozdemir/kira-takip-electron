@@ -130,6 +130,9 @@ export function useSQLiteStore() {
       paid: number;
       note?: string;
       decisionInfo?: string;
+      status?: string;
+      receiptNo?: string;
+      paymentMethod?: string;
     }): Promise<{ success: boolean; error?: string }> => {
       if (window.electronAPI?.db?.addReservation) {
         const result = await window.electronAPI.db.addReservation(res);
@@ -175,6 +178,30 @@ export function useSQLiteStore() {
     [fetchStore]
   );
 
+  const updateReservationStatus = useCallback(
+    async (id: string, status: string) => {
+      if (window.electronAPI?.db?.updateReservationStatus) {
+        await window.electronAPI.db.updateReservationStatus(id, status);
+        await fetchStore();
+      } else {
+        setStore((s) => ({ ...s, reservations: s.reservations.map((r) => (r.id === id ? { ...r, status } : r)) }));
+      }
+    },
+    [fetchStore]
+  );
+
+  const updateReservationDetails = useCallback(
+    async (id: string, details: { receiptNo?: string; paymentMethod?: string; paid?: number; status?: string; note?: string }) => {
+      if (window.electronAPI?.db?.updateReservationDetails) {
+        await window.electronAPI.db.updateReservationDetails(id, details);
+        await fetchStore();
+      } else {
+        setStore((s) => ({ ...s, reservations: s.reservations.map((r) => (r.id === id ? { ...r, ...details } : r)) }));
+      }
+    },
+    [fetchStore]
+  );
+
   return {
     store,
     ready,
@@ -187,5 +214,7 @@ export function useSQLiteStore() {
     addReservation,
     removeReservation,
     updatePaid,
+    updateReservationStatus,
+    updateReservationDetails,
   };
 }
