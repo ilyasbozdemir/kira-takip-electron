@@ -5,6 +5,10 @@ export function useSettingsStore() {
     return localStorage.getItem("institution_name") || "BELEDİYE & KURUMSAL BAŞKANLIK";
   });
 
+  const [institutionSubHeader, setInstitutionSubHeaderState] = useState<string>(() => {
+    return localStorage.getItem("institution_subheader") || "Kültür ve Sosyal İşler Dairesi / Tesis İşletme Müdürlüğü";
+  });
+
   const [institutionLogo, setInstitutionLogoState] = useState<string>(() => {
     return localStorage.getItem("institution_logo") || "";
   });
@@ -25,6 +29,10 @@ export function useSettingsStore() {
           if (settings.institution_name) {
             setInstitutionNameState(settings.institution_name);
             localStorage.setItem("institution_name", settings.institution_name);
+          }
+          if (settings.institution_subheader) {
+            setInstitutionSubHeaderState(settings.institution_subheader);
+            localStorage.setItem("institution_subheader", settings.institution_subheader);
           }
           if (settings.institution_logo) {
             setInstitutionLogoState(settings.institution_logo);
@@ -66,6 +74,18 @@ export function useSettingsStore() {
     }
   };
 
+  const setInstitutionSubHeader = async (subHeader: string) => {
+    setInstitutionSubHeaderState(subHeader);
+    localStorage.setItem("institution_subheader", subHeader);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("institution_subheader", subHeader);
+      }
+    } catch (err) {
+      console.error("Failed to save institution_subheader to SQLite:", err);
+    }
+  };
+
   const setInstitutionLogo = async (logo: string) => {
     setInstitutionLogoState(logo);
     localStorage.setItem("institution_logo", logo);
@@ -92,9 +112,11 @@ export function useSettingsStore() {
 
   return {
     institutionName,
+    institutionSubHeader,
     institutionLogo,
     defaultTariffBasis,
     setInstitutionName,
+    setInstitutionSubHeader,
     setInstitutionLogo,
     setDefaultTariffBasis,
     reloadSettings: loadDbSettings,

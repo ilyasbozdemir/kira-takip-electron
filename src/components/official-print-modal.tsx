@@ -17,6 +17,7 @@ interface OfficialPrintModalProps {
   venue?: Venue;
   hall?: Hall;
   institutionName: string;
+  institutionSubHeader?: string;
   institutionLogo: string;
   defaultTariffBasis: string;
   theme: "dark" | "light";
@@ -29,6 +30,7 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
   venue,
   hall,
   institutionName,
+  institutionSubHeader = "TESİS & SALON İŞLETME BİRİMİ",
   institutionLogo,
   defaultTariffBasis,
   theme,
@@ -118,8 +120,8 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
                 <h1 className="text-sm font-extrabold uppercase tracking-wide text-slate-900">
                   {institutionName || "T.C. KURUM / MÜDÜRLÜK YÖNETİMİ"}
                 </h1>
-                <p className="text-[11px] font-semibold text-slate-600 mt-0.5">
-                  MEKAN & SALON TAHSİS MÜDÜRLÜĞÜ (MEKANPRO)
+                <p className="text-[11px] font-semibold text-slate-600 mt-0.5 uppercase">
+                  {institutionSubHeader}
                 </p>
                 <p className="text-[10px] text-slate-500 font-mono mt-0.5">
                   Resmi Evrak Kayıt No:{" "}
@@ -163,133 +165,120 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
                     İletişim Telefonu
                   </th>
-                  <td className="p-2.5 font-mono font-semibold text-slate-900">
+                  <td className="p-2.5 font-mono text-slate-900 font-semibold">
                     {reservation.phone}
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Tahsis Edilen Mekan
+                    Tahsis Edilen Mekan / Tesis
                   </th>
-                  <td className="p-2.5 font-semibold text-indigo-900">
-                    {venue?.name || "Bilinmiyor"}
+                  <td className="p-2.5 font-semibold text-slate-900">
+                    {venue?.name || "Belirtilmedi"} ({venue?.district || "-"})
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200">
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Tahsis Edilen Salon / Kat
+                    Tahsis Edilen Salon
                   </th>
-                  <td className="p-2.5 font-semibold text-indigo-900">
-                    {hall?.name || "Bilinmiyor"} ({hall?.floor || "Zemin Kat"})
+                  <td className="p-2.5 font-semibold text-slate-900">
+                    {hall?.name || "Belirtilmedi"}{" "}
+                    {hall?.capacity ? `(${hall.capacity} Kişilik)` : ""}
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Etkinlik Kategori & Türü
+                    Etkinlik Türü
                   </th>
-                  <td className="p-2.5 font-bold text-rose-700">
-                    {reservation.eventType || "Genel Etkinlik"}
+                  <td className="p-2.5 font-semibold text-slate-900">
+                    {reservation.eventType || "Genel Kiralama"}
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200">
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Tahsis Tarihi & Saat Aralığı
+                    Tahsis Tarihi ve Saat Dilimi
                   </th>
-                  <td className="p-2.5 font-mono font-bold text-slate-900">
-                    🗓️ {reservation.date} | ⏰ {reservation.start} -{" "}
-                    {reservation.end}
+                  <td className="p-2.5 font-mono font-bold text-indigo-950">
+                    📅 {reservation.date} | ⏰ {reservation.start} - {reservation.end}
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Toplam Resmi Tarife Ücreti
+                    Makbuz / İntizam No
                   </th>
-                  <td className="p-2.5 font-mono font-bold text-slate-900">
-                    {money(reservation.price)}
+                  <td className="p-2.5 font-mono font-semibold text-slate-800">
+                    {reservation.receiptNo || "Belirtilmedi"}
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200">
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Tahsil Edilen (Ödenen) Tutar
+                    Ödeme Yöntemi
                   </th>
-                  <td className="p-2.5 font-mono font-bold text-emerald-700">
-                    {money(reservation.paid)}
+                  <td className="p-2.5 font-semibold text-slate-800">
+                    {reservation.paymentMethod || "Nakit Tahsilat"}
                   </td>
                 </tr>
-                <tr className="border-b border-slate-200 bg-slate-50">
+                <tr>
                   <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                    Kalan Ödenecek Bakiye
+                    Tahsis Notları
                   </th>
-                  <td className="p-2.5 font-mono font-bold text-amber-700">
-                    {remaining > 0
-                      ? money(remaining)
-                      : "Borç Bulunmamaktadır (Tamamı Ödendi)"}
+                  <td className="p-2.5 text-slate-700">
+                    {reservation.note || "Ek not bulunmamaktadır."}
                   </td>
                 </tr>
-                {reservation.note && (
-                  <tr>
-                    <th className="p-2.5 font-bold text-slate-700 border-r border-slate-200">
-                      Özel Notlar & Açıklama
-                    </th>
-                    <td className="p-2.5 text-slate-700 italic">
-                      {reservation.note}
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
 
-          {/* Legal Notice */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[10px] text-slate-600 leading-relaxed">
-            <p className="font-bold text-slate-800 mb-1">
-              📌 Tahsis Şartları ve Yasal Bilgilendirme:
-            </p>
-            1. İşbu tahsis belgesi ilgili kurum encümen/meclis kararı
-            dayanağında belirtilen kurallar çerçevesinde tanzim
-            edilmiştir.<br />
-            2. Tahsis edilen süre haricinde mekanda izinsiz kullanım yapılamaz.
-            Belirtilen saat aralığına riayet edilmesi zorunludur.<br />
-            3. Teslim alan ilgili kişi, tahsis süresince demirbaşların
-            muhafazasından ve mevzuata uygun hareket etmekten sorumludur.
+          {/* Financial Breakdown Box */}
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-300 grid grid-cols-3 gap-4 text-center">
+            <div>
+              <p className="text-[10px] font-bold uppercase text-slate-500">
+                Toplam Tarife Ücreti
+              </p>
+              <p className="text-sm font-extrabold text-slate-900 mt-1">
+                {money(reservation.price)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-slate-500">
+                Tahsil Edilen Peşinat
+              </p>
+              <p className="text-sm font-extrabold text-emerald-700 mt-1">
+                {money(reservation.paid)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-slate-500">
+                Kalan Tahsil Edilecek
+              </p>
+              <p
+                className={`text-sm font-extrabold mt-1 ${
+                  remaining > 0 ? "text-rose-600" : "text-slate-700"
+                }`}
+              >
+                {money(remaining)}
+              </p>
+            </div>
           </div>
 
-          {/* Signature Box */}
-          <div className="pt-6 grid grid-cols-2 gap-8 text-center text-xs">
-            <div className="space-y-12">
-              <p className="font-bold text-slate-800 border-b border-slate-300 pb-1">
-                TESLİM EDEN (YETKİLİ İMZA / MÜHÜR)
+          {/* Signatures Footer */}
+          <div className="pt-8 grid grid-cols-2 gap-8 text-center text-[11px]">
+            <div>
+              <p className="font-bold text-slate-800">TAHSİS EDEN KURUM / YETKİLİ</p>
+              <p className="text-slate-500 text-[10px] mt-0.5">
+                Imza / Mühür
               </p>
-              <div className="text-[10px] text-slate-500 italic">
-                İmza & Kaşe
-              </div>
+              <div className="h-16 mt-2 border-b border-dashed border-slate-400" />
             </div>
-            <div className="space-y-12">
-              <p className="font-bold text-slate-800 border-b border-slate-300 pb-1">
-                TESLİM ALAN (İLGİLİ KİŞİ İMZA)
-              </p>
-              <div className="text-[10px] text-slate-500 italic">
+            <div>
+              <p className="font-bold text-slate-800">KİRALAYAN / İLGİLİ KİŞİ</p>
+              <p className="text-slate-500 text-[10px] mt-0.5">
                 {reservation.customer}
-              </div>
+              </p>
+              <div className="h-16 mt-2 border-b border-dashed border-slate-400" />
             </div>
           </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/40 print:hidden">
-          <Button
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            className="text-xs h-8"
-          >
-            Kapat
-          </Button>
-          <Button
-            onClick={handlePrint}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs flex items-center gap-1.5"
-          >
-            <Printer className="h-3.5 w-3.5" /> Belgeyi Yazdır / PDF Al
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

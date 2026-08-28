@@ -132,6 +132,7 @@ interface AppModalsProps {
   selectedPrintReservation: Reservation | null;
   setSelectedPrintReservation: (r: Reservation | null) => void;
   institutionName: string;
+  institutionSubHeader?: string;
   institutionLogo: string;
   defaultTariffBasis: string;
   hallById: (id: string) => any;
@@ -266,6 +267,7 @@ export function AppModals({
   selectedPrintReservation,
   setSelectedPrintReservation,
   institutionName,
+  institutionSubHeader,
   institutionLogo,
   defaultTariffBasis,
   hallById,
@@ -432,6 +434,7 @@ export function AppModals({
         )}
         hall={hallById(selectedPrintReservation?.hallId || "")}
         institutionName={institutionName}
+        institutionSubHeader={institutionSubHeader}
         institutionLogo={institutionLogo}
         defaultTariffBasis={defaultTariffBasis}
         theme={theme}

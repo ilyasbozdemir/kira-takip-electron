@@ -38,6 +38,8 @@ interface SettingsScreenProps {
   setGdriveFolderId: (v: string) => void;
   draftInstitutionName: string;
   setDraftInstitutionName: (v: string) => void;
+  draftInstitutionSubHeader: string;
+  setDraftInstitutionSubHeader: (v: string) => void;
   draftInstitutionLogo: string;
   handleDraftLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleRemoveDraftLogo: () => void;
@@ -65,6 +67,8 @@ export function SettingsScreen({
   setGdriveFolderId,
   draftInstitutionName,
   setDraftInstitutionName,
+  draftInstitutionSubHeader,
+  setDraftInstitutionSubHeader,
   draftInstitutionLogo,
   handleDraftLogoUpload,
   handleRemoveDraftLogo,
@@ -140,20 +144,37 @@ export function SettingsScreen({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div>
-                <Label className={`text-xs font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
-                  Kurum / İşletme Resmi Adı
-                </Label>
-                <Input
-                  placeholder="örn: Ankara İl Milli Eğitim Müdürlüğü veya T.C. BELEDİYE BAŞKANLIĞI"
-                  value={draftInstitutionName}
-                  onChange={(e) => setDraftInstitutionName(e.target.value)}
-                  className={`text-xs mt-1.5 ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                  }`}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className={`text-xs font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                    Kurum / İşletme Resmi Adı
+                  </Label>
+                  <Input
+                    placeholder="örn: T.C. BELEDİYE BAŞKANLIĞI veya ÖZEL TESİS YÖNETİMİ"
+                    value={draftInstitutionName}
+                    onChange={(e) => setDraftInstitutionName(e.target.value)}
+                    className={`text-xs mt-1.5 ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                    }`}
+                  />
+                </div>
+                <div>
+                  <Label className={`text-xs font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                    Resmi Alt Antet / Müdürlük / Birim Adı
+                  </Label>
+                  <Input
+                    placeholder="örn: Kültür ve Sosyal İşler Dairesi / Tesis İşletme Müdürlüğü"
+                    value={draftInstitutionSubHeader}
+                    onChange={(e) => setDraftInstitutionSubHeader(e.target.value)}
+                    className={`text-xs mt-1.5 ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                    }`}
+                  />
+                </div>
               </div>
 
               <div>

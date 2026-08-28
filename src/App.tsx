@@ -55,9 +55,11 @@ export function App(): React.JSX.Element {
   // Store & Settings Hooks
   const {
     institutionName,
+    institutionSubHeader,
     institutionLogo,
     defaultTariffBasis,
     setInstitutionName,
+    setInstitutionSubHeader,
     setInstitutionLogo,
     setDefaultTariffBasis,
   } = useSettingsStore();
@@ -184,13 +186,15 @@ export function App(): React.JSX.Element {
   const [gdriveToken, setGdriveToken] = useState(() => localStorage.getItem("gdrive_token") || "");
   const [gdriveFolderId, setGdriveFolderId] = useState(() => localStorage.getItem("gdrive_folder_id") || "");
   const [draftInstitutionName, setDraftInstitutionName] = useState(institutionName);
+  const [draftInstitutionSubHeader, setDraftInstitutionSubHeader] = useState(institutionSubHeader);
   const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(institutionLogo);
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   useEffect(() => {
     setDraftInstitutionName(institutionName);
+    setDraftInstitutionSubHeader(institutionSubHeader);
     setDraftInstitutionLogo(institutionLogo);
-  }, [institutionName, institutionLogo]);
+  }, [institutionName, institutionSubHeader, institutionLogo]);
 
   useEffect(() => {
     setDraftTariffBasis(defaultTariffBasis);
@@ -198,12 +202,14 @@ export function App(): React.JSX.Element {
 
   const handleSaveInstitutionSettings = () => {
     setInstitutionName(draftInstitutionName);
+    setInstitutionSubHeader(draftInstitutionSubHeader);
     setInstitutionLogo(draftInstitutionLogo);
-    toast.success("Kurumsal kimlik ve logo başarıyla kaydedildi.");
+    toast.success("Kurumsal kimlik, alt antet ve logo başarıyla kaydedildi.");
   };
 
   const handleCancelInstitutionSettings = () => {
     setDraftInstitutionName(institutionName);
+    setDraftInstitutionSubHeader(institutionSubHeader);
     setDraftInstitutionLogo(institutionLogo);
     toast.info("Değişiklikler iptal edildi.");
   };
@@ -635,6 +641,8 @@ export function App(): React.JSX.Element {
                 setGdriveFolderId={setGdriveFolderId}
                 draftInstitutionName={draftInstitutionName}
                 setDraftInstitutionName={setDraftInstitutionName}
+                draftInstitutionSubHeader={draftInstitutionSubHeader}
+                setDraftInstitutionSubHeader={setDraftInstitutionSubHeader}
                 draftInstitutionLogo={draftInstitutionLogo}
                 handleDraftLogoUpload={handleDraftLogoUpload}
                 handleRemoveDraftLogo={handleRemoveDraftLogo}
@@ -759,6 +767,7 @@ export function App(): React.JSX.Element {
         selectedPrintReservation={selectedPrintReservation}
         setSelectedPrintReservation={setSelectedPrintReservation}
         institutionName={institutionName}
+        institutionSubHeader={institutionSubHeader}
         institutionLogo={institutionLogo}
         defaultTariffBasis={defaultTariffBasis}
         hallById={hallById}
