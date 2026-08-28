@@ -91,6 +91,7 @@ import {
   Phone,
   Plus,
   Printer,
+  QrCode,
   Scale,
   Search,
   Settings,
@@ -109,6 +110,7 @@ type NavSection =
   | "venues"
   | "events"
   | "reports"
+  | "personnel"
   | "settings";
 
 type HallInfo = Hall & {
@@ -1194,6 +1196,11 @@ export default function App() {
                   id: "events",
                   label: `Etkinlik Listesi (${store.reservations.length})`,
                   icon: Layers,
+                },
+                {
+                  id: "personnel",
+                  label: `Personel Kadrosu (${store.personnel?.length || 0})`,
+                  icon: Users,
                 },
                 { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
                 { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
@@ -2838,6 +2845,193 @@ export default function App() {
               )}
 
               {/* ==================================================================== */}
+              {/* 5.5. PERSONNEL SECTION                                               */}
+              {/* ==================================================================== */}
+              {activeSection === "personnel" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3
+                        className={`text-lg font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
+                        👥 Personel Kadrosu & Tesis Sorumluları
+                      </h3>
+                      <p
+                        className={`text-xs ${
+                          theme === "dark" ? "text-slate-400" : "text-slate-600"
+                        }`}
+                      >
+                        Kurum personel kadrosu, tesis amirleri, görevliler ve yetkili iletişim bilgileri.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setPersonnelModalOpen(true)}
+                      className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold"
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" /> Yeni Personel Ekle
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Add Personnel Form Card */}
+                    <Card className={theme === "dark" ? "md:col-span-1 bg-slate-900/80 border-slate-800" : "md:col-span-1 bg-white border-slate-200 shadow-sm"}>
+                      <CardHeader className="pb-3 border-b border-slate-800/40">
+                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                          <Users className="h-4 w-4 text-sky-400" /> Hızlı Personel Kaydı
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-4">
+                        <form onSubmit={handleCreatePersonnel} className="space-y-3">
+                          <div>
+                            <Label className="text-xs">Ad Soyad *</Label>
+                            <Input
+                              required
+                              placeholder="örn: Mehmet Akif Yılmaz"
+                              value={personnelName}
+                              onChange={(e) => setPersonnelName(e.target.value)}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Görevi / Unvanı</Label>
+                            <Input
+                              placeholder="örn: Tesis Sorumlusu / Zabıta Amiri"
+                              value={personnelTitle}
+                              onChange={(e) => setPersonnelTitle(e.target.value)}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">İletişim Telefonu</Label>
+                            <Input
+                              placeholder="0532 000 00 00"
+                              value={personnelPhone}
+                              onChange={(e) => setPersonnelPhone(e.target.value)}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">E-posta Adresi</Label>
+                            <Input
+                              type="email"
+                              placeholder="mehmet@kurum.bel.tr"
+                              value={personnelEmail}
+                              onChange={(e) => setPersonnelEmail(e.target.value)}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Özel Notlar</Label>
+                            <Input
+                              placeholder="örn: Gece vardiya amiri"
+                              value={personnelNotes}
+                              onChange={(e) => setPersonnelNotes(e.target.value)}
+                              className="mt-1 text-xs"
+                            />
+                          </div>
+                          <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold mt-2">
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Kadroya Ekle
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+
+                    {/* Personnel Cards List */}
+                    <div className="md:col-span-2 space-y-4">
+                      {(!store.personnel || store.personnel.length === 0) ? (
+                        <Card className={`p-8 text-center ${
+                          theme === "dark" ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200"
+                        }`}>
+                          <Users className="h-10 w-10 text-slate-500 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm font-semibold text-slate-300">Henüz personel tanımlanmadı.</p>
+                          <p className="text-xs text-slate-500 mt-1">Sol taraftaki formdan kurum personel kadrosunu ekleyebilirsiniz.</p>
+                        </Card>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {store.personnel.map((p) => {
+                            const boundVenues = store.venues.filter((v) => v.managerName === p.name || v.managerPhone === p.phone);
+                            return (
+                              <Card key={p.id} className={`p-4 space-y-3 relative ${
+                                theme === "dark" ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"
+                              }`}>
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <h4 className={`text-sm font-bold ${
+                                        theme === "dark" ? "text-slate-100" : "text-slate-900"
+                                      }`}>👤 {p.name}</h4>
+                                      <Badge variant="outline" className="text-[10px] bg-sky-500/10 border-sky-500/30 text-sky-400">
+                                        {p.title || "Tesis Sorumlusu"}
+                                      </Badge>
+                                    </div>
+                                    <div className="mt-2 space-y-1 text-xs text-slate-400 font-mono">
+                                      {p.phone && (
+                                        <div className="flex items-center gap-1.5">
+                                          <span>📞</span>
+                                          <a
+                                            href={`https://wa.me/90${(p.phone || "").replace(/\D/g, "")}`}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            onClick={(e) => {
+                                              if (window.electronAPI?.openExternalLink) {
+                                                e.preventDefault();
+                                                window.electronAPI.openExternalLink(`https://wa.me/90${(p.phone || "").replace(/\D/g, "")}`);
+                                              }
+                                            }}
+                                            className="text-emerald-400 hover:underline font-bold"
+                                          >
+                                            {p.phone}
+                                          </a>
+                                        </div>
+                                      )}
+                                      {p.email && (
+                                        <div className="flex items-center gap-1.5">
+                                          <span>✉️</span>
+                                          <a
+                                            href={`mailto:${p.email}`}
+                                            className="text-sky-400 hover:underline"
+                                          >
+                                            {p.email}
+                                          </a>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => removePersonnel(p.id)}
+                                    className="h-7 w-7 text-slate-500 hover:text-rose-500"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+
+                                {boundVenues.length > 0 && (
+                                  <div className="pt-2 border-t border-slate-800/60 text-[11px]">
+                                    <span className="text-slate-400">🏢 Sorumlu Olduğu Tesisler:</span>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {boundVenues.map((bv) => (
+                                        <Badge key={bv.id} variant="outline" className="text-[9px] bg-indigo-500/10 border-indigo-500/30 text-indigo-300">
+                                          {bv.name}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ==================================================================== */}
               {/* 6. SETTINGS SECTION                                                  */}
               {/* ==================================================================== */}
               {activeSection === "settings" && (
@@ -4353,6 +4547,57 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+
+                {/* Venue Manager & QR Code Section */}
+                {(() => {
+                  const targetVenue = store.venues.find((v) => v.id === selectedReservation.venueId);
+                  const manager = targetVenue?.managerName
+                    ? { name: targetVenue.managerName, title: targetVenue.managerTitle || "Tesis Sorumlusu", phone: targetVenue.managerPhone }
+                    : store.personnel?.[0];
+                  
+                  const qrText = `TESIS: ${targetVenue?.name || "Mekan"}\nSALON: ${hallById(selectedReservation.hallId)?.name || "Salon"}\nTARIH: ${selectedReservation.date} (${selectedReservation.start}-${selectedReservation.end})\nMUSTERI: ${selectedReservation.customer}\nSORUMLU: ${manager?.name || "Belirtilmedi"} (${manager?.phone || ""})`;
+                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrText)}`;
+
+                  return (
+                    <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                        <span>👤 Tesis Sorumlusu & Doğrulama Karekodu</span>
+                        <QrCode className="h-3.5 w-3.5 text-indigo-400" />
+                      </h4>
+
+                      <div className="flex items-center gap-4">
+                        <div className="h-20 w-20 p-1 bg-white rounded-lg border border-slate-300 shadow-sm shrink-0 flex items-center justify-center">
+                          <img src={qrUrl} alt="Tahsis Doğrulama Karekodu" className="h-full w-full object-contain" />
+                        </div>
+                        <div className="space-y-1.5 text-xs flex-1">
+                          <div>
+                            <span className="text-slate-400">Yetkili Sorumlu:</span>
+                            <p className="font-bold text-slate-100">{manager?.name || "Yetkili Atanmadı"}</p>
+                            <p className="text-[10px] text-sky-400 font-semibold">{manager?.title || "Tesis Amiri"}</p>
+                          </div>
+                          {manager?.phone && (
+                            <div className="flex items-center gap-2 pt-1 font-mono">
+                              <a
+                                href={`https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => {
+                                  if (window.electronAPI?.openExternalLink) {
+                                    e.preventDefault();
+                                    window.electronAPI.openExternalLink(`https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`);
+                                  }
+                                }}
+                                className="text-emerald-400 font-bold hover:underline text-[11px]"
+                              >
+                                📞 {manager.phone} (WhatsApp)
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Financial & Receipt Section */}
                 <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>

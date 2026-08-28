@@ -87,15 +87,90 @@ export function initDatabase(dbFilePath?: string): string | null {
   try {
     workspaceManager.open(targetPath);
     db = workspaceManager.getDb();
+    if (db) {
+      initSchemaDatabase(db);
+      runMigrations(db);
+      ensureDynamicColumns(db);
+    }
   } catch {
     db = new Database(targetPath);
     db.pragma("journal_mode = WAL");
     db.pragma("foreign_keys = ON");
     initSchemaDatabase(db);
     runMigrations(db);
+    ensureDynamicColumns(db);
   }
 
   return targetPath;
+}
+
+function ensureDynamicColumns(d: Database.Database) {
+  const ensureCols = (table: string, cols: { name: string; def: string }[]) => {
+    try {
+      const existing = (d.prepare(`PRAGMA table_info(${table})`).all() as any[]).map((c) => c.name);
+      for (const col of cols) {
+        if (!existing.includes(col.name)) {
+          d.exec(`ALTER TABLE ${table} ADD COLUMN ${col.name} ${col.def}`);
+        }
+      }
+    } catch {}
+  };
+
+  ensureCols("DATA_Rezervasyon", [
+    { name: "decisionInfo", def: "TEXT DEFAULT ''" },
+    { name: "status", def: "TEXT DEFAULT 'confirmed'" },
+    { name: "receiptNo", def: "TEXT DEFAULT ''" },
+    { name: "paymentMethod", def: "TEXT DEFAULT 'Nakit'" },
+    { name: "note", def: "TEXT DEFAULT ''" },
+    { name: "isDeleted", def: "INTEGER DEFAULT 0" },
+  ]);
+
+  ensureCols("TANIM_Mekan", [
+    { name: "address", def: "TEXT DEFAULT ''" },
+    { name: "mapUrl", def: "TEXT DEFAULT ''" },
+    { name: "managerName", def: "TEXT DEFAULT ''" },
+    { name: "managerPhone", def: "TEXT DEFAULT ''" },
+    { name: "managerTitle", def: "TEXT DEFAULT ''" },
+    { name: "isDeleted", def: "INTEGER DEFAULT 0" },
+  ]);
+
+  ensureCols("TANIM_Salon", [
+    { name: "isDeleted", def: "INTEGER DEFAULT 0" },
+  ]);
+
+  try {
+    d.exec(`
+      CREATE TABLE IF NOT EXISTS TANIM_Personel (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        title TEXT DEFAULT 'Tesis Sorumlusu',
+        phone TEXT DEFAULT '',
+        email TEXT DEFAULT '',
+        notes TEXT DEFAULT ''
+      );
+    `);
+  } catch {}
+
+  try {
+    d.exec(`
+      DROP VIEW IF EXISTS venues;
+      DROP VIEW IF EXISTS halls;
+      DROP VIEW IF EXISTS reservations;
+      DROP VIEW IF EXISTS settings;
+
+      CREATE VIEW venues AS 
+      SELECT id, name, district, category, address, mapUrl AS map_url, managerName AS manager_name, managerPhone AS manager_phone, managerTitle AS manager_title FROM TANIM_Mekan WHERE isDeleted = 0;
+
+      CREATE VIEW halls AS 
+      SELECT id, venueId AS venue_id, name, floor, capacity, hourlyPrice AS hourly_price FROM TANIM_Salon WHERE isDeleted = 0;
+
+      CREATE VIEW reservations AS 
+      SELECT id, venueId AS venue_id, hallId AS hall_id, date, startTime AS start_time, endTime AS end_time, customer, phone, eventType AS event_type, price, paid, note, decisionInfo AS decision_info, status, receiptNo AS receipt_no, paymentMethod AS payment_method FROM DATA_Rezervasyon WHERE isDeleted = 0;
+
+      CREATE VIEW settings AS 
+      SELECT key, value FROM TANIM_Ayar;
+    `);
+  } catch {}
 }
 
 function runMigrations(database: Database.Database) {
