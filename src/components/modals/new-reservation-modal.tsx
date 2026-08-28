@@ -152,22 +152,6 @@ export function NewReservationModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Past Date Warning Banner */}
-        {selectedDay < toKey(new Date()) && (
-          <div
-            className={`p-2.5 rounded-lg border text-xs flex items-center gap-2 ${
-              theme === "dark"
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                : "bg-amber-50 border-amber-300 text-amber-800"
-            }`}
-          >
-            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
-            <span>
-              Uyarı: <strong>{selectedDay}</strong> geçmiş bir tarihtir! Etkinlik geçmiş tarihli olarak kaydedilecektir.
-            </span>
-          </div>
-        )}
-
         <form onSubmit={handleCreateReservation} className="space-y-3 py-1">
           {/* Venue & Hall Select */}
           <div className="grid grid-cols-2 gap-3">

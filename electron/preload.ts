@@ -94,6 +94,10 @@ export const electronAPI = {
   backupDatabase: () => ipcRenderer.invoke("backup-database"),
   openExternalLink: (url: string) => ipcRenderer.invoke("open-external-link", url),
 
+  minimizeWindow: () => ipcRenderer.invoke("win:minimize"),
+  maximizeWindow: () => ipcRenderer.invoke("win:maximize"),
+  closeWindow: () => ipcRenderer.invoke("win:close"),
+
   windowControls: {
     minimize: () => ipcRenderer.invoke("win:minimize"),
     maximize: () => ipcRenderer.invoke("win:maximize"),

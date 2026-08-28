@@ -259,6 +259,28 @@ app.on("window-all-closed", () => {
 /* SQLITE & FILE IPC HANDLERS                                                */
 /* ========================================================================== */
 
+ipcMain.handle("win:minimize", () => {
+  if (win) win.minimize();
+});
+
+ipcMain.handle("win:maximize", () => {
+  if (win) {
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
+  }
+});
+
+ipcMain.handle("win:close", () => {
+  if (win) win.close();
+});
+
+ipcMain.handle("win:is-maximized", () => {
+  return win ? win.isMaximized() : false;
+});
+
 ipcMain.handle("db:get-current-path", () => {
   return getCurrentDbPath();
 });

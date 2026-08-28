@@ -104,14 +104,6 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
       return;
     }
 
-    const todayKey = toKey(new Date());
-    if (selectedDay < todayKey) {
-      toast.error(
-        "Geçmiş bir tarihe yeni etkinlik kaydı oluşturulamaz! Yalnızca bugün ve gelecek tarihler için yeni rezervasyon eklenebilir."
-      );
-      return;
-    }
-
     try {
       const formattedNote = [
         resNote.trim(),
