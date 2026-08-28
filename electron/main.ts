@@ -266,44 +266,51 @@ function safeHandle(channel: string, listener: (...args: any[]) => any) {
   ipcMain.handle(channel, listener);
 }
 
+// Window Controls
 safeHandle("win:minimize", () => {
-  if (win) win.minimize();
+  win?.minimize();
 });
 
 safeHandle("win:maximize", () => {
-  if (win) {
-    if (win.isMaximized()) {
-      win.unmaximize();
-    } else {
-      win.maximize();
-    }
+  if (win?.isMaximized()) {
+    win.unmaximize();
+  } else {
+    win?.maximize();
   }
 });
 
 safeHandle("win:close", () => {
-  if (win) win.close();
+  win?.close();
 });
 
 safeHandle("win:is-maximized", () => {
-  return win ? win.isMaximized() : false;
+  return win?.isMaximized() ?? false;
 });
 
+// App Utility IPCs
 safeHandle("get-app-version", () => {
   return app.getVersion();
 });
 
 safeHandle("get-local-ip", () => {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const net of nets[name] || []) {
-      if (net.family === "IPv4" && !net.internal) {
-        return net.address;
+  try {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name] || []) {
+        if (iface.family === "IPv4" && !iface.internal) {
+          return iface.address;
+        }
       }
     }
-  }
+  } catch {}
   return "127.0.0.1";
 });
 
+safeHandle("open-external-link", (_event, url: string) => {
+  shell.openExternal(url);
+});
+
+// Database & Store IPCs
 safeHandle("db:get-current-path", () => {
   return getCurrentDbPath();
 });
@@ -328,7 +335,9 @@ safeHandle("db:delete-venue", (_event, venueId: string) => {
 });
 
 safeHandle("db:add-hall", (_event, data) => {
-  return addHall(data.venueId, data.hall);
+  const vId = data?.venueId || data;
+  const h = data?.hall || data;
+  return addHall(vId, h);
 });
 
 safeHandle("db:update-hall", (_event, data) => {
@@ -336,71 +345,61 @@ safeHandle("db:update-hall", (_event, data) => {
 });
 
 safeHandle("db:delete-hall", (_event, data) => {
-  return deleteHall(data.venueId, data.hallId);
+  const vId = data?.venueId || data;
+  const hId = data?.hallId || data;
+  return deleteHall(vId, hId);
 });
 
-ipcMain.handle("db:get-personnel", () => {
+safeHandle("db:get-personnel", () => {
   return getPersonnelList();
 });
 
-ipcMain.handle("db:add-personnel", (_event, p) => {
+safeHandle("db:add-personnel", (_event, p) => {
   return addPersonnel(p);
 });
 
-ipcMain.handle("db:delete-personnel", (_event, id: string) => {
+safeHandle("db:delete-personnel", (_event, id: string) => {
   return deletePersonnel(id);
 });
 
-ipcMain.handle("db:delete-venue", (_event, venueId: string) => {
-  return deleteVenue(venueId);
-});
-
-ipcMain.handle("db:add-hall", (_event, { venueId, hall }) => {
-  return addHall(venueId, hall);
-});
-
-ipcMain.handle("db:delete-hall", (_event, { venueId, hallId }) => {
-  return deleteHall(venueId, hallId);
-});
-
-ipcMain.handle("db:add-reservation", (_event, res) => {
+safeHandle("db:add-reservation", (_event, res) => {
   return addReservation(res);
 });
 
-ipcMain.handle("db:delete-reservation", (_event, id: string) => {
+safeHandle("db:delete-reservation", (_event, id: string) => {
   deleteReservation(id);
   return true;
 });
 
-ipcMain.handle("db:update-paid", (_event, { id, paid }) => {
+safeHandle("db:update-paid", (_event, { id, paid }) => {
   updatePaid(id, paid);
   return true;
 });
 
-ipcMain.handle("db:update-reservation-status", (_event, { id, status }: { id: string; status: string }) => {
+safeHandle("db:update-reservation-status", (_event, { id, status }: { id: string; status: string }) => {
   updateReservationStatus(id, status);
   return true;
 });
 
-ipcMain.handle("db:update-reservation-details", (_event, { id, details }: { id: string; details: any }) => {
+safeHandle("db:update-reservation-details", (_event, { id, details }: { id: string; details: any }) => {
   updateReservationDetails(id, details);
   return true;
 });
 
-ipcMain.handle("db:get-setting", (_event, key: string) => {
+safeHandle("db:get-setting", (_event, key: string) => {
   return getSetting(key);
 });
 
-ipcMain.handle("db:set-setting", (_event, { key, value }: { key: string; value: string }) => {
+safeHandle("db:set-setting", (_event, { key, value }: { key: string; value: string }) => {
   setSetting(key, value);
   return true;
 });
 
-ipcMain.handle("db:get-all-settings", () => {
+safeHandle("db:get-all-settings", () => {
   return getAllSettings();
 });
 
-ipcMain.handle("db:switch-path", (_event, filePath: string) => {
+safeHandle("db:switch-path", (_event, filePath: string) => {
   if (filePath && fs.existsSync(filePath)) {
     initDatabase(filePath);
     openedFilePath = filePath;
@@ -414,33 +413,11 @@ ipcMain.handle("db:switch-path", (_event, filePath: string) => {
   return { success: false, error: "Dosya bulunamadı veya veritabanı açılamadı." };
 });
 
-// Window Controls IPCs
-ipcMain.handle("win:minimize", () => {
-  win?.minimize();
-});
-
-ipcMain.handle("win:maximize", () => {
-  if (win?.isMaximized()) {
-    win.unmaximize();
-  } else {
-    win?.maximize();
-  }
-});
-
-ipcMain.handle("win:close", () => {
-  win?.close();
-});
-
-ipcMain.handle("win:is-maximized", () => {
-  return win?.isMaximized() ?? false;
-});
-
-// File dialog IPCs
-ipcMain.handle("get-opened-file-path", () => {
+safeHandle("get-opened-file-path", () => {
   return openedFilePath;
 });
 
-ipcMain.handle("open-file-dialog", async () => {
+safeHandle("open-file-dialog", async () => {
   if (!win) return null;
   const result = await dialog.showOpenDialog(win, {
     title: "VenueKeeper Veritabanı Dosyası Aç",
@@ -464,7 +441,7 @@ ipcMain.handle("open-file-dialog", async () => {
   return { filePath, content: JSON.stringify(getStoreData()) };
 });
 
-ipcMain.handle("save-file-dialog", async (_event, { defaultName }) => {
+safeHandle("save-file-dialog", async (_event, { defaultName }) => {
   if (!win) return null;
   const result = await dialog.showSaveDialog(win, {
     title: "Yeni VenueKeeper Veritabanı Kaydet",
@@ -484,8 +461,7 @@ ipcMain.handle("save-file-dialog", async (_event, { defaultName }) => {
   return result.filePath;
 });
 
-// SMTP Mail Sending IPC
-ipcMain.handle("send-email", async (_event, { smtpConfig, mailData }) => {
+safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
   try {
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
@@ -512,25 +488,7 @@ ipcMain.handle("send-email", async (_event, { smtpConfig, mailData }) => {
   }
 });
 
-ipcMain.handle("get-app-version", () => {
-  return app.getVersion();
-});
-
-ipcMain.handle("get-local-ip", () => {
-  try {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name] || []) {
-        if (iface.family === "IPv4" && !iface.internal) {
-          return iface.address;
-        }
-      }
-    }
-  } catch {}
-  return "127.0.0.1";
-});
-
-ipcMain.handle("backup-database", () => {
+safeHandle("backup-database", () => {
   const currentPath = getCurrentDbPath();
   if (currentPath && fs.existsSync(currentPath)) {
     const backupDir = path.join(app.getPath("userData"), "backups");
