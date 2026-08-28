@@ -192,7 +192,9 @@ export function App(): React.JSX.Element {
 
   useEffect(() => {
     sqliteStore.loadFromDb().then(() => setStore(sqliteStore.getSnapshot()));
-    const unsubscribe = sqliteStore.subscribe(() => setStore(sqliteStore.getSnapshot()));
+    const unsubscribe = sqliteStore.subscribe(() =>
+      setStore(sqliteStore.getSnapshot())
+    );
     return () => {
       unsubscribe();
     };
@@ -739,16 +741,20 @@ export function App(): React.JSX.Element {
     >
       <Toaster position="top-right" richColors />
 
-      {/* Header Bar */}
+      {/* Header Bar (Electron Window Drag Region) */}
       <header
-        className={`sticky top-0 z-40 border-b flex items-center justify-between px-4 py-2.5 transition-colors ${
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+        className={`sticky top-0 z-40 border-b flex items-center justify-between px-4 py-2.5 transition-colors select-none ${
           theme === "dark"
             ? "bg-slate-900/90 border-slate-800 backdrop-blur-md"
             : "bg-white/90 border-slate-200 backdrop-blur-md shadow-xs"
         }`}
       >
         {/* Left: Brand & Sidebar Toggle */}
-        <div className="flex items-center gap-3">
+        <div
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className="flex items-center gap-3"
+        >
           <Button
             variant="ghost"
             size="icon"
@@ -783,7 +789,7 @@ export function App(): React.JSX.Element {
               <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5">
                 <span>{institutionName}</span>
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono">
-                  v1.0.0-beta.13
+                  v1.0.0-beta.14
                 </Badge>
               </h1>
               <p
@@ -791,14 +797,18 @@ export function App(): React.JSX.Element {
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                İşletme Kiralama & Etkinlik Takip Sistemi (SQLite Cloud Sync)
+                Kamu & Kurumsal Tesis, Mekan & Etkinlik Yönetim Sistemi (SQLite
+                Cloud Sync)
               </p>
             </div>
           </div>
         </div>
 
         {/* Center: Quick Search */}
-        <div className="hidden md:flex items-center gap-2 max-w-xs w-full">
+        <div
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className="hidden md:flex items-center gap-2 max-w-xs w-full"
+        >
           <div className="relative w-full">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
             <Input
@@ -815,8 +825,11 @@ export function App(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Right: Quick Action Buttons & Theme Switcher */}
-        <div className="flex items-center gap-2">
+        {/* Right: Quick Action Buttons & Native Window Controls */}
+        <div
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className="flex items-center gap-2"
+        >
           <Button
             size="sm"
             onClick={() => {
