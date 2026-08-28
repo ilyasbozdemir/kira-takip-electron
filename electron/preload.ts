@@ -89,6 +89,8 @@ export const electronAPI = {
 
   // Utility & Window Controls IPCs
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
+  getLocalIp: () => ipcRenderer.invoke("get-local-ip"),
+  backupDatabase: () => ipcRenderer.invoke("backup-database"),
   openExternalLink: (url: string) => ipcRenderer.invoke("open-external-link", url),
 
   windowControls: {

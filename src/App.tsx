@@ -56,6 +56,7 @@ import { CopySettingsModal } from "@/components/copy-settings-modal";
 import { LauncherModal, RecentFileItem } from "@/components/launcher-modal";
 import { OfficialPrintModal } from "@/components/official-print-modal";
 import { WelcomeStartScreen } from "@/components/welcome-start-screen";
+import { Footer } from "@/components/footer";
 import {
   AlertTriangle,
   BarChart3,
@@ -3485,6 +3486,9 @@ export default function App() {
             </div>
           </div>
         </div>
+
+        {/* Global Application Footer */}
+        <Footer currentFilePath={currentFilePath} institutionName={institutionName} theme={theme} />
 
         {/* ======================================================================== */}
         {/* DIALOG MODALS                                                            */}

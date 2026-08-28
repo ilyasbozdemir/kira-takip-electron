@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from "electron";
 import path from "node:path";
 import fs from "node:fs";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import nodemailer from "nodemailer";
 import pkg from "electron-updater";
@@ -448,6 +449,34 @@ ipcMain.handle("send-email", async (_event, { smtpConfig, mailData }) => {
 
 ipcMain.handle("get-app-version", () => {
   return app.getVersion();
+});
+
+ipcMain.handle("get-local-ip", () => {
+  try {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name] || []) {
+        if (iface.family === "IPv4" && !iface.internal) {
+          return iface.address;
+        }
+      }
+    }
+  } catch {}
+  return "127.0.0.1";
+});
+
+ipcMain.handle("backup-database", () => {
+  const currentPath = getCurrentDbPath();
+  if (currentPath && fs.existsSync(currentPath)) {
+    const backupDir = path.join(app.getPath("userData"), "backups");
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const destName = `backup_${path.basename(currentPath, ".vke")}_${timestamp}.vke`;
+    const destPath = path.join(backupDir, destName);
+    fs.copyFileSync(currentPath, destPath);
+    return { success: true, path: destPath };
+  }
+  return { success: false, error: "Veritabanı dosyası bulunamadı." };
 });
 
 ipcMain.handle("open-external-link", (_event, url: string) => {
