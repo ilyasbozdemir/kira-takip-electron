@@ -32,14 +32,12 @@ jobs:
         run: pnpm run build:vite && npx electron-builder --win --config electron/electron-builder.yml --publish never
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ github.ref_name }}
-          files: |
-            release/**/*.exe
-            release/**/*.blockmap
-            release/**/latest.yml
-          draft: false
-          prerelease: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $files = Get-ChildItem -Path release -Recurse -Include *.exe,*.blockmap,latest.yml | Select-Object -ExpandProperty FullName
+          if (gh release view ${{ github.ref_name }} 2>$null) {
+            gh release upload ${{ github.ref_name }} $files --clobber
+          } else {
+            gh release create ${{ github.ref_name }} $files --title "${{ github.ref_name }}" --prerelease --generate-notes
+          }
