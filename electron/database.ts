@@ -460,7 +460,7 @@ export function addReservation(res: {
 
   const newId = uid();
   db!.prepare(
-    "INSERT INTO reservations (id, venue_id, hall_id, date, start_time, end_time, customer, phone, event_type, price, paid, note, decision_info, status, receipt_no, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO DATA_Rezervasyon (id, venueId, hallId, date, startTime, endTime, customer, phone, eventType, price, paid, note, decisionInfo, status, receiptNo, paymentMethod) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     newId,
     res.venueId,

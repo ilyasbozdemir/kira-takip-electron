@@ -1079,29 +1079,44 @@ export default function App() {
                 ? (
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="h-9 w-9 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 border border-indigo-500/30 flex items-center justify-center bg-slate-900 shrink-0">
-                      <img
-                        src="/app-logo.png"
-                        alt="VenueKeeper Logo"
-                        className="h-full w-full object-cover"
-                      />
+                      {institutionLogo ? (
+                        <img
+                          src={institutionLogo}
+                          alt={institutionName || "Kurum Logosu"}
+                          className="h-full w-full object-contain p-0.5"
+                        />
+                      ) : (
+                        <img
+                          src="/app-logo.png"
+                          alt="VenueKeeper Logo"
+                          className="h-full w-full object-cover"
+                        />
+                      )}
                     </div>
                     <div className="truncate">
                       <h1
-                        className={`text-sm font-bold flex items-center gap-1.5 ${
+                        className={`text-xs font-bold flex items-center gap-1 truncate ${
                           theme === "dark" ? "text-slate-100" : "text-slate-900"
                         }`}
+                        title={institutionName || "İşletme Takip App Pro"}
                       >
-                        VenueKeeper{" "}
-                        <Badge className="bg-indigo-600 text-white text-[9px] uppercase font-mono px-1 py-0 shrink-0">
-                          PRO
-                        </Badge>
+                        {institutionName ? (
+                          <span className="truncate">{institutionName}</span>
+                        ) : (
+                          <>
+                            İşletme Takip{" "}
+                            <Badge className="bg-indigo-600 text-white text-[9px] uppercase font-mono px-1 py-0 shrink-0">
+                              PRO
+                            </Badge>
+                          </>
+                        )}
                       </h1>
                       <p
                         className={`text-[10px] truncate ${
                           theme === "dark" ? "text-slate-400" : "text-slate-500"
                         }`}
                       >
-                        Mekan & Etkinlik
+                        Mekan, Tesis & Salon Takip
                       </p>
                     </div>
                   </div>
@@ -1109,13 +1124,21 @@ export default function App() {
                 : (
                   <div
                     className="h-9 w-9 rounded-xl overflow-hidden shadow-md shadow-indigo-500/20 border border-indigo-500/30 flex items-center justify-center bg-slate-900 shrink-0"
-                    title="VenueKeeper APP PRO"
+                    title={institutionName || "İşletme Takip App Pro"}
                   >
-                    <img
-                      src="/app-logo.jpg"
-                      alt="VenueKeeper Logo"
-                      className="h-full w-full object-cover"
-                    />
+                    {institutionLogo ? (
+                      <img
+                        src={institutionLogo}
+                        alt="Kurum Logosu"
+                        className="h-full w-full object-contain p-0.5"
+                      />
+                    ) : (
+                      <img
+                        src="/app-logo.png"
+                        alt="App Logo"
+                        className="h-full w-full object-cover"
+                      />
+                    )}
                   </div>
                 )}
 

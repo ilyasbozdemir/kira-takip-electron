@@ -161,16 +161,21 @@ export function initializeDatabase(db: Database.Database): void {
 
     // Legacy Compatibility Views & Triggers
     db.exec(`
-      CREATE VIEW IF NOT EXISTS venues AS 
+      DROP VIEW IF EXISTS venues;
+      DROP VIEW IF EXISTS halls;
+      DROP VIEW IF EXISTS reservations;
+      DROP VIEW IF EXISTS settings;
+
+      CREATE VIEW venues AS 
       SELECT id, name, district, category, address, mapUrl AS map_url, managerName AS manager_name, managerPhone AS manager_phone, managerTitle AS manager_title FROM TANIM_Mekan WHERE isDeleted = 0;
 
-      CREATE VIEW IF NOT EXISTS halls AS 
+      CREATE VIEW halls AS 
       SELECT id, venueId AS venue_id, name, floor, capacity, hourlyPrice AS hourly_price FROM TANIM_Salon WHERE isDeleted = 0;
 
-      CREATE VIEW IF NOT EXISTS reservations AS 
+      CREATE VIEW reservations AS 
       SELECT id, venueId AS venue_id, hallId AS hall_id, date, startTime AS start_time, endTime AS end_time, customer, phone, eventType AS event_type, price, paid, note, decisionInfo AS decision_info, status, receiptNo AS receipt_no, paymentMethod AS payment_method FROM DATA_Rezervasyon WHERE isDeleted = 0;
 
-      CREATE VIEW IF NOT EXISTS settings AS 
+      CREATE VIEW settings AS 
       SELECT key, value FROM TANIM_Ayar;
 
       CREATE TRIGGER IF NOT EXISTS trg_insert_venues INSTEAD OF INSERT ON venues BEGIN
