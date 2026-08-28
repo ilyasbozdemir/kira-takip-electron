@@ -70,6 +70,17 @@ export const TANIM_AyarSchema: TableSchema = defineTable({
   ]
 })
 
+export const TANIM_PersonelSchema: TableSchema = defineTable({
+  name: 'TANIM_Personel',
+  description: 'Personel ve Kullanıcı Tanımları',
+  hasAudit: false,
+  columns: [
+    { name: 'id', type: 'INTEGER', constraints: ['PRIMARY KEY AUTOINCREMENT'] },
+    { name: 'name', type: 'TEXT', constraints: ['NOT NULL'] },
+    { name: 'role', type: 'TEXT', defaultValue: "'Personel'" }
+  ]
+})
+
 export const LOG_HareketSchema: TableSchema = defineTable({
   name: 'LOG_Hareket',
   description: 'Sistem Logları ve Kullanıcı Hareketleri',
@@ -83,6 +94,7 @@ export const LOG_HareketSchema: TableSchema = defineTable({
 })
 
 export const schema = {
+  TANIM_Personel: TANIM_PersonelSchema,
   TANIM_Mekan: TANIM_MekanSchema,
   TANIM_Salon: TANIM_SalonSchema,
   DATA_Rezervasyon: DATA_RezervasyonSchema,
@@ -127,7 +139,7 @@ export function initializeDatabase(db: Database.Database): void {
   `)
 
   // Execute Table Schemas via SQL Generator
-  const allSchemas = [TANIM_MekanSchema, TANIM_SalonSchema, DATA_RezervasyonSchema, TANIM_AyarSchema, LOG_HareketSchema]
+  const allSchemas = [TANIM_PersonelSchema, TANIM_MekanSchema, TANIM_SalonSchema, DATA_RezervasyonSchema, TANIM_AyarSchema, LOG_HareketSchema]
   db.transaction(() => {
     for (const s of allSchemas) {
       const statements = buildCreateTableSQL(s)
