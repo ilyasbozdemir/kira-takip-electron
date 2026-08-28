@@ -53,6 +53,22 @@ export type Reservation = {
   paymentMethod?: string;
 };
 
+export type NavSection = "dashboard" | "calendar" | "venues" | "events" | "personnel" | "reports" | "settings";
+export type PricingMode = "hourly" | "daily";
+
+export const allEventTypes = [
+  "Düğün & Davet",
+  "Nişan & Kına",
+  "Sünnet Düğünü",
+  "Konser & Tiyatro",
+  "Kongre & Seminer",
+  "Toplantı & Lansman",
+  "Sergi & Fuar",
+  "Mezuniyet & Balo",
+  "Spor & Turnuva",
+  "İftar & Yemek",
+];
+
 export type Store = {
   venues: Venue[];
   reservations: Reservation[];

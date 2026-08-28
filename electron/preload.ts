@@ -45,6 +45,7 @@ export const electronAPI = {
   getOpenedFilePath: () => ipcRenderer.invoke("get-opened-file-path"),
   openFileDialog: () => ipcRenderer.invoke("open-file-dialog"),
   saveFileDialog: (data: { defaultName?: string }) => ipcRenderer.invoke("save-file-dialog", data),
+  switchPath: (filePath?: string) => ipcRenderer.invoke("db:switch-path", filePath),
 
   onFileOpened: (callback: (filePath: string) => void) => {
     const subscription = (_event: any, filePath: string) => callback(filePath);

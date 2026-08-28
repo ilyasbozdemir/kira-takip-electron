@@ -1,396 +1,234 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  type Hall,
+  BarChart3,
+  Building2,
+  Calendar as CalendarIcon,
+  Database,
+  Download,
+  FilePlus2,
+  FolderOpen,
+  HelpCircle,
+  KeyRound,
+  Layers,
+  LayoutDashboard,
+  Menu,
+  Moon,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  RefreshCw,
+  Search,
+  Settings,
+  Sun,
+  Users,
+} from "lucide-react";
+import { toast, Toaster } from "sonner";
+
+import {
+  allEventTypes,
   hoursBetween,
   money,
+  type NavSection,
+  type PricingMode,
   type Reservation,
   timeSlots,
   toKey,
-  toMin,
-  trDays,
-  trMonths,
   type Venue,
 } from "@/lib/rental-store";
-import { useSQLiteStore } from "@/lib/db-client";
+import { sqliteStore } from "@/lib/db-client";
+import { useSettingsStore } from "@/store/settingsStore";
+import { useWorkspaceStore } from "@/store/workspaceStore";
+import { useTabStore } from "@/store/tabStore";
+
+import { Footer } from "@/components/footer";
+import { MailDialog } from "@/components/mail-dialog";
+import { CopySettingsModal } from "@/components/copy-settings-modal";
+import { OfficialPrintModal } from "@/components/official-print-modal";
+import { LauncherModal } from "@/components/launcher-modal";
+import { WelcomeStartScreen } from "@/components/welcome-start-screen";
+
+import { DashboardScreen } from "@/screens/dashboard.screen";
+import { CalendarScreen } from "@/screens/calendar.screen";
+import { VenuesScreen } from "@/screens/venues.screen";
+import { EventsScreen } from "@/screens/events.screen";
+import { PersonnelScreen } from "@/screens/personnel.screen";
+import { ReportsScreen } from "@/screens/reports.screen";
+import { SettingsScreen } from "@/screens/settings.screen";
+
+import { NewReservationModal } from "@/components/modals/new-reservation-modal";
+import { NewVenueModal } from "@/components/modals/new-venue-modal";
+import { NewHallModal } from "@/components/modals/new-hall-modal";
+import { PersonnelModal } from "@/components/modals/personnel-modal";
+import { ReservationDrawer } from "@/components/modals/reservation-drawer";
+import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { toast, Toaster } from "sonner";
-import { MailDialog } from "@/components/mail-dialog";
-import { UpdateBanner } from "@/components/update-banner";
-import { CopySettingsModal } from "@/components/copy-settings-modal";
-import { LauncherModal, RecentFileItem } from "@/components/launcher-modal";
-import { OfficialPrintModal } from "@/components/official-print-modal";
-import { WelcomeStartScreen } from "@/components/welcome-start-screen";
-import { Footer } from "@/components/footer";
-import {
-  AlertTriangle,
-  BarChart3,
-  Briefcase,
-  Building2,
-  Calendar as CalendarIcon,
-  CalendarDays,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Cloud,
-  Copy,
-  Database,
-  DollarSign,
-  FilePlus,
-  FileSpreadsheet,
-  FileText,
-  Filter,
-  FolderOpen,
-  Grid as GridIcon,
-  Layers,
-  LayoutDashboard,
-  ListFilter,
-  Mail,
-  MapPin,
-  Menu as MenuIcon,
-  MessageSquare,
-  Minus,
-  Moon,
-  Music,
-  PartyPopper,
-  Phone,
-  Plus,
-  Printer,
-  QrCode,
-  Scale,
-  Search,
-  Settings,
-  Sparkles,
-  Square,
-  Sun,
-  Trash2,
-  User,
-  Users,
-  X,
-} from "lucide-react";
 
-type NavSection =
-  | "dashboard"
-  | "calendar"
-  | "venues"
-  | "events"
-  | "reports"
-  | "personnel"
-  | "settings";
-
-type HallInfo = Hall & {
-  venueId: string;
-  venueName: string;
-};
-
-const DEFAULT_EVENT_TYPES = [
-  "Düğün & Nişan",
-  "Konferans & Kongre",
-  "Balo & Gala",
-  "İftar & Toplu Yemek",
-  "Konser & Sahne",
-  "Toplantı & Seminer",
-  "Lansman & Sergi",
-  "Özel Etkinlik",
-];
-
-export default function App() {
-  const {
-    store,
-    ready,
-    currentFilePath,
-    addVenue,
-    removeVenue,
-    addHall,
-    removeHall,
-    addReservation,
-    removeReservation,
-    updatePaid,
-    updateReservationStatus,
-    updateReservationDetails,
-    addPersonnel,
-    removePersonnel,
-  } = useSQLiteStore();
-
-  const today = new Date();
-  const [activeSection, setActiveSection] = useState<NavSection>("dashboard");
-  const [cursor, setCursor] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1),
-  );
-  const [venueFilter, setVenueFilter] = useState<string>("all");
-  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
-  const [selectedDay, setSelectedDay] = useState<string>(toKey(today));
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+export function App(): React.JSX.Element {
+  // Theme State
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    return (localStorage.getItem("venuekeeper-theme") as "dark" | "light") ||
-      "dark";
+    return (localStorage.getItem("theme") as "dark" | "light") || "dark";
   });
-
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem("venuekeeper-sidebar-collapsed") === "true";
-  });
-
-  const toggleSidebarCollapsed = () => {
-    const next = !sidebarCollapsed;
-    setSidebarCollapsed(next);
-    localStorage.setItem("venuekeeper-sidebar-collapsed", String(next));
-  };
-
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("venuekeeper-theme", nextTheme);
-  };
 
   useEffect(() => {
-    const root = document.documentElement;
     if (theme === "dark") {
-      root.classList.add("dark");
+      document.documentElement.classList.add("dark");
     } else {
-      root.classList.remove("dark");
+      document.documentElement.classList.remove("dark");
     }
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // Calendar View & Filter States
-  const [calendarViewMode, setCalendarViewMode] = useState<"grid" | "timeline">(
-    "grid",
-  );
-  const [calendarVenueFilter, setCalendarVenueFilter] = useState<string>("all");
+  // Sidebar Layout State
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  // Dynamic Event Types State
-  const [eventTypes, setEventTypes] = useState<string[]>(() => {
+  // Store & Settings Hooks
+  const {
+    institutionName,
+    institutionLogo,
+    defaultTariffBasis,
+    setInstitutionName,
+    setInstitutionLogo,
+    setDefaultTariffBasis,
+  } = useSettingsStore();
+
+  const {
+    activeDosyaId,
+    fileName,
+    currentFilePath,
+    isStartingFile,
+    recentFiles,
+    openFile,
+    createFile,
+    saveFileAs,
+    closeFile,
+    fetchRecentFiles,
+  } = useWorkspaceStore();
+
+  const { tabs, activeTabId, removeTab, setActiveTab } = useTabStore();
+
+  // Launcher Modal State
+  const [showLauncherModal, setShowLauncherModal] = useState(false);
+
+  // Custom Event Types State
+  const [customEventTypes, setCustomEventTypes] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem("venuekeeper-event-types");
-      return saved ? JSON.parse(saved) : DEFAULT_EVENT_TYPES;
-    } catch {
-      return DEFAULT_EVENT_TYPES;
-    }
-  });
-  const [newEventTypeInput, setNewEventTypeInput] = useState("");
-
-  const allEventTypes = useMemo(() => {
-    const dbTypes = store.reservations.map((r) => r.eventType).filter((
-      x,
-    ): x is string => Boolean(x));
-    const set = new Set([...eventTypes, ...dbTypes]);
-    return Array.from(set).sort((a, b) =>
-      (a || "").localeCompare(b || "", "tr")
-    );
-  }, [eventTypes, store.reservations]);
-
-  const customerSuggestions = useMemo(() => {
-    const list = store.reservations.map((r) => r.customer).filter(Boolean);
-    return Array.from(new Set(list));
-  }, [store.reservations]);
-
-  const phoneSuggestions = useMemo(() => {
-    const list = store.reservations.map((r) => r.phone).filter(Boolean);
-    return Array.from(new Set(list));
-  }, [store.reservations]);
-
-  const handleAddCustomEventType = (typeName?: string) => {
-    const val = (typeName || newEventTypeInput).trim();
-    if (!val) return;
-    if (!eventTypes.includes(val)) {
-      const updated = [...eventTypes, val];
-      setEventTypes(updated);
-      localStorage.setItem("venuekeeper-event-types", JSON.stringify(updated));
-      toast.success(`Yeni etkinlik türü eklendi: "${val}"`);
-    }
-    setNewEventTypeInput("");
-  };
-
-  const handleRemoveEventType = (val: string) => {
-    const updated = eventTypes.filter((t) => t !== val);
-    setEventTypes(updated);
-    localStorage.setItem("venuekeeper-event-types", JSON.stringify(updated));
-    toast.info(`Etkinlik türü silindi: "${val}"`);
-  };
-
-  const handleResetEventTypes = () => {
-    setEventTypes(DEFAULT_EVENT_TYPES);
-    localStorage.setItem(
-      "venuekeeper-event-types",
-      JSON.stringify(DEFAULT_EVENT_TYPES),
-    );
-    toast.success("Etkinlik türleri varsayılan listeye sıfırlandı.");
-  };
-
-  const getEventTypeColor = (type?: string) => {
-    const isDark = theme === "dark";
-    if (!type) {
-      return isDark
-        ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"
-        : "bg-indigo-50 text-indigo-700 border-indigo-300";
-    }
-    switch (type) {
-      case "Düğün & Nişan":
-        return isDark
-          ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
-          : "bg-rose-50 text-rose-700 border-rose-300";
-      case "Konferans & Kongre":
-      case "Toplantı & Seminer":
-        return isDark
-          ? "bg-sky-500/15 text-sky-400 border-sky-500/30"
-          : "bg-sky-50 text-sky-700 border-sky-300";
-      case "Konser & Sahne":
-        return isDark
-          ? "bg-purple-500/15 text-purple-400 border-purple-500/30"
-          : "bg-purple-50 text-purple-700 border-purple-300";
-      case "Balo & Gala":
-      case "Lansman & Sergi":
-        return isDark
-          ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-          : "bg-amber-50 text-amber-800 border-amber-300";
-      case "İftar & Toplu Yemek":
-        return isDark
-          ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-          : "bg-emerald-50 text-emerald-700 border-emerald-300";
-      default: {
-        const hash = type.split("").reduce(
-          (acc, char) => acc + char.charCodeAt(0),
-          0,
-        );
-        const darkColors = [
-          "bg-pink-500/15 text-pink-400 border-pink-500/30",
-          "bg-teal-500/15 text-teal-400 border-teal-500/30",
-          "bg-violet-500/15 text-violet-400 border-violet-500/30",
-          "bg-orange-500/15 text-orange-400 border-orange-500/30",
-          "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-        ];
-        const lightColors = [
-          "bg-pink-50 text-pink-700 border-pink-300",
-          "bg-teal-50 text-teal-700 border-teal-300",
-          "bg-violet-50 text-violet-700 border-violet-300",
-          "bg-orange-50 text-orange-800 border-orange-300",
-          "bg-cyan-50 text-cyan-700 border-cyan-300",
-        ];
-        return isDark
-          ? darkColors[hash % darkColors.length]
-          : lightColors[hash % lightColors.length];
-      }
-    }
-  };
-
-  // Dialog States
-  const [resModalOpen, setResModalOpen] = useState(false);
-  const [venueModalOpen, setVenueModalOpen] = useState(false);
-  const [hallModalOpen, setHallModalOpen] = useState(false);
-  const [mailModalOpen, setMailModalOpen] = useState(false);
-  const [copyModalOpen, setCopyModalOpen] = useState(false);
-  const [launcherOpen, setLauncherOpen] = useState(false);
-  const [printModalOpen, setPrintModalOpen] = useState(false);
-  const [selectedPrintReservation, setSelectedPrintReservation] = useState<
-    Reservation | null
-  >(null);
-
-  const handlePrintOfficialDoc = (res: Reservation) => {
-    setSelectedPrintReservation(res);
-    setPrintModalOpen(true);
-  };
-
-  // Recent Database Files History State
-  const [recentFiles, setRecentFiles] = useState<RecentFileItem[]>(() => {
-    try {
-      const saved = localStorage.getItem("venuekeeper-recent-files");
+      const saved = localStorage.getItem("custom_event_types");
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
 
-  const addRecentFile = useCallback((filePath: string) => {
-    if (!filePath) return;
-    const fileName = filePath.split(/[\\/]/).pop() || filePath;
-    const nowStr = new Date().toLocaleDateString("tr-TR") + " " +
-      new Date().toLocaleTimeString("tr-TR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    setRecentFiles((prev) => {
-      const filtered = prev.filter((item) => item.path !== filePath);
-      const updated = [
-        { path: filePath, name: fileName, lastOpened: nowStr },
-        ...filtered,
-      ].slice(0, 10);
-      localStorage.setItem("venuekeeper-recent-files", JSON.stringify(updated));
-      return updated;
-    });
-  }, []);
+  const mergedEventTypes = useMemo(() => {
+    const set = new Set([...allEventTypes, ...customEventTypes]);
+    return Array.from(set);
+  }, [customEventTypes]);
+
+  const [newEventTypeInput, setNewEventTypeInput] = useState("");
+
+  const handleAddCustomEventType = (typeName?: string) => {
+    const val = (typeName || newEventTypeInput).trim();
+    if (!val) return;
+    if (mergedEventTypes.includes(val)) {
+      toast.error(`"${val}" türü zaten mevcut.`);
+      return;
+    }
+    const updated = [...customEventTypes, val];
+    setCustomEventTypes(updated);
+    localStorage.setItem("custom_event_types", JSON.stringify(updated));
+    setNewEventTypeInput("");
+    toast.success(`"${val}" türü eklendi.`);
+  };
+
+  const handleRemoveEventType = (val: string) => {
+    const updated = customEventTypes.filter((t) => t !== val);
+    setCustomEventTypes(updated);
+    localStorage.setItem("custom_event_types", JSON.stringify(updated));
+    toast.info(`"${val}" türü listeden kaldırıldı.`);
+  };
+
+  const handleResetEventTypes = () => {
+    setCustomEventTypes([]);
+    localStorage.removeItem("custom_event_types");
+    toast.success("Etkinlik türleri varsayılan değerlere sıfırlandı.");
+  };
+
+  const getEventTypeColor = (type?: string): string => {
+    switch (type) {
+      case "Düğün & Davet":
+        return "bg-pink-500/10 border-pink-500/30 text-pink-600 dark:text-pink-400";
+      case "Nişan & Kına":
+        return "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400";
+      case "Sünnet Düğünü":
+        return "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400";
+      case "Konser & Tiyatro":
+        return "bg-purple-500/10 border-purple-500/30 text-purple-600 dark:text-purple-400";
+      case "Kongre & Seminer":
+        return "bg-sky-500/10 border-sky-500/30 text-sky-600 dark:text-sky-400";
+      case "Toplantı & Lansman":
+        return "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400";
+      case "Sergi & Fuar":
+        return "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
+      case "Mezuniyet & Balo":
+        return "bg-violet-500/10 border-violet-500/30 text-violet-600 dark:text-violet-400";
+      case "Spor & Turnuva":
+        return "bg-teal-500/10 border-teal-500/30 text-teal-600 dark:text-teal-400";
+      case "İftar & Yemek":
+        return "bg-orange-500/10 border-orange-500/30 text-orange-600 dark:text-orange-400";
+      default:
+        return "bg-slate-500/10 border-slate-500/30 text-slate-600 dark:text-slate-400";
+    }
+  };
+
+  // SQLite Store State
+  const [store, setStore] = useState(sqliteStore.getSnapshot());
 
   useEffect(() => {
-    if (currentFilePath) {
-      addRecentFile(currentFilePath);
-    }
-  }, [currentFilePath, addRecentFile]);
+    sqliteStore.loadFromDb().then(() => setStore(sqliteStore.getSnapshot()));
+    const unsubscribe = sqliteStore.subscribe(() => setStore(sqliteStore.getSnapshot()));
+    return () => {
+      unsubscribe();
+    };
+  }, [activeDosyaId]);
 
-  const handleOpenRecent = async (filePath: string) => {
-    if (window.electronAPI?.db?.switchDatabase) {
-      const res = await window.electronAPI.db.switchDatabase(filePath);
-      if (res?.success) {
-        addRecentFile(filePath);
-        toast.success(
-          `Çalışma dosyasına geçiş yapıldı: ${filePath.split(/[\\/]/).pop()}`,
-        );
-      } else {
-        toast.error(res?.error || "Dosya açılamadı!");
-      }
-    } else {
-      addRecentFile(filePath);
-      toast.success(`Dosyaya geçiş yapıldı: ${filePath.split(/[\\/]/).pop()}`);
-    }
-  };
+  // Navigation Section State
+  const [activeSection, setActiveSection] = useState<NavSection>("dashboard");
 
-  const handleClearRecent = () => {
-    setRecentFiles([]);
-    localStorage.removeItem("venuekeeper-recent-files");
-    toast.info("Son açılan dosya geçmişi temizlendi.");
-  };
+  // Calendar State
+  const today = useMemo(() => new Date(), []);
+  const [cursor, setCursor] = useState(() =>
+    new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+  const [selectedDay, setSelectedDay] = useState(() => toKey(today));
+  const [calendarViewMode, setCalendarViewMode] = useState<"grid" | "timeline">(
+    "grid",
+  );
+  const [calendarVenueFilter, setCalendarVenueFilter] = useState("all");
 
-  // Mail preset state
-  const [mailPreset, setMailPreset] = useState<
-    { recipient?: string; subject?: string; body?: string }
-  >({});
+  // Search & Filter State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [eventTypeFilter, setEventTypeFilter] = useState("all");
 
-  // Delete Confirmation State
+  // Modals & Drawers Visibility State
+  const [resModalOpen, setResModalOpen] = useState(false);
+  const [venueModalOpen, setVenueModalOpen] = useState(false);
+  const [hallModalOpen, setHallModalOpen] = useState(false);
+  const [personnelModalOpen, setPersonnelModalOpen] = useState(false);
+  const [mailModalOpen, setMailModalOpen] = useState(false);
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+
+  // Selected Item Drawer & Delete Confirmation
+  const [selectedReservation, setSelectedReservation] = useState<
+    Reservation | null
+  >(null);
+  const [selectedPrintReservation, setSelectedPrintReservation] = useState<
+    Reservation | null
+  >(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<
     {
@@ -401,6 +239,431 @@ export default function App() {
     } | null
   >(null);
 
+  // Edit Drawer Form States
+  const [editReceiptNo, setEditReceiptNo] = useState("");
+  const [editPaymentMethod, setEditPaymentMethod] = useState("Nakit");
+  const [editPaidAmount, setEditPaidAmount] = useState<number | "">("");
+
+  useEffect(() => {
+    if (selectedReservation) {
+      setEditReceiptNo(selectedReservation.receiptNo || "");
+      setEditPaymentMethod(selectedReservation.paymentMethod || "Nakit");
+      setEditPaidAmount(selectedReservation.paid || 0);
+    }
+  }, [selectedReservation]);
+
+  // Mail Modal Preset State
+  const [mailPreset, setMailPreset] = useState({
+    recipient: "",
+    subject: "",
+    body: "",
+  });
+
+  const handleQuickMail = (r: Reservation) => {
+    const v = store.venues.find((x) => x.id === r.venueId);
+    const h = store.venues.flatMap((x) => x.halls).find((x) =>
+      x.id === r.hallId
+    );
+    const subject = `Etkinlik Rezervasyon Teyidi - ${r.customer} (${r.date})`;
+    const body = `Sayın ${r.customer},\n\n` +
+      `Mekan: ${v?.name || "-"}\n` +
+      `Salon: ${h?.name || "-"}\n` +
+      `Tarih: ${r.date} (${r.start} - ${r.end})\n` +
+      `Etkinlik Türü: ${r.eventType || "Genel"}\n` +
+      `Toplam Ücret: ${money(r.price)}\n` +
+      `Ödenen Peşinat: ${money(r.paid)}\n` +
+      `Kalan Bakiye: ${money(r.price - r.paid)}\n\n` +
+      `Detaylı bilgi için bizimle iletişime geçebilirsiniz.`;
+
+    setMailPreset({ recipient: "", subject, body });
+    setMailModalOpen(true);
+  };
+
+  const handleCopySMS = (r: Reservation) => {
+    const v = store.venues.find((x) => x.id === r.venueId);
+    const h = store.venues.flatMap((x) => x.halls).find((x) =>
+      x.id === r.hallId
+    );
+    const text =
+      `Sn. ${r.customer}, ${r.date} tarihindeki ${v?.name} - ${h?.name} ${r.eventType} salon kiralamanız kaydedilmiştir. Saat: ${r.start}-${r.end}. Toplam: ${
+        money(r.price)
+      }. Bilgi için: 0532 000 0000`;
+    navigator.clipboard.writeText(text);
+    toast.success("Özet mesaj metni panoya kopyalandı!");
+  };
+
+  // Google Drive Settings State
+  const [gdriveToken, setGdriveToken] = useState(() =>
+    localStorage.getItem("gdrive_token") || ""
+  );
+  const [gdriveFolderId, setGdriveFolderId] = useState(() =>
+    localStorage.getItem("gdrive_folder_id") || ""
+  );
+
+  // Draft Settings State
+  const [draftInstitutionName, setDraftInstitutionName] = useState(
+    institutionName,
+  );
+  const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(
+    institutionLogo,
+  );
+  const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
+
+  useEffect(() => {
+    setDraftInstitutionName(institutionName);
+    setDraftInstitutionLogo(institutionLogo);
+  }, [institutionName, institutionLogo]);
+
+  useEffect(() => {
+    setDraftTariffBasis(defaultTariffBasis);
+  }, [defaultTariffBasis]);
+
+  const handleSaveInstitutionSettings = () => {
+    setInstitutionName(draftInstitutionName);
+    setInstitutionLogo(draftInstitutionLogo);
+    toast.success("Kurumsal kimlik ve logo başarıyla kaydedildi.");
+  };
+
+  const handleCancelInstitutionSettings = () => {
+    setDraftInstitutionName(institutionName);
+    setDraftInstitutionLogo(institutionLogo);
+    toast.info("Değişiklikler iptal edildi.");
+  };
+
+  const handleSaveTariffSettings = () => {
+    setDefaultTariffBasis(draftTariffBasis);
+    toast.success("Resmi tarife ve karar dayanağı kaydedildi.");
+  };
+
+  const handleCancelTariffSettings = () => {
+    setDraftTariffBasis(defaultTariffBasis);
+    toast.info("Değişiklikler iptal edildi.");
+  };
+
+  const handleDraftLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Logo dosyası 2MB'dan büyük olamaz.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setDraftInstitutionLogo(reader.result as string);
+      toast.success(
+        "Logo seçildi. Değişiklikleri Kaydet butonuna basarak onaylayın.",
+      );
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveDraftLogo = () => {
+    setDraftInstitutionLogo("");
+    toast.info("Logo kaldırıldı.");
+  };
+
+  // Personnel Form State
+  const [personnelName, setPersonnelName] = useState("");
+  const [personnelTitle, setPersonnelTitle] = useState("");
+  const [personnelPhone, setPersonnelPhone] = useState("");
+  const [personnelEmail, setPersonnelEmail] = useState("");
+  const [personnelNotes, setPersonnelNotes] = useState("");
+
+  const handleCreatePersonnel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!personnelName.trim()) {
+      toast.error("Lütfen personel adını girin.");
+      return;
+    }
+    try {
+      await sqliteStore.addPersonnel({
+        name: personnelName.trim(),
+        title: personnelTitle.trim() || undefined,
+        phone: personnelPhone.trim() || undefined,
+        email: personnelEmail.trim() || undefined,
+        notes: personnelNotes.trim() || undefined,
+      });
+      setPersonnelName("");
+      setPersonnelTitle("");
+      setPersonnelPhone("");
+      setPersonnelEmail("");
+      setPersonnelNotes("");
+      toast.success("Yeni personel başarıyla eklendi.");
+    } catch (err: any) {
+      toast.error(`Personel ekleme hatası: ${err.message || err}`);
+    }
+  };
+
+  const removePersonnel = async (id: string) => {
+    try {
+      await sqliteStore.deletePersonnel(id);
+      toast.success("Personel kaydı silindi.");
+    } catch (err: any) {
+      toast.error(`Silme hatası: ${err.message || err}`);
+    }
+  };
+
+  // New Reservation Form State
+  const [resVenueId, setResVenueId] = useState("");
+  const [resHallId, setResHallId] = useState("");
+  const [resEventType, setResEventType] = useState(
+    allEventTypes[0] || "Düğün & Davet",
+  );
+  const [resCustomer, setResCustomer] = useState("");
+  const [resPhone, setResPhone] = useState("");
+  const [pricingMode, setPricingMode] = useState<PricingMode>("hourly");
+  const [resStart, setResStart] = useState("10:00");
+  const [resEnd, setResEnd] = useState("14:00");
+  const [resPrice, setResPrice] = useState<number | "">(0);
+  const [resPaid, setResPaid] = useState<number | "">(0);
+  const [resStatus, setResStatus] = useState("confirmed");
+  const [resReceiptNo, setResReceiptNo] = useState("");
+  const [resPaymentMethod, setResPaymentMethod] = useState("Nakit");
+  const [resDecisionInfo, setResDecisionInfo] = useState("");
+  const [resNote, setResNote] = useState("");
+
+  // Default Decision Info initialization
+  useEffect(() => {
+    if (!resDecisionInfo && defaultTariffBasis) {
+      setResDecisionInfo(defaultTariffBasis);
+    }
+  }, [defaultTariffBasis]);
+
+  // Price Calculation Logic
+  useEffect(() => {
+    if (!resVenueId || !resHallId) return;
+    const venue = store.venues.find((v) => v.id === resVenueId);
+    const hall = venue?.halls.find((h) => h.id === resHallId);
+    if (!hall) return;
+
+    if (pricingMode === "hourly") {
+      const hrs = hoursBetween(resStart, resEnd);
+      setResPrice(hrs * hall.hourlyPrice);
+    } else {
+      if (resPrice === 0 || resPrice === "") {
+        setResPrice(hall.hourlyPrice);
+      }
+    }
+  }, [resVenueId, resHallId, resStart, resEnd, pricingMode]);
+
+  // New Venue Form State
+  const [newVenueName, setNewVenueName] = useState("");
+  const [newVenueDistrict, setNewVenueDistrict] = useState("");
+  const [newVenueAddress, setNewVenueAddress] = useState("");
+  const [newVenueMapUrl, setNewVenueMapUrl] = useState("");
+  const [newVenueCategory, setNewVenueCategory] = useState("Kongre & Balo");
+  const [newVenueManagerName, setNewVenueManagerName] = useState("");
+  const [newVenueManagerTitle, setNewVenueManagerTitle] = useState(
+    "Tesis Sorumlusu",
+  );
+  const [newVenueManagerPhone, setNewVenueManagerPhone] = useState("");
+  const [newVenueColor, setNewVenueColor] = useState("#6366f1");
+
+  // New Hall Form State
+  const [targetVenueId, setTargetVenueId] = useState("");
+  const [newHallName, setNewHallName] = useState("");
+  const [newHallFloor, setNewHallFloor] = useState("1. Kat");
+  const [newHallCapacity, setNewHallCapacity] = useState(250);
+  const [newHallHourlyPrice, setNewHallHourlyPrice] = useState(1500);
+  const [newHallColor, setNewHallColor] = useState("#8b5cf6");
+
+  // Helpers
+  const hallById = (id: string) => {
+    for (const v of store.venues) {
+      const h = v.halls.find((x) => x.id === id);
+      if (h) return h;
+    }
+    return undefined;
+  };
+
+  // Calendar Days Grid Construction
+  const grid = useMemo(() => {
+    const year = cursor.getFullYear();
+    const month = cursor.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    let startDayOfWeek = firstDay.getDay() - 1;
+    if (startDayOfWeek === -1) startDayOfWeek = 6;
+
+    const days: (Date | null)[] = [];
+    for (let i = 0; i < startDayOfWeek; i++) {
+      days.push(null);
+    }
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      days.push(new Date(year, month, d));
+    }
+    return days;
+  }, [cursor]);
+
+  // Group Reservations by Date
+  const byDate = useMemo(() => {
+    const map = new Map<string, Reservation[]>();
+    for (const r of store.reservations) {
+      const list = map.get(r.date) ?? [];
+      list.push(r);
+      map.set(r.date, list);
+    }
+    return map;
+  }, [store.reservations]);
+
+  // Filtered Reservations
+  const filteredReservations = useMemo(() => {
+    return store.reservations.filter((r) => {
+      const matchesSearch = !searchTerm ||
+        r.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.phone.includes(searchTerm) ||
+        (r.eventType || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = eventTypeFilter === "all" ||
+        r.eventType === eventTypeFilter;
+      const matchesVenue = calendarVenueFilter === "all" ||
+        r.venueId === calendarVenueFilter;
+      return matchesSearch && matchesType && matchesVenue;
+    });
+  }, [store.reservations, searchTerm, eventTypeFilter, calendarVenueFilter]);
+
+  // Monthly Financial Statistics
+  const monthStats = useMemo(() => {
+    const curYear = cursor.getFullYear();
+    const curMonth = String(cursor.getMonth() + 1).padStart(2, "0");
+    const prefix = `${curYear}-${curMonth}`;
+
+    const monthRes = store.reservations.filter((r) =>
+      r.date.startsWith(prefix)
+    );
+    const totalCount = monthRes.length;
+    const totalRev = monthRes.reduce((acc, r) => acc + (r.price || 0), 0);
+    const totalPaid = monthRes.reduce((acc, r) => acc + (r.paid || 0), 0);
+    const totalHours = monthRes.reduce(
+      (acc, r) => acc + hoursBetween(r.start, r.end),
+      0,
+    );
+    const remaining = totalRev - totalPaid;
+
+    return { totalCount, totalRev, totalPaid, totalHours, remaining };
+  }, [store.reservations, cursor]);
+
+  // Customer Suggestions
+  const customerSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of store.reservations) {
+      if (r.customer) set.add(r.customer);
+    }
+    return Array.from(set);
+  }, [store.reservations]);
+
+  const phoneSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of store.reservations) {
+      if (r.phone) set.add(r.phone);
+    }
+    return Array.from(set);
+  }, [store.reservations]);
+
+  const decisionSuggestions = useMemo(() => {
+    const set = new Set<string>();
+    if (defaultTariffBasis) set.add(defaultTariffBasis);
+    for (const r of store.reservations) {
+      if (r.decisionInfo) set.add(r.decisionInfo);
+    }
+    return Array.from(set);
+  }, [store.reservations, defaultTariffBasis]);
+
+  // Form Handlers
+  const handleCreateReservation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resVenueId || !resHallId || !resCustomer || !resPhone) {
+      toast.error("Lütfen tüm zorunlu alanları doldurun.");
+      return;
+    }
+
+    try {
+      await sqliteStore.addReservation({
+        venueId: resVenueId,
+        hallId: resHallId,
+        eventType: resEventType,
+        customer: resCustomer,
+        phone: resPhone,
+        date: selectedDay,
+        start: resStart,
+        end: resEnd,
+        price: Number(resPrice) || 0,
+        paid: Number(resPaid) || 0,
+        status: resStatus,
+        receiptNo: resReceiptNo.trim() || undefined,
+        paymentMethod: resPaymentMethod || "Nakit",
+        decisionInfo: resDecisionInfo.trim() || undefined,
+        note: resNote.trim() || undefined,
+      });
+
+      setResCustomer("");
+      setResPhone("");
+      setResReceiptNo("");
+      setResNote("");
+      setResModalOpen(false);
+      toast.success(
+        "Etkinlik ve salon tahsis kaydı SQLite veritabanına eklendi!",
+      );
+    } catch (err: any) {
+      toast.error(`Kayıt hatası: ${err.message || err}`);
+    }
+  };
+
+  const handleCreateVenue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVenueName || !newVenueDistrict) {
+      toast.error("Lütfen mekan adı ve ilçe bilgisini girin.");
+      return;
+    }
+    try {
+      await sqliteStore.addVenue({
+        name: newVenueName,
+        district: newVenueDistrict,
+        category: newVenueCategory,
+        address: newVenueAddress.trim() || undefined,
+        mapUrl: newVenueMapUrl.trim() || undefined,
+        managerName: newVenueManagerName.trim() || undefined,
+        managerTitle: newVenueManagerTitle.trim() || undefined,
+        managerPhone: newVenueManagerPhone.trim() || undefined,
+        color: newVenueColor,
+      });
+      setNewVenueName("");
+      setNewVenueDistrict("");
+      setNewVenueAddress("");
+      setNewVenueMapUrl("");
+      setNewVenueManagerName("");
+      setNewVenueManagerPhone("");
+      setVenueModalOpen(false);
+      toast.success("Yeni mekan başarıyla tanımlandı!");
+    } catch (err: any) {
+      toast.error(`Mekan oluşturma hatası: ${err.message || err}`);
+    }
+  };
+
+  const handleCreateHall = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetVenueId || !newHallName) {
+      toast.error("Salon adı zorunludur.");
+      return;
+    }
+    try {
+      await sqliteStore.addHall({
+        venueId: targetVenueId,
+        name: newHallName,
+        capacity: Number(newHallCapacity),
+        hourlyPrice: Number(newHallHourlyPrice),
+        floor: newHallFloor,
+        color: newHallColor,
+      });
+      setNewHallName("");
+      setHallModalOpen(false);
+      toast.success("Salon mekana eklendi!");
+    } catch (err: any) {
+      toast.error(`Salon ekleme hatası: ${err.message || err}`);
+    }
+  };
+
+  // Delete Action Handlers
   const promptDelete = (
     type: "venue" | "hall" | "reservation",
     id: string,
@@ -413,4590 +676,621 @@ export default function App() {
 
   const handleExecuteDelete = async () => {
     if (!deleteTarget) return;
-    const { type, id, venueId } = deleteTarget;
-    setDeleteConfirmOpen(false);
-
-    if (type === "venue") {
-      const res = await removeVenue(id);
-      if (res?.success) {
-        toast.success("Mekan silindi.");
-      } else {
-        toast.error(res?.error || "Mekan silinemedi!");
+    try {
+      if (deleteTarget.type === "venue") {
+        await sqliteStore.deleteVenue(deleteTarget.id);
+        toast.success(`"${deleteTarget.title}" mekanı silindi.`);
+      } else if (deleteTarget.type === "hall" && deleteTarget.venueId) {
+        await sqliteStore.deleteHall(deleteTarget.venueId, deleteTarget.id);
+        toast.success(`"${deleteTarget.title}" salonu silindi.`);
+      } else if (deleteTarget.type === "reservation") {
+        await sqliteStore.deleteReservation(deleteTarget.id);
+        toast.success(`"${deleteTarget.title}" rezervasyonu silindi.`);
       }
-    } else if (type === "hall") {
-      const res = await removeHall(venueId!, id);
-      if (res?.success) {
-        toast.success("Salon silindi.");
-      } else {
-        toast.error(res?.error || "Salon silinemedi!");
-      }
-    } else if (type === "reservation") {
-      await removeReservation(id);
-      toast.success("Etkinlik rezervasyonu silindi.");
+    } catch (err: any) {
+      toast.error(`Silme hatası: ${err.message || err}`);
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeleteTarget(null);
     }
-
-    setDeleteTarget(null);
   };
 
-  // New Event/Reservation Form State
-  const [defaultTariffBasis, setDefaultTariffBasis] = useState<string>(() => {
+  // Status & Details Updates
+  const updateReservationStatus = async (
+    id: string,
+    status: "confirmed" | "option",
+  ) => {
+    await sqliteStore.updateReservationStatus(id, status);
+  };
+
+  const updateReservationDetails = async (
+    id: string,
+    details: Partial<Reservation>,
+  ) => {
+    await sqliteStore.updateReservationDetails(id, details);
+  };
+
+  if (isStartingFile) {
     return (
-      localStorage.getItem("venuekeeper-default-tariff-basis") ||
-      "Belediye Encümeni Kararı: 15/01/2026 - Karar No: 42 (2464 Sayılı Kanun Md. 97)"
-    );
-  });
-
-  // Institution & Base64 Logo State
-  const [institutionName, setInstitutionName] = useState<string>(() => {
-    return (
-      localStorage.getItem("venuekeeper-institution-name") ||
-      "VenueKeeper"
-    );
-  });
-  const [institutionLogo, setInstitutionLogo] = useState<string>(() => {
-    return localStorage.getItem("venuekeeper-institution-logo") || "";
-  });
-
-  // Draft States for Settings Forms
-  const [draftInstitutionName, setDraftInstitutionName] = useState(
-    institutionName,
-  );
-  const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(
-    institutionLogo,
-  );
-  const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
-
-  const decisionSuggestions = useMemo(() => {
-    const list = store.reservations.map((r) => r.decisionInfo).filter((
-      x,
-    ): x is string => Boolean(x));
-    return Array.from(new Set([defaultTariffBasis, ...list]));
-  }, [store.reservations, defaultTariffBasis]);
-
-  useEffect(() => {
-    setDraftInstitutionName(institutionName);
-    setDraftInstitutionLogo(institutionLogo);
-    setDraftTariffBasis(defaultTariffBasis);
-  }, [institutionName, institutionLogo, defaultTariffBasis]);
-
-  useEffect(() => {
-    if (window.electronAPI?.db?.getSetting) {
-      window.electronAPI.db.getSetting("company_name").then((val) => {
-        if (val) {
-          setInstitutionName(val);
-          setDraftInstitutionName(val);
-        }
-      });
-      window.electronAPI.db.getSetting("company_logo").then((val) => {
-        if (val) {
-          setInstitutionLogo(val);
-          setDraftInstitutionLogo(val);
-        }
-      });
-    }
-  }, [currentFilePath]);
-
-  const handleSaveInstitutionSettings = async () => {
-    setInstitutionName(draftInstitutionName);
-    setInstitutionLogo(draftInstitutionLogo);
-    localStorage.setItem("venuekeeper-institution-name", draftInstitutionName);
-    localStorage.setItem("venuekeeper-institution-logo", draftInstitutionLogo);
-    if (window.electronAPI?.db?.setSetting) {
-      await window.electronAPI.db.setSetting(
-        "company_name",
-        draftInstitutionName,
-      );
-      await window.electronAPI.db.setSetting(
-        "company_logo",
-        draftInstitutionLogo,
-      );
-    }
-    toast.success("Kurumsal kimlik ve logo bilgileri veritabanına kaydedildi!");
-  };
-
-  const handleCancelInstitutionSettings = () => {
-    setDraftInstitutionName(institutionName);
-    setDraftInstitutionLogo(institutionLogo);
-    toast.info("Değişiklikler iptal edildi.");
-  };
-
-  const handleSaveTariffSettings = () => {
-    setDefaultTariffBasis(draftTariffBasis);
-    localStorage.setItem("venuekeeper-default-tariff-basis", draftTariffBasis);
-    toast.success("Resmi tarife ve karar dayanağı kaydedildi!");
-  };
-
-  const handleCancelTariffSettings = () => {
-    setDraftTariffBasis(defaultTariffBasis);
-    toast.info("Değişiklikler iptal edildi.");
-  };
-
-  const handleDraftLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Logo dosyası 2MB'tan küçük olmalıdır.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64Str = event.target?.result as string;
-        if (base64Str) {
-          setDraftInstitutionLogo(base64Str);
-          toast.info(
-            "Logo önizlemeye yüklendi. Kaydet butonuna basarak onaylayabilirsiniz.",
-          );
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleRemoveDraftLogo = () => {
-    setDraftInstitutionLogo("");
-    toast.info("Logo önizlemeden kaldırıldı.");
-  };
-  const [resVenueId, setResVenueId] = useState("");
-  const [resHallId, setResHallId] = useState("");
-  const [resStart, setResStart] = useState("13:00");
-  const [resEnd, setResEnd] = useState("17:00");
-  const [resCustomer, setResCustomer] = useState("");
-  const [resPhone, setResPhone] = useState("");
-  const [resEventType, setResEventType] = useState("Düğün & Nişan");
-  const [resPrice, setResPrice] = useState<number | "">("");
-  const [resPaid, setResPaid] = useState<number | "">(0);
-  const [resNote, setResNote] = useState("");
-  const [resDecisionInfo, setResDecisionInfo] = useState(defaultTariffBasis);
-  const [resStatus, setResStatus] = useState<string>("confirmed"); // "option" | "confirmed"
-  const [resReceiptNo, setResReceiptNo] = useState("");
-  const [resPaymentMethod, setResPaymentMethod] = useState("Nakit");
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-
-  // Edit receipt & payment details state for selected reservation panel
-  const [editPaidAmount, setEditPaidAmount] = useState<number | "">("");
-  const [editReceiptNo, setEditReceiptNo] = useState("");
-  const [editPaymentMethod, setEditPaymentMethod] = useState("Nakit");
-  const [editNote, setEditNote] = useState("");
-
-  const [pricingMode, setPricingMode] = useState<"hourly" | "daily">("hourly");
-  const [gdriveToken, setGdriveToken] = useState(() => localStorage.getItem("gdrive_token") || "");
-  const [gdriveFolderId, setGdriveFolderId] = useState(() => localStorage.getItem("gdrive_folder_id") || "");
-
-  useEffect(() => {
-    if (selectedReservation) {
-      setEditPaidAmount(selectedReservation.paid);
-      setEditReceiptNo(selectedReservation.receiptNo || "");
-      setEditPaymentMethod(selectedReservation.paymentMethod || "Nakit");
-      setEditNote(selectedReservation.note || "");
-    }
-  }, [selectedReservation]);
-
-  // New Venue Form State
-  const [newVenueName, setNewVenueName] = useState("");
-  const [newVenueDistrict, setNewVenueDistrict] = useState("");
-  const [newVenueCategory, setNewVenueCategory] = useState("Kongre & Balo");
-  const [newVenueAddress, setNewVenueAddress] = useState("");
-  const [newVenueMapUrl, setNewVenueMapUrl] = useState("");
-  const [newVenueManagerName, setNewVenueManagerName] = useState("");
-  const [newVenueManagerPhone, setNewVenueManagerPhone] = useState("");
-  const [newVenueManagerTitle, setNewVenueManagerTitle] = useState("Tesis Sorumlusu");
-
-  const [newVenueColor, setNewVenueColor] = useState("#6366f1");
-
-  // Personnel Modal State
-  const [personnelModalOpen, setPersonnelModalOpen] = useState(false);
-  const [personnelName, setPersonnelName] = useState("");
-  const [personnelTitle, setPersonnelTitle] = useState("Tesis Sorumlusu");
-  const [personnelPhone, setPersonnelPhone] = useState("");
-  const [personnelEmail, setPersonnelEmail] = useState("");
-  const [personnelNotes, setPersonnelNotes] = useState("");
-
-  // New Hall Form State
-  const [targetVenueId, setTargetVenueId] = useState("");
-  const [newHallName, setNewHallName] = useState("");
-  const [newHallFloor, setNewHallFloor] = useState("");
-  const [newHallCapacity, setNewHallCapacity] = useState(300);
-  const [newHallHourlyPrice, setNewHallHourlyPrice] = useState(1500);
-  const [newHallColor, setNewHallColor] = useState("#8b5cf6");
-
-  const handleOpenFileDialog = async () => {
-    if (window.electronAPI?.openFileDialog) {
-      const res = await window.electronAPI.openFileDialog();
-      if (res?.filePath) {
-        toast.success(
-          `Veritabanı dosyası açıldı: ${res.filePath.split(/[\\/]/).pop()}`,
-        );
-      }
-    } else {
-      toast.info(
-        "Dosya açma özelliği masaüstü Electron uygulamasında kullanılabilir.",
-      );
-    }
-  };
-
-  const handleCreateNewDatabase = async () => {
-    if (window.electronAPI?.saveFileDialog) {
-      const path = await window.electronAPI.saveFileDialog({
-        defaultName: "yeni-mekan-veritabani.vke",
-      });
-      if (path) {
-        toast.success(
-          `Yeni boş veritabanı projesi oluşturuldu: ${
-            path.split(/[\\/]/).pop()
-          }`,
-        );
-      }
-    } else {
-      toast.info(
-        "Yeni dosya oluşturma özelliği masaüstü Electron uygulamasında kullanılabilir.",
-      );
-    }
-  };
-
-  const halls: HallInfo[] = useMemo(
-    () =>
-      store.venues.flatMap((v) =>
-        v.halls.map((h) => ({ ...h, venueId: v.id, venueName: v.name }))
-      ),
-    [store.venues],
-  );
-  const hallById = (id: string) => halls.find((h) => h.id === id);
-
-  const filteredReservations = useMemo(() => {
-    return store.reservations.filter((r) => {
-      const matchVenue = venueFilter === "all" || r.venueId === venueFilter;
-      const matchType = eventTypeFilter === "all" ||
-        r.eventType === eventTypeFilter;
-      const matchSearch = !searchQuery.trim() ||
-        r.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        r.phone.includes(searchQuery) ||
-        r.date.includes(searchQuery);
-      return matchVenue && matchType && matchSearch;
-    });
-  }, [store.reservations, venueFilter, eventTypeFilter, searchQuery]);
-
-  const byDate = useMemo(() => {
-    const map = new Map<string, Reservation[]>();
-    for (const r of filteredReservations) {
-      map.set(r.date, [...(map.get(r.date) ?? []), r]);
-    }
-    for (const [, list] of map) {
-      list.sort((a, b) => toMin(a.start) - toMin(b.start));
-    }
-    return map;
-  }, [filteredReservations]);
-
-  const grid = useMemo(() => {
-    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    const offset = (first.getDay() + 6) % 7;
-    const days: (Date | null)[] = Array.from({ length: offset }, () => null);
-    const total = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 0)
-      .getDate();
-    for (let i = 1; i <= total; i++) {
-      days.push(new Date(cursor.getFullYear(), cursor.getMonth(), i));
-    }
-    while (days.length % 7 !== 0) days.push(null);
-    return days;
-  }, [cursor]);
-
-  const monthStats = useMemo(() => {
-    const prefix = `${cursor.getFullYear()}-${
-      String(cursor.getMonth() + 1).padStart(2, "0")
-    }`;
-    const list = filteredReservations.filter((r) => r.date.startsWith(prefix));
-    const totalCount = list.length;
-    const totalRev = list.reduce((acc, curr) => acc + curr.price, 0);
-    const totalPaid = list.reduce((acc, curr) => acc + curr.paid, 0);
-    const totalHours = list.reduce(
-      (acc, curr) => acc + hoursBetween(curr.start, curr.end),
-      0,
-    );
-    return {
-      totalCount,
-      totalRev,
-      totalPaid,
-      totalHours,
-      remaining: totalRev - totalPaid,
-    };
-  }, [filteredReservations, cursor]);
-
-  useEffect(() => {
-    if (resHallId && resStart && resEnd) {
-      const h = hallById(resHallId);
-      if (h) {
-        if (pricingMode === "hourly") {
-          const hrs = hoursBetween(resStart, resEnd);
-          setResPrice(hrs * h.hourlyPrice);
-        } else {
-          // In daily/seans/indi-bindi flat rate mode, do not multiply by hours!
-          if (resPrice === "" || resPrice === 0) {
-            setResPrice(h.hourlyPrice);
-          }
-        }
-      }
-    }
-  }, [resHallId, resStart, resEnd, pricingMode, halls]);
-
-  const handleCreateReservation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (
-      !resVenueId || !resHallId || !resCustomer || !resPhone || resPrice === ""
-    ) {
-      toast.error("Lütfen zorunlu alanları doldurun.");
-      return;
-    }
-
-    const res = await addReservation({
-      venueId: resVenueId,
-      hallId: resHallId,
-      date: selectedDay,
-      start: resStart,
-      end: resEnd,
-      customer: resCustomer,
-      phone: resPhone,
-      eventType: resEventType,
-      price: Number(resPrice),
-      paid: Number(resPaid) || 0,
-      note: resNote,
-      decisionInfo: resDecisionInfo,
-      status: resStatus,
-      receiptNo: resReceiptNo,
-      paymentMethod: resPaymentMethod,
-    });
-
-    if (res.success) {
-      toast.success(
-        resStatus === "option"
-          ? "Opsiyonlu (şerhli) etkinlik kaydı oluşturuldu."
-          : "Kesinleşmiş etkinlik kaydı oluşturuldu.",
-      );
-      setResModalOpen(false);
-      setResCustomer("");
-      setResPhone("");
-      setResNote("");
-      setResReceiptNo("");
-      setResStatus("confirmed");
-    } else {
-      toast.error(res.error || "Çakışma Hatası!");
-    }
-  };
-
-  const handleCreateVenue = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newVenueName || !newVenueDistrict) {
-      toast.error("Mekan adı ve konumu zorunludur.");
-      return;
-    }
-    await addVenue({
-      name: newVenueName,
-      district: newVenueDistrict,
-      category: newVenueCategory,
-      address: newVenueAddress,
-      mapUrl: newVenueMapUrl,
-      managerName: newVenueManagerName,
-      managerPhone: newVenueManagerPhone,
-      managerTitle: newVenueManagerTitle,
-      color: newVenueColor,
-    });
-    toast.success("Yeni mekan ve sorumlu personel bilgileri tanımlandı.");
-    setNewVenueName("");
-    setNewVenueDistrict("");
-    setNewVenueAddress("");
-    setNewVenueMapUrl("");
-    setNewVenueManagerName("");
-    setNewVenueManagerPhone("");
-    setVenueModalOpen(false);
-  };
-
-  const handleCreatePersonnel = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!personnelName) {
-      toast.error("Personel ad soyad zorunludur.");
-      return;
-    }
-    await addPersonnel({
-      name: personnelName,
-      title: personnelTitle,
-      phone: personnelPhone,
-      email: personnelEmail,
-      notes: personnelNotes,
-    });
-    toast.success("Yeni personel kadroya eklendi.");
-    setPersonnelName("");
-    setPersonnelPhone("");
-    setPersonnelEmail("");
-    setPersonnelNotes("");
-    setPersonnelModalOpen(false);
-  };
-
-  const handleCreateHall = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!targetVenueId || !newHallName) {
-      toast.error("Mekan seçimi ve salon adı zorunludur.");
-      return;
-    }
-    await addHall(targetVenueId, {
-      name: newHallName,
-      floor: newHallFloor || "Zemin Kat",
-      capacity: Number(newHallCapacity) || 100,
-      hourlyPrice: Number(newHallHourlyPrice) || 1000,
-      color: newHallColor,
-    });
-    toast.success("Salon eklendi.");
-    setNewHallName("");
-    setHallModalOpen(false);
-  };
-
-  const handleCopySMS = (res: Reservation) => {
-    const h = hallById(res.hallId);
-    const v = store.venues.find((x) => x.id === res.venueId);
-    let template = localStorage.getItem("venue-keeper-copy-template") || "";
-    if (!template) {
-      template =
-        `Sayın {CUSTOMER},\n{VENUE} - {HALL} için {DATE} tarihinde ({START} - {END}) rezervasyonunuz alınmıştır.\nEtkinlik: {EVENT_TYPE}\nToplam: {PRICE}\nÖdenen: {PAID}\nKalan: {REMAINING}`;
-    }
-
-    const msg = template
-      .replace(/{CUSTOMER}/g, res.customer)
-      .replace(/{VENUE}/g, v?.name || "")
-      .replace(/{HALL}/g, h?.name || "")
-      .replace(/{DATE}/g, res.date)
-      .replace(/{START}/g, res.start)
-      .replace(/{END}/g, res.end)
-      .replace(/{EVENT_TYPE}/g, res.eventType || "Etkinlik")
-      .replace(/{PRICE}/g, money(res.price))
-      .replace(/{PAID}/g, money(res.paid))
-      .replace(/{REMAINING}/g, money(res.price - res.paid));
-
-    navigator.clipboard.writeText(msg);
-    toast.success("WhatsApp / SMS bildirim metni kopyalandı!");
-  };
-
-  const handleQuickMail = (res: Reservation) => {
-    const h = hallById(res.hallId);
-    const v = store.venues.find((x) => x.id === res.venueId);
-    setMailPreset({
-      recipient: "",
-      subject: `${v?.name} - ${res.eventType} Etkinlik Bilgilendirmesi`,
-      body:
-        `Sayın ${res.customer},\n\n${v?.name} bünyesindeki ${h?.name} salonunda ${res.date} tarihinde (${res.start} - ${res.end}) saatleri arasında düzenlenecek ${res.eventType} etkinliğinize ilişkin kayıt bilgileriniz aşağıdadır:\n\nToplam Ücret: ${
-          money(res.price)
-        }\nÖdenen Tutar: ${money(res.paid)}\nKalan Bakiye: ${
-          money(res.price - res.paid)
-        }\n\nBizi tercih ettiğiniz için teşekkür ederiz.`,
-    });
-    setMailModalOpen(true);
-  };
-
-  if (!currentFilePath) {
-    return (
-      <div
-        className={`min-h-screen flex flex-col font-sans ${
-          theme === "dark"
-            ? "bg-slate-950 text-slate-100"
-            : "bg-slate-50 text-slate-900"
-        }`}
-      >
-        <Toaster position="top-right" theme={theme} richColors />
-        <WelcomeStartScreen
-          recentFiles={recentFiles}
-          onOpenRecent={handleOpenRecent}
-          onCreateNew={handleCreateNewDatabase}
-          onOpenDialog={handleOpenFileDialog}
-          onClearRecent={handleClearRecent}
-          theme={theme}
-        />
-      </div>
+      <WelcomeStartScreen
+        theme={theme}
+        recentFiles={recentFiles}
+        onOpenRecent={(p) => openFile(p)}
+        onCreateNew={() => createFile()}
+        onOpenDialog={() => openFile()}
+        onClearRecent={() => {
+          localStorage.removeItem("recent_vke_files");
+          fetchRecentFiles();
+        }}
+      />
     );
   }
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${
+      className={`min-h-screen flex flex-col font-sans transition-colors ${
         theme === "dark"
-          ? "bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white"
-          : "bg-slate-50 text-slate-900 selection:bg-indigo-600 selection:text-white"
+          ? "bg-slate-950 text-slate-100 dark"
+          : "bg-slate-50 text-slate-900 light"
       }`}
     >
-      <Toaster position="top-right" theme={theme} richColors />
-      <UpdateBanner />
+      <Toaster position="top-right" richColors />
 
-      {/* Main Responsive Grid Layout */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Unified Header & Frameless Window Bar */}
-        <header
-          className={`h-12 px-4 select-none flex items-center justify-between gap-4 backdrop-blur-md sticky top-0 z-40 border-b transition-colors ${
-            theme === "dark"
-              ? "bg-slate-950/95 border-slate-800/90 text-slate-100"
-              : "bg-white/95 border-slate-200 text-slate-900 shadow-sm"
-          }`}
-          style={{ WebkitAppRegion: "drag" } as any}
-        >
-          <div
-            className="flex items-center gap-3"
-            style={{ WebkitAppRegion: "no-drag" } as any}
-          >
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className={`md:hidden p-1.5 rounded-lg ${
-                theme === "dark"
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <MenuIcon className="h-5 w-5" />
-            </button>
-
-            {currentFilePath && (
-              <span
-                className={`text-[10px] font-mono px-2 py-0.5 rounded border max-w-[200px] truncate hidden md:inline-block ${
-                  theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-indigo-400"
-                    : "bg-slate-100 border-slate-300 text-indigo-700 font-semibold"
-                }`}
-                title={currentFilePath}
-              >
-                📁 {currentFilePath.split(/[\\/]/).pop()}
-              </span>
-            )}
-          </div>
-
-          {/* Search Input */}
-          <div
-            className="flex-1 max-w-md mx-2 hidden sm:block"
-            style={{ WebkitAppRegion: "no-drag" } as any}
-          >
-            <div className="relative">
-              <Search
-                className={`h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${
-                  theme === "dark" ? "text-slate-500" : "text-slate-400"
-                }`}
-              />
-              <Input
-                placeholder="Müşteri adı, telefon veya tarih ara..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`pl-8 text-xs h-8 rounded-lg ${
-                  theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                    : "bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Actions & Native Window Controls */}
-          <div
-            className="flex items-center gap-2"
-            style={{ WebkitAppRegion: "no-drag" } as any}
-          >
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={toggleTheme}
-              className={`h-7.5 w-7.5 p-0 rounded-full border ${
-                theme === "dark"
-                  ? "bg-slate-900 border-slate-800 text-amber-400 hover:text-amber-300 hover:bg-slate-800"
-                  : "bg-slate-100 border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-200"
-              }`}
-              title={theme === "dark" ? "Açık Temaya Geç" : "Koyu Temaya Geç"}
-            >
-              {theme === "dark"
-                ? <Sun className="h-3.5 w-3.5" />
-                : <Moon className="h-3.5 w-3.5" />}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPersonnelModalOpen(true)}
-              className={`text-xs h-7.5 font-semibold px-2.5 ${
-                theme === "dark"
-                  ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
-                  : "bg-white border-slate-300 text-slate-800 hover:bg-slate-100"
-              }`}
-              title="Kurum Personel Kadrosu ve Tesis Sorumluları"
-            >
-              <Users className="h-3.5 w-3.5 mr-1 text-sky-400" /> Personel Kadrosu
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={() => {
-                if (store.venues.length === 0) {
-                  toast.error("Önce mekan/tesis eklemelisiniz.");
-                  setActiveSection("venues");
-                  return;
-                }
-                const firstV = store.venues[0];
-                setResVenueId(firstV.id);
-                if (firstV.halls.length > 0) setResHallId(firstV.halls[0].id);
-                setResModalOpen(true);
-              }}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-7.5 font-semibold px-3 shadow-sm"
-            >
-              <Plus className="h-3.5 w-3.5 mr-1" /> Yeni Etkinlik
-            </Button>
-
-            {/* Native Window Controls */}
-            <div
-              className={`flex items-center ml-1.5 border-l pl-1.5 ${
-                theme === "dark" ? "border-slate-800" : "border-slate-300"
-              }`}
-            >
-              <button
-                onClick={() => window.electronAPI?.windowControls?.minimize()}
-                className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
-                  theme === "dark"
-                    ? "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-                    : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-                }`}
-                title="Simge Durumuna Küçült"
-              >
-                <Minus className="h-3.5 w-3.5" />
-              </button>
-              <button
-                onClick={() => window.electronAPI?.windowControls?.maximize()}
-                className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
-                  theme === "dark"
-                    ? "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
-                    : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-                }`}
-                title="Tam Ekran"
-              >
-                <Square className="h-3 w-3" />
-              </button>
-              <button
-                onClick={() => window.electronAPI?.windowControls?.close()}
-                className="h-7 w-7 flex items-center justify-center rounded hover:bg-rose-600 hover:text-white transition-colors"
-                title="Kapat"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Content Body & Sidebar Container */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar Navigation */}
-          <aside
-            className={`fixed inset-y-0 left-0 z-50 flex flex-col transform transition-all duration-200 ease-in-out md:relative md:translate-x-0 ${
-              sidebarCollapsed ? "w-16" : "w-64"
-            } ${
+      {/* Header Bar */}
+      <header
+        className={`sticky top-0 z-40 border-b flex items-center justify-between px-4 py-2.5 transition-colors ${
+          theme === "dark"
+            ? "bg-slate-900/90 border-slate-800 backdrop-blur-md"
+            : "bg-white/90 border-slate-200 backdrop-blur-md shadow-xs"
+        }`}
+      >
+        {/* Left: Brand & Sidebar Toggle */}
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`h-8 w-8 ${
               theme === "dark"
-                ? "bg-slate-900/95 border-r border-slate-800/90 text-slate-100"
-                : "bg-white/95 border-r border-slate-200 text-slate-900 shadow-sm"
-            } ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+                ? "text-slate-400 hover:text-slate-100"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+            title={sidebarCollapsed ? "Menüyü Genişlet" : "Menüyü Daralt"}
           >
-            {/* Brand Header */}
-            <div
-              className={`p-3.5 border-b flex items-center ${
-                sidebarCollapsed ? "justify-center" : "justify-between"
-              } ${theme === "dark" ? "border-slate-800" : "border-slate-200"}`}
-            >
-              {!sidebarCollapsed
-                ? (
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`h-9 w-9 rounded-xl overflow-hidden border flex items-center justify-center shrink-0 ${
-                      theme === "dark" ? "bg-slate-900 border-slate-700" : "bg-indigo-50/80 border-indigo-200/80 shadow-xs"
-                    }`}>
-                      {institutionLogo ? (
-                        <img
-                          src={institutionLogo}
-                          alt={institutionName || "Kurum Logosu"}
-                          className="h-full w-full object-contain p-0.5"
-                        />
-                      ) : (
-                        <img
-                          src="/app-logo.png"
-                          alt="VenueKeeper Logo"
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="truncate">
-                      <h1
-                        className={`text-xs font-bold flex items-center gap-1 truncate ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                        title={institutionName || "İşletme Takip App Pro"}
-                      >
-                        {institutionName ? (
-                          <span className="truncate">{institutionName}</span>
-                        ) : (
-                          <>
-                            İşletme Takip{" "}
-                            <Badge className="bg-indigo-600 text-white text-[9px] uppercase font-mono px-1 py-0 shrink-0">
-                              PRO
-                            </Badge>
-                          </>
-                        )}
-                      </h1>
-                      <p
-                        className={`text-[10px] truncate ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-500"
-                        }`}
-                      >
-                        Mekan, Tesis & Salon Takip
-                      </p>
-                    </div>
-                  </div>
-                )
-                : (
-                  <div
-                    className={`h-9 w-9 rounded-xl overflow-hidden border flex items-center justify-center shrink-0 ${
-                      theme === "dark" ? "bg-slate-900 border-slate-700" : "bg-indigo-50/80 border-indigo-200/80 shadow-xs"
-                    }`}
-                    title={institutionName || "İşletme Takip App Pro"}
-                  >
-                    {institutionLogo ? (
-                      <img
-                        src={institutionLogo}
-                        alt="Kurum Logosu"
-                        className="h-full w-full object-contain p-0.5"
-                      />
-                    ) : (
-                      <img
-                        src="/app-logo.png"
-                        alt="App Logo"
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-                  </div>
-                )}
+            {sidebarCollapsed
+              ? <PanelLeftOpen className="h-4 w-4" />
+              : <PanelLeftClose className="h-4 w-4" />}
+          </Button>
 
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={toggleSidebarCollapsed}
-                  className={`hidden md:flex p-1.5 rounded-lg transition-colors ${
-                    theme === "dark"
-                      ? "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                  }`}
-                  title={sidebarCollapsed
-                    ? "Menüyü Genişlet"
-                    : "Menüyü Daralt (İkon Modu)"}
-                >
-                  {sidebarCollapsed
-                    ? <ChevronRight className="h-4 w-4" />
-                    : <ChevronLeft className="h-4 w-4" />}
-                </button>
-
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className={`md:hidden p-1 rounded-lg ${
-                    theme === "dark"
-                      ? "text-slate-400 hover:text-slate-200"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Navigation Items */}
-            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-              {[
-                {
-                  id: "dashboard",
-                  label: "Gösterge Paneli",
-                  icon: LayoutDashboard,
-                },
-                {
-                  id: "calendar",
-                  label: "Takvim & Etkinlikler",
-                  icon: CalendarIcon,
-                },
-                {
-                  id: "venues",
-                  label: `Mekanlar & Salonlar (${store.venues.length})`,
-                  icon: Building2,
-                },
-                {
-                  id: "events",
-                  label: `Etkinlik Listesi (${store.reservations.length})`,
-                  icon: Layers,
-                },
-                {
-                  id: "personnel",
-                  label: `Personel Kadrosu (${store.personnel?.length || 0})`,
-                  icon: Users,
-                },
-                { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
-                { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
-              ].map((item) => {
-                const IconComp = item.icon;
-                const isActive = activeSection === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id as NavSection);
-                      setSidebarOpen(false);
-                    }}
-                    title={item.label}
-                    className={`w-full flex items-center ${
-                      sidebarCollapsed
-                        ? "justify-center px-2 py-3"
-                        : "gap-3 px-3.5 py-2.5"
-                    } rounded-xl text-xs font-medium transition-all ${
-                      isActive
-                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold"
-                        : theme === "dark"
-                        ? "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`}
-                  >
-                    <IconComp
-                      className={sidebarCollapsed
-                        ? "h-5 w-5 shrink-0"
-                        : "h-4 w-4 shrink-0"}
-                    />
-                    {!sidebarCollapsed && (
-                      <span className="truncate">{item.label}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
-
-          {/* Main Content Area */}
-          <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-            {/* Section Body */}
-            <div className="p-6 max-w-7xl w-full mx-auto space-y-6 flex-1">
-              {/* ==================================================================== */}
-              {/* 1. DASHBOARD SECTION                                                 */}
-              {/* ==================================================================== */}
-              {activeSection === "dashboard" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2
-                        className={`text-xl font-bold ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        Etkinlik & Mekan Gösterge Paneli
-                      </h2>
-                      <p
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Aylık genel doluluk, gelir dökümü ve yaklaşan
-                        rezervasyonlar.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Metrics */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <Card
-                      className={theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"}
-                    >
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <p
-                            className={`text-xs font-medium ${
-                              theme === "dark"
-                                ? "text-slate-400"
-                                : "text-slate-600"
-                            }`}
-                          >
-                            Toplam Kayıtlı Mekan
-                          </p>
-                          <p
-                            className={`text-2xl font-bold mt-1 ${
-                              theme === "dark"
-                                ? "text-slate-100"
-                                : "text-slate-900"
-                            }`}
-                          >
-                            {store.venues.length}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
-                          <Building2 className="h-5 w-5" />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className={theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"}
-                    >
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <p
-                            className={`text-xs font-medium ${
-                              theme === "dark"
-                                ? "text-slate-400"
-                                : "text-slate-600"
-                            }`}
-                          >
-                            Bu Ayki Etkinlikler
-                          </p>
-                          <p
-                            className={`text-2xl font-bold mt-1 ${
-                              theme === "dark"
-                                ? "text-slate-100"
-                                : "text-slate-900"
-                            }`}
-                          >
-                            {monthStats.totalCount}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-sky-500/10 rounded-xl text-sky-400">
-                          <CalendarIcon className="h-5 w-5" />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className={theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"}
-                    >
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <p
-                            className={`text-xs font-medium ${
-                              theme === "dark"
-                                ? "text-slate-400"
-                                : "text-slate-600"
-                            }`}
-                          >
-                            Aylık Toplam Ciro
-                          </p>
-                          <p className="text-2xl font-bold text-emerald-500 mt-1">
-                            {money(monthStats.totalRev)}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
-                          <DollarSign className="h-5 w-5" />
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card
-                      className={theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"}
-                    >
-                      <CardContent className="p-4 flex items-center justify-between">
-                        <div>
-                          <p
-                            className={`text-xs font-medium ${
-                              theme === "dark"
-                                ? "text-slate-400"
-                                : "text-slate-600"
-                            }`}
-                          >
-                            Tahsil Edilmeyi Bekleyen
-                          </p>
-                          <p className="text-2xl font-bold text-amber-500 mt-1">
-                            {money(monthStats.remaining)}
-                          </p>
-                        </div>
-                        <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
-                          <Clock className="h-5 w-5" />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Upcoming Events Card */}
-                  <Card
-                    className={theme === "dark"
-                      ? "bg-slate-900/80 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"}
-                  >
-                    <CardHeader
-                      className={`pb-3 border-b flex flex-row items-center justify-between ${
-                        theme === "dark"
-                          ? "border-slate-800"
-                          : "border-slate-200"
-                      }`}
-                    >
-                      <div>
-                        <CardTitle
-                          className={`text-base font-bold ${
-                            theme === "dark"
-                              ? "text-slate-100"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          Yaklaşan Etkinlikler
-                        </CardTitle>
-                        <CardDescription
-                          className={`text-xs ${
-                            theme === "dark"
-                              ? "text-slate-400"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          SQLite veritabanından alınan aktif kayıtlar.
-                        </CardDescription>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setActiveSection("calendar")}
-                        className="text-indigo-500 hover:text-indigo-600 text-xs font-semibold"
-                      >
-                        Takvimde Gör
-                      </Button>
-                    </CardHeader>
-
-                    <CardContent className="p-4 space-y-3">
-                      {store.reservations.length === 0
-                        ? (
-                          <p
-                            className={`text-xs py-6 text-center ${
-                              theme === "dark"
-                                ? "text-slate-500"
-                                : "text-slate-400"
-                            }`}
-                          >
-                            Henüz etkinlik kaydı bulunmuyor.
-                          </p>
-                        )
-                        : (
-                          store.reservations.slice(0, 5).map((r) => {
-                            const h = hallById(r.hallId);
-                            const v = store.venues.find((x) =>
-                              x.id === r.venueId
-                            );
-
-                            return (
-                              <div
-                                key={r.id}
-                                className={`p-3 rounded-xl border flex flex-wrap items-center justify-between gap-3 text-xs ${
-                                  theme === "dark"
-                                    ? "bg-slate-950 border-slate-800 text-slate-200"
-                                    : "bg-slate-50 border-slate-200 text-slate-800"
-                                }`}
-                              >
-                                <div className="space-y-0.5">
-                                  <div className="flex items-center gap-2">
-                                    <span
-                                      className={`font-bold ${
-                                        theme === "dark"
-                                          ? "text-slate-100"
-                                          : "text-slate-900"
-                                      }`}
-                                    >
-                                      {r.customer}
-                                    </span>
-                                    <Badge
-                                      variant="outline"
-                                      className="border-indigo-500/30 text-indigo-500 text-[10px]"
-                                    >
-                                      {r.eventType || "Etkinlik"}
-                                    </Badge>
-                                  </div>
-                                  <p
-                                    className={`text-[11px] ${
-                                      theme === "dark"
-                                        ? "text-slate-400"
-                                        : "text-slate-600"
-                                    }`}
-                                  >
-                                    {v?.name} •{" "}
-                                    <span
-                                      className={`font-semibold ${
-                                        theme === "dark"
-                                          ? "text-slate-300"
-                                          : "text-slate-800"
-                                      }`}
-                                    >
-                                      {h?.name}
-                                    </span>
-                                  </p>
-                                </div>
-
-                                <div
-                                  className={`flex items-center gap-4 ${
-                                    theme === "dark"
-                                      ? "text-slate-300"
-                                      : "text-slate-700"
-                                  }`}
-                                >
-                                  <div className="text-right font-mono">
-                                    <div>{r.date}</div>
-                                    <div
-                                      className={`text-[11px] ${
-                                        theme === "dark"
-                                          ? "text-slate-400"
-                                          : "text-slate-500"
-                                      }`}
-                                    >
-                                      {r.start} - {r.end}
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="font-bold text-emerald-500">
-                                      {money(r.price)}
-                                    </div>
-                                    <div
-                                      className={`text-[11px] ${
-                                        theme === "dark"
-                                          ? "text-slate-400"
-                                          : "text-slate-500"
-                                      }`}
-                                    >
-                                      {r.price - r.paid > 0
-                                        ? `Kalan: ${money(r.price - r.paid)}`
-                                        : "Ödendi"}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                    </CardContent>
-                  </Card>
+          <div className="flex items-center gap-2">
+            {institutionLogo
+              ? (
+                <img
+                  src={institutionLogo}
+                  alt="Logo"
+                  className="h-7 w-7 object-contain rounded"
+                />
+              )
+              : (
+                <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                  VK
                 </div>
               )}
-
-              {/* ==================================================================== */}
-              {/* 2. CALENDAR SECTION                                                  */}
-              {/* ==================================================================== */}
-              {activeSection === "calendar" && (
-                <div className="space-y-4">
-                  {/* Calendar Toolbar */}
-                  <div
-                    className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-4 transition-colors ${
-                      theme === "dark"
-                        ? "bg-slate-900/80 border-slate-800"
-                        : "bg-white border-slate-200 shadow-sm"
-                    }`}
-                  >
-                    {/* Left: Detailed Month & Year Navigator with Quick Jump */}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={`h-8 w-8 ${
-                          theme === "dark"
-                            ? "border-slate-800 text-slate-300 hover:bg-slate-800"
-                            : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                        }`}
-                        onClick={() =>
-                          setCursor(
-                            new Date(
-                              cursor.getFullYear(),
-                              cursor.getMonth() - 1,
-                              1,
-                            ),
-                          )}
-                        title="Önceki Ay"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-
-                      {/* Month Dropdown */}
-                      <Select
-                        value={String(cursor.getMonth())}
-                        onValueChange={(val) =>
-                          setCursor(
-                            new Date(cursor.getFullYear(), Number(val), 1),
-                          )}
-                      >
-                        <SelectTrigger
-                          className={`w-[125px] text-xs h-8 font-semibold ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-100"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent
-                          className={theme === "dark"
-                            ? "bg-slate-900 border-slate-800 text-slate-200"
-                            : "bg-white border-slate-200 text-slate-900"}
-                        >
-                          {trMonths.map((m, idx) => (
-                            <SelectItem key={idx} value={String(idx)}>
-                              {m}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {/* Year Dropdown */}
-                      <Select
-                        value={String(cursor.getFullYear())}
-                        onValueChange={(val) =>
-                          setCursor(
-                            new Date(Number(val), cursor.getMonth(), 1),
-                          )}
-                      >
-                        <SelectTrigger
-                          className={`w-[90px] text-xs h-8 font-semibold ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-100"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent
-                          className={theme === "dark"
-                            ? "bg-slate-900 border-slate-800 text-slate-200"
-                            : "bg-white border-slate-200 text-slate-900"}
-                        >
-                          {Array.from({ length: 16 }, (_, i) => 2020 + i).map((y) => (
-                            <SelectItem key={y} value={String(y)}>
-                              {y}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className={`h-8 w-8 ${
-                          theme === "dark"
-                            ? "border-slate-800 text-slate-300 hover:bg-slate-800"
-                            : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                        }`}
-                        onClick={() =>
-                          setCursor(
-                            new Date(
-                              cursor.getFullYear(),
-                              cursor.getMonth() + 1,
-                              1,
-                            ),
-                          )}
-                        title="Sonraki Ay"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setCursor(
-                            new Date(today.getFullYear(), today.getMonth(), 1),
-                          );
-                          setSelectedDay(toKey(today));
-                        }}
-                        className="text-indigo-500 hover:text-indigo-600 text-xs font-semibold px-2 h-8"
-                        title="Bugünün tarihine git"
-                      >
-                        Bugüne Git
-                      </Button>
-
-                      {/* İlgili Tarihe Git Date Picker */}
-                      <div className="flex items-center gap-1.5 ml-1 border-l pl-2 dark:border-slate-800 border-slate-300">
-                        <span
-                          className={`text-[11px] font-medium hidden sm:inline ${
-                            theme === "dark" ? "text-slate-400" : "text-slate-600"
-                          }`}
-                        >
-                          İlgili Tarihe Git:
-                        </span>
-                        <Input
-                          type="date"
-                          value={selectedDay}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val) {
-                              const [y, m, d] = val.split("-").map(Number);
-                              if (y && m && d) {
-                                setCursor(new Date(y, m - 1, 1));
-                                setSelectedDay(val);
-                                toast.info(`Tarihe gidildi: ${val}`);
-                              }
-                            }
-                          }}
-                          className={`text-xs h-8 w-[130px] font-mono ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-100"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Center: View Mode Tabs */}
-                    <div
-                      className={`flex items-center p-1 rounded-lg border text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800"
-                          : "bg-slate-100 border-slate-200"
-                      }`}
-                    >
-                      <button
-                        onClick={() => setCalendarViewMode("grid")}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all font-medium ${
-                          calendarViewMode === "grid"
-                            ? "bg-indigo-600 text-white shadow-xs"
-                            : theme === "dark"
-                            ? "text-slate-400 hover:text-slate-200"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <GridIcon className="h-3.5 w-3.5" /> Aylık Izgara
-                      </button>
-                      <button
-                        onClick={() => setCalendarViewMode("timeline")}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all font-medium ${
-                          calendarViewMode === "timeline"
-                            ? "bg-indigo-600 text-white shadow-xs"
-                            : theme === "dark"
-                            ? "text-slate-400 hover:text-slate-200"
-                            : "text-slate-600 hover:text-slate-900"
-                        }`}
-                      >
-                        <CalendarDays className="h-3.5 w-3.5" /> Zaman Çizelgesi
-                      </button>
-                    </div>
-
-                    {/* Right: Venue Filter & Add Button */}
-                    <div className="flex items-center gap-2">
-                      <Select
-                        value={calendarVenueFilter}
-                        onValueChange={setCalendarVenueFilter}
-                      >
-                        <SelectTrigger
-                          className={`w-[170px] text-xs h-8 ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-200"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        >
-                          <SelectValue placeholder="Mekan Filtrele" />
-                        </SelectTrigger>
-                        <SelectContent
-                          className={theme === "dark"
-                            ? "bg-slate-900 border-slate-800 text-slate-200"
-                            : "bg-white border-slate-200 text-slate-900"}
-                        >
-                          <SelectItem value="all">Tüm Mekanlar</SelectItem>
-                          {store.venues.map((v) => (
-                            <SelectItem key={v.id} value={v.id}>
-                              {v.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (store.venues.length === 0) {
-                            toast.error("Önce bir mekan ekleyin.");
-                            return;
-                          }
-                          const firstV = store.venues[0];
-                          setResVenueId(firstV.id);
-                          if (firstV.halls.length > 0) {
-                            setResHallId(firstV.halls[0].id);
-                          }
-                          setResModalOpen(true);
-                        }}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold px-3"
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1" /> Etkinlik Ekle
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Main Calendar Grid & Day Details */}
-                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left Column: Calendar Grid or Timeline */}
-                    <Card
-                      className={`lg:col-span-8 ${
-                        theme === "dark"
-                          ? "bg-slate-900/80 border-slate-800"
-                          : "bg-white border-slate-200 shadow-sm"
-                      }`}
-                    >
-                      <CardContent className="p-4">
-                        {calendarViewMode === "grid"
-                          ? (
-                            <>
-                              <div className="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-400 mb-2">
-                                {trDays.map((d) => (
-                                  <div
-                                    key={d}
-                                    className="py-1.5 uppercase font-mono text-[11px]"
-                                  >
-                                    {d}
-                                  </div>
-                                ))}
-                              </div>
-
-                              <div className="grid grid-cols-7 gap-1.5">
-                                {grid.map((cell, idx) => {
-                                  if (!cell) {
-                                    return (
-                                      <div
-                                        key={`empty-${idx}`}
-                                        className={`h-22 md:h-26 rounded-xl ${
-                                          theme === "dark"
-                                            ? "bg-slate-950/30 border border-slate-900/50"
-                                            : "bg-slate-100/40 border border-slate-200/50"
-                                        }`}
-                                      />
-                                    );
-                                  }
-                                  const k = toKey(cell);
-                                  const isToday = k === toKey(today);
-                                  const isSelected = k === selectedDay;
-                                  const rawDayRes = byDate.get(k) ?? [];
-                                  const dayResList = rawDayRes.filter(
-                                    (r) =>
-                                      calendarVenueFilter === "all" ||
-                                      r.venueId === calendarVenueFilter,
-                                  );
-
-                                  return (
-                                    <button
-                                      key={k}
-                                      onClick={() => setSelectedDay(k)}
-                                      className={`h-22 md:h-26 p-2 rounded-xl border text-left transition-all relative flex flex-col justify-between overflow-hidden group ${
-                                        isSelected
-                                          ? "border-indigo-500 bg-indigo-950/30 ring-2 ring-indigo-500/50 shadow-md"
-                                          : isToday
-                                          ? theme === "dark"
-                                            ? "border-amber-500/60 bg-amber-950/20"
-                                            : "border-amber-500 bg-amber-50"
-                                          : theme === "dark"
-                                          ? "border-slate-800/80 bg-slate-950/60 hover:bg-slate-800/50 hover:border-slate-700"
-                                          : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 shadow-2xs"
-                                      }`}
-                                    >
-                                      <div className="flex items-center justify-between w-full">
-                                        <span
-                                          className={`text-xs font-bold ${
-                                            isToday
-                                              ? "bg-amber-500 text-slate-950 h-5 px-1.5 rounded-full flex items-center justify-center font-mono text-[11px]"
-                                              : theme === "dark"
-                                              ? "text-slate-300"
-                                              : "text-slate-800"
-                                          }`}
-                                        >
-                                          {cell.getDate()}
-                                        </span>
-                                        {dayResList.length > 0 && (
-                                          <Badge className="bg-indigo-600 text-white text-[10px] px-1 py-0 h-4">
-                                            {dayResList.length} Kayıt
-                                          </Badge>
-                                        )}
-                                      </div>
-
-                                      <div className="space-y-1 mt-1 overflow-y-auto no-scrollbar flex-1 w-full">
-                                        {dayResList.slice(0, 2).map((r) => {
-                                          const h = hallById(r.hallId);
-                                          const v = store.venues.find((x) => x.id === r.venueId);
-                                          const customColor = h?.color || v?.color || "#6366f1";
-                                          const colorClass = getEventTypeColor(r.eventType);
-                                          return (
-                                            <div
-                                              key={r.id}
-                                              className={`text-[10px] leading-tight p-1 rounded border truncate font-medium flex items-center gap-1 ${colorClass}`}
-                                              title={`${r.customer} (${r.start} - ${h?.name})`}
-                                            >
-                                              <span
-                                                className="h-2 w-2 rounded-full shrink-0 shadow-xs"
-                                                style={{ backgroundColor: customColor }}
-                                              />
-                                              <span className="font-mono font-bold shrink-0">
-                                                {r.start}
-                                              </span>
-                                              <span className="truncate">{r.customer}</span>
-                                            </div>
-                                          );
-                                        })}
-                                        {dayResList.length > 2 && (
-                                          <div
-                                            className={`text-[9px] font-semibold text-center py-0.5 ${
-                                              theme === "dark"
-                                                ? "text-slate-400"
-                                                : "text-slate-600"
-                                            }`}
-                                          >
-                                            +{dayResList.length - 2} daha
-                                          </div>
-                                        )}
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </>
-                          )
-                          : (
-                            /* Timeline View */
-                            <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
-                              <h3
-                                className={`text-xs font-bold uppercase tracking-wider ${
-                                  theme === "dark"
-                                    ? "text-slate-400"
-                                    : "text-slate-600"
-                                }`}
-                              >
-                                {trMonths[cursor.getMonth()]}{" "}
-                                {cursor.getFullYear()} Tüm Etkinlik Çizelgesi
-                              </h3>
-                              {filteredReservations.length === 0
-                                ? (
-                                  <p className="text-xs text-slate-500 py-12 text-center">
-                                    Bu ay için henüz etkinlik kaydı yok.
-                                  </p>
-                                )
-                                : (
-                                  filteredReservations.map((r) => {
-                                    const h = hallById(r.hallId);
-                                    const v = store.venues.find((x) =>
-                                      x.id === r.venueId
-                                    );
-                                    const colorClass = getEventTypeColor(
-                                      r.eventType,
-                                    );
-
-                                    return (
-                                      <div
-                                        key={r.id}
-                                        onClick={() => {
-                                          setSelectedDay(r.date);
-                                          setSelectedReservation(r);
-                                        }}
-                                        className={`p-3 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${
-                                          r.date === selectedDay
-                                            ? "border-indigo-500 bg-indigo-950/20 shadow-xs"
-                                            : theme === "dark"
-                                            ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
-                                            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                                        }`}
-                                      >
-                                        <div className="flex items-center gap-3">
-                                          <div className="text-center font-mono shrink-0 bg-indigo-600/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg">
-                                            <span className="text-xs font-bold text-indigo-500 block">
-                                              {r.date}
-                                            </span>
-                                            <span className="text-[10px] text-slate-400">
-                                              {r.start} - {r.end}
-                                            </span>
-                                          </div>
-                                          <div>
-                                            <div className="flex items-center gap-2">
-                                              <p
-                                                className={`text-xs font-bold ${
-                                                  theme === "dark"
-                                                    ? "text-slate-100"
-                                                    : "text-slate-900"
-                                                }`}
-                                              >
-                                                {r.customer}
-                                              </p>
-                                              {r.status === "option" ? (
-                                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 border-amber-500/40 text-amber-500 font-bold">
-                                                  ⚠️ Şerhli
-                                                </Badge>
-                                              ) : (
-                                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 border-emerald-500/40 text-emerald-500 font-semibold">
-                                                  ✅ Kesin
-                                                </Badge>
-                                              )}
-                                            </div>
-                                            <p
-                                              className={`text-[11px] ${
-                                                theme === "dark"
-                                                  ? "text-slate-400"
-                                                  : "text-slate-600"
-                                              }`}
-                                            >
-                                              {v?.name} •{" "}
-                                              <span className="font-semibold text-indigo-500">
-                                                {h?.name}
-                                              </span>
-                                            </p>
-                                          </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-3 shrink-0">
-                                          <Badge
-                                            variant="outline"
-                                            className={`text-[10px] ${colorClass}`}
-                                          >
-                                            {r.eventType || "Etkinlik"}
-                                          </Badge>
-                                          <span className="font-bold text-emerald-500 text-xs">
-                                            {money(r.price)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    );
-                                  })
-                                )}
-                            </div>
-                          )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Right Column: Selected Day Details */}
-                    <Card
-                      className={`lg:col-span-4 flex flex-col ${
-                        theme === "dark"
-                          ? "bg-slate-900/80 border-slate-800"
-                          : "bg-white border-slate-200 shadow-sm"
-                      }`}
-                    >
-                      <CardHeader
-                        className={`pb-3 border-b flex flex-row items-center justify-between ${
-                          theme === "dark"
-                            ? "border-slate-800"
-                            : "border-slate-200"
-                        }`}
-                      >
-                        <div>
-                          <CardTitle
-                            className={`text-sm font-bold flex items-center gap-2 ${
-                              theme === "dark"
-                                ? "text-slate-100"
-                                : "text-slate-900"
-                            }`}
-                          >
-                            <CalendarIcon className="h-4 w-4 text-indigo-500" />
-                            {" "}
-                            {selectedDay}
-                          </CardTitle>
-                          <CardDescription
-                            className={`text-[11px] mt-0.5 ${
-                              theme === "dark"
-                                ? "text-slate-400"
-                                : "text-slate-600"
-                            }`}
-                          >
-                            {(byDate.get(selectedDay) ?? []).length}{" "}
-                            Kayıtlı Etkinlik
-                          </CardDescription>
-                        </div>
-
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            if (store.venues.length === 0) {
-                              toast.error("Önce mekan ekleyin.");
-                              return;
-                            }
-                            const firstV = store.venues[0];
-                            setResVenueId(firstV.id);
-                            if (firstV.halls.length > 0) {
-                              setResHallId(firstV.halls[0].id);
-                            }
-                            setResModalOpen(true);
-                          }}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] h-7 px-2.5 font-semibold"
-                        >
-                          <Plus className="h-3 w-3 mr-1" /> Yeni Kayıt
-                        </Button>
-                      </CardHeader>
-
-                      <CardContent className="p-4 flex-1 overflow-y-auto space-y-4 max-h-[550px]">
-                        {(byDate.get(selectedDay) ?? []).length === 0
-                          ? (
-                            <div
-                              className={`text-center py-12 space-y-2 ${
-                                theme === "dark"
-                                  ? "text-slate-500"
-                                  : "text-slate-400"
-                              }`}
-                            >
-                              <CalendarIcon className="h-8 w-8 mx-auto opacity-30 text-indigo-500" />
-                              <p className="text-xs">
-                                Bu tarih için henüz bir etkinlik tanımı
-                                bulunmuyor.
-                              </p>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  if (store.venues.length === 0) {
-                                    toast.error("Önce bir mekan ekleyin.");
-                                    return;
-                                  }
-                                  const firstV = store.venues[0];
-                                  setResVenueId(firstV.id);
-                                  if (firstV.halls.length > 0) {
-                                    setResHallId(firstV.halls[0].id);
-                                  }
-                                  setResModalOpen(true);
-                                }}
-                                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 px-3.5 font-semibold shadow-xs"
-                              >
-                                <Plus className="h-3.5 w-3.5 mr-1" />{" "}
-                                Etkinlik Oluştur
-                              </Button>
-                            </div>
-                          )
-                          : (
-                            (byDate.get(selectedDay) ?? []).map((r) => {
-                              const h = hallById(r.hallId);
-                              const v = store.venues.find((x) =>
-                                x.id === r.venueId
-                              );
-                              const rem = r.price - r.paid;
-                              const colorClass = getEventTypeColor(r.eventType);
-
-                              return (
-                                <div
-                                  key={r.id}
-                                  onClick={() => setSelectedReservation(r)}
-                                  className={`p-4 rounded-xl border space-y-3 cursor-pointer transition-all ${
-                                    theme === "dark"
-                                      ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
-                                      : "bg-slate-50 border-slate-200 hover:bg-slate-100 shadow-2xs"
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between">
-                                    <div>
-                                      <div className="flex items-center gap-2">
-                                        <h4
-                                          className={`text-sm font-bold ${
-                                            theme === "dark"
-                                              ? "text-slate-100"
-                                              : "text-slate-900"
-                                          }`}
-                                        >
-                                          {r.customer}
-                                        </h4>
-                                        {r.status === "option" ? (
-                                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 border-amber-500/40 text-amber-500 font-bold">
-                                            ⚠️ Şerhli (Opsiyon)
-                                          </Badge>
-                                        ) : (
-                                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 border-emerald-500/40 text-emerald-500 font-semibold">
-                                            ✅ Kesin
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <Badge
-                                          variant="outline"
-                                          className={`text-[10px] ${colorClass}`}
-                                        >
-                                          {r.eventType || "Etkinlik"}
-                                        </Badge>
-                                        <span
-                                          className={`text-[11px] font-mono ${
-                                            theme === "dark"
-                                              ? "text-slate-400"
-                                              : "text-slate-500"
-                                          }`}
-                                        >
-                                          📞 {r.phone}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        promptDelete(
-                                          "reservation",
-                                          r.id,
-                                          `${r.customer} (${r.date})`,
-                                        );
-                                      }}
-                                      className="h-7 w-7 text-slate-500 hover:text-rose-500"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                  </div>
-
-                                  <div
-                                    className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${
-                                      theme === "dark"
-                                        ? "bg-slate-900/80 border-slate-800"
-                                        : "bg-white border-slate-200"
-                                    }`}
-                                  >
-                                    <div className="flex justify-between items-center">
-                                      <span
-                                        className={`font-medium ${
-                                          theme === "dark"
-                                            ? "text-slate-300"
-                                            : "text-slate-700"
-                                        }`}
-                                      >
-                                        {v?.name}
-                                      </span>
-                                      <span className="text-indigo-500 font-semibold">
-                                        {h?.name}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className={`text-[11px] flex justify-between items-center border-t pt-1 ${
-                                        theme === "dark"
-                                          ? "border-slate-800 text-slate-400"
-                                          : "border-slate-100 text-slate-600"
-                                      }`}
-                                    >
-                                      <span>Saat Aralığı:</span>
-                                      <span className="font-mono font-semibold text-emerald-500">
-                                        {r.start} - {r.end}{" "}
-                                        ({hoursBetween(r.start, r.end)} Saat)
-                                      </span>
-                                    </div>
-                                    <div className="flex justify-between items-center text-[11px] pt-0.5">
-                                      <span
-                                        className={theme === "dark"
-                                          ? "text-slate-400"
-                                          : "text-slate-600"}
-                                      >
-                                        Finansal Durum:
-                                      </span>
-                                      <span className="font-bold text-emerald-500">
-                                        {money(r.price)}
-                                      </span>
-                                    </div>
-                                    {rem > 0 && (
-                                      <div className="flex justify-between items-center text-[10px] text-amber-500 font-semibold">
-                                        <span>Kalan Bakiye:</span>
-                                        <span>{money(rem)}</span>
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5 pt-1">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handlePrintOfficialDoc(r)}
-                                      className={`flex-1 text-xs h-7.5 px-2 font-medium ${
-                                        theme === "dark"
-                                          ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
-                                          : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
-                                      }`}
-                                      title="Resmi Tahsis Belgesi & Rapor Yazdır"
-                                    >
-                                      <Printer className="h-3 w-3 mr-1 text-emerald-500" />
-                                      Resmi Belge
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleCopySMS(r)}
-                                      className={`flex-1 text-xs h-7.5 px-2 ${
-                                        theme === "dark"
-                                          ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
-                                          : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
-                                      }`}
-                                    >
-                                      <Copy className="h-3 w-3 mr-1 text-amber-500" />
-                                      {" "}
-                                      WhatsApp
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() => handleQuickMail(r)}
-                                      className={`flex-1 text-xs h-7.5 px-2 ${
-                                        theme === "dark"
-                                          ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
-                                          : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
-                                      }`}
-                                    >
-                                      <Mail className="h-3 w-3 mr-1 text-sky-500" />
-                                      {" "}
-                                      E-posta
-                                    </Button>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          )}
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              )}
-
-              {/* ==================================================================== */}
-              {/* 3. VENUES SECTION                                                    */}
-              {/* ==================================================================== */}
-              {activeSection === "venues" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3
-                        className={`text-lg font-bold ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        Mekanlar, Tesisler & Salonlar
-                      </h3>
-                      <p
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Mekan ekleyin, kat bazlı salon ve saatlik kira
-                        tarifelerini düzenleyin.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => setVenueModalOpen(true)}
-                      className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
-                    >
-                      <Plus className="h-4 w-4 mr-1.5" /> Yeni Mekan Ekle
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {store.venues.map((v) => (
-                      <Card
-                        key={v.id}
-                        className={theme === "dark"
-                          ? "bg-slate-900/80 border-slate-800"
-                          : "bg-white border-slate-200 shadow-sm"}
-                      >
-                        <CardHeader
-                          className={`flex flex-row items-center justify-between pb-3 border-b ${
-                            theme === "dark"
-                              ? "border-slate-800"
-                              : "border-slate-200"
-                          }`}
-                        >
-                          <div>
-                            <CardTitle
-                              className={`text-base font-bold flex items-center gap-2 ${
-                                theme === "dark"
-                                  ? "text-slate-100"
-                                  : "text-slate-900"
-                              }`}
-                            >
-                              <Building2 className="h-4 w-4 text-indigo-500" />
-                              {" "}
-                              {v.name}
-                            </CardTitle>
-                            <CardDescription
-                              className={`text-xs mt-0.5 space-y-1 ${
-                                theme === "dark"
-                                  ? "text-slate-400"
-                                  : "text-slate-600"
-                              }`}
-                            >
-                              <div>
-                                Konum: <strong className="text-indigo-400">{v.district}</strong> • Kategori:{" "}
-                                {v.category || "Genel"}
-                              </div>
-                              {v.address && (
-                                <div className="text-[11px] flex items-start gap-1 font-sans">
-                                  <MapPin className="h-3 w-3 text-indigo-400 shrink-0 mt-0.5" />
-                                  <span>{v.address}</span>
-                                </div>
-                              )}
-                              {v.mapUrl && (
-                                <div>
-                                  <a
-                                    href={v.mapUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => {
-                                      if (window.electronAPI?.openExternalLink) {
-                                        e.preventDefault();
-                                        window.electronAPI.openExternalLink(v.mapUrl!);
-                                      }
-                                    }}
-                                    className="inline-flex items-center gap-1 text-[11px] text-sky-400 font-semibold hover:underline"
-                                  >
-                                    <MapPin className="h-3 w-3 text-sky-400" /> 🗺️ Google Maps'te Aç
-                                  </a>
-                                </div>
-                              )}
-                              {v.managerName && (
-                                <div className={`p-2 rounded-lg border text-[11px] flex items-center justify-between mt-2 ${
-                                  theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-800"
-                                }`}>
-                                  <div>
-                                    <span className="font-bold">👤 Sorumlu:</span> {v.managerName}
-                                    <span className="text-[10px] text-slate-400 ml-1">({v.managerTitle || "Tesis Sorumlusu"})</span>
-                                  </div>
-                                  {v.managerPhone && (
-                                    <a
-                                      href={`https://wa.me/90${v.managerPhone.replace(/\D/g, "")}`}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      onClick={(e) => {
-                                        if (window.electronAPI?.openExternalLink) {
-                                          e.preventDefault();
-                                          window.electronAPI.openExternalLink(`https://wa.me/90${v.managerPhone!.replace(/\D/g, "")}`);
-                                        }
-                                      }}
-                                      className="font-mono font-bold text-emerald-500 hover:underline flex items-center gap-1"
-                                    >
-                                      📞 {v.managerPhone}
-                                    </a>
-                                  )}
-                                </div>
-                              )}
-                            </CardDescription>
-                          </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => promptDelete("venue", v.id, v.name)}
-                            className="h-8 w-8 text-slate-500 hover:text-rose-500"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </CardHeader>
-
-                        <CardContent className="p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={`text-xs font-semibold uppercase tracking-wider ${
-                                theme === "dark"
-                                  ? "text-slate-300"
-                                  : "text-slate-700"
-                              }`}
-                            >
-                              Salonlar ({v.halls.length})
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setTargetVenueId(v.id);
-                                setHallModalOpen(true);
-                              }}
-                              className={`text-xs h-7 text-indigo-500 ${
-                                theme === "dark"
-                                  ? "border-slate-800"
-                                  : "border-slate-300"
-                              }`}
-                            >
-                              <Plus className="h-3 w-3 mr-1" /> Salon Ekle
-                            </Button>
-                          </div>
-
-                          {v.halls.length === 0
-                            ? (
-                              <p
-                                className={`text-xs py-4 text-center ${
-                                  theme === "dark"
-                                    ? "text-slate-500"
-                                    : "text-slate-400"
-                                }`}
-                              >
-                                Bu mekanda salon bulunmuyor.
-                              </p>
-                            )
-                            : (
-                              <div className="space-y-2">
-                                {v.halls.map((h) => (
-                                  <div
-                                    key={h.id}
-                                    className={`p-3 rounded-lg border flex items-center justify-between text-xs ${
-                                      theme === "dark"
-                                        ? "bg-slate-950 border-slate-800 text-slate-200"
-                                        : "bg-slate-50 border-slate-200 text-slate-800"
-                                    }`}
-                                  >
-                                    <div>
-                                      <p
-                                        className={`font-bold ${
-                                          theme === "dark"
-                                            ? "text-slate-200"
-                                            : "text-slate-900"
-                                        }`}
-                                      >
-                                        {h.name}
-                                      </p>
-                                      <p
-                                        className={`text-[11px] ${
-                                          theme === "dark"
-                                            ? "text-slate-400"
-                                            : "text-slate-600"
-                                        }`}
-                                      >
-                                        {h.floor} • Kapasite: {h.capacity} Kişi
-                                      </p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className="font-semibold text-emerald-500">
-                                        {money(h.hourlyPrice)} / Saat
-                                      </span>
-                                      <Button
-                                        size="icon"
-                                        variant="ghost"
-                                        onClick={() =>
-                                          promptDelete(
-                                            "hall",
-                                            h.id,
-                                            h.name,
-                                            v.id,
-                                          )}
-                                        className="h-6 w-6 text-slate-500 hover:text-rose-500"
-                                      >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ==================================================================== */}
-              {/* 4. EVENTS LIST SECTION                                               */}
-              {/* ==================================================================== */}
-              {activeSection === "events" && (
-                <Card
-                  className={theme === "dark"
-                    ? "bg-slate-900/80 border-slate-800"
-                    : "bg-white border-slate-200 shadow-sm"}
-                >
-                  <CardHeader
-                    className={`flex flex-wrap items-center justify-between gap-4 pb-4 border-b ${
-                      theme === "dark" ? "border-slate-800" : "border-slate-200"
-                    }`}
-                  >
-                    <div>
-                      <CardTitle
-                        className={`text-base font-bold ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        Etkinlik & Rezervasyon Listesi
-                      </CardTitle>
-                      <CardDescription
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Filtreleme ve arama ile tüm etkinlik kayıtları.
-                      </CardDescription>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Select
-                        value={eventTypeFilter}
-                        onValueChange={setEventTypeFilter}
-                      >
-                        <SelectTrigger
-                          className={`w-[180px] text-xs ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-200"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        >
-                          <SelectValue placeholder="Etkinlik Türü" />
-                        </SelectTrigger>
-                        <SelectContent
-                          className={theme === "dark"
-                            ? "bg-slate-900 border-slate-800 text-slate-200"
-                            : "bg-white border-slate-200 text-slate-900"}
-                        >
-                          <SelectItem value="all">
-                            Tüm Etkinlik Türleri
-                          </SelectItem>
-                          {allEventTypes.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="p-0 overflow-x-auto">
-                    <table
-                      className={`w-full text-left text-xs ${
-                        theme === "dark" ? "text-slate-300" : "text-slate-800"
-                      }`}
-                    >
-                      <thead
-                        className={`uppercase font-mono text-[11px] border-b ${
-                          theme === "dark"
-                            ? "bg-slate-950 text-slate-400 border-slate-800"
-                            : "bg-slate-100 text-slate-700 border-slate-200"
-                        }`}
-                      >
-                        <tr>
-                          <th className="p-3.5">Müşteri / Etkinlik</th>
-                          <th className="p-3.5">Tarih & Saat</th>
-                          <th className="p-3.5">Mekan / Salon</th>
-                          <th className="p-3.5">Tür</th>
-                          <th className="p-3.5 text-right">Toplam</th>
-                          <th className="p-3.5 text-right">Ödenen</th>
-                          <th className="p-3.5 text-center">İşlemler</th>
-                        </tr>
-                      </thead>
-                      <tbody
-                        className={`divide-y ${
-                          theme === "dark"
-                            ? "divide-slate-800/60"
-                            : "divide-slate-200"
-                        }`}
-                      >
-                        {filteredReservations.map((r) => {
-                          const h = hallById(r.hallId);
-                          const v = store.venues.find((x) =>
-                            x.id === r.venueId
-                          );
-
-                          return (
-                            <tr
-                              key={r.id}
-                              className={`transition-colors ${
-                                theme === "dark"
-                                  ? "hover:bg-slate-800/30"
-                                  : "hover:bg-slate-50"
-                              }`}
-                            >
-                              <td className="p-3.5">
-                                <span
-                                  className={`font-bold block ${
-                                    theme === "dark"
-                                      ? "text-slate-200"
-                                      : "text-slate-900"
-                                  }`}
-                                >
-                                  {r.customer}
-                                </span>
-                                <span
-                                  className={`text-[11px] ${
-                                    theme === "dark"
-                                      ? "text-slate-400"
-                                      : "text-slate-600"
-                                  }`}
-                                >
-                                  {r.phone}
-                                </span>
-                              </td>
-                              <td className="p-3.5 font-mono">
-                                <div>{r.date}</div>
-                                <div
-                                  className={`text-[11px] ${
-                                    theme === "dark"
-                                      ? "text-slate-400"
-                                      : "text-slate-600"
-                                  }`}
-                                >
-                                  {r.start} - {r.end}
-                                </div>
-                              </td>
-                              <td className="p-3.5">
-                                <span>{v?.name}</span>
-                                <span className="text-indigo-500 block font-semibold">
-                                  {h?.name}
-                                </span>
-                              </td>
-                              <td className="p-3.5">
-                                <Badge
-                                  variant="outline"
-                                  className="border-indigo-500/30 text-indigo-500 text-[10px]"
-                                >
-                                  {r.eventType || "Etkinlik"}
-                                </Badge>
-                              </td>
-                              <td
-                                className={`p-3.5 text-right font-bold ${
-                                  theme === "dark"
-                                    ? "text-slate-200"
-                                    : "text-slate-900"
-                                }`}
-                              >
-                                {money(r.price)}
-                              </td>
-                              <td className="p-3.5 text-right font-bold text-emerald-500">
-                                {money(r.paid)}
-                              </td>
-                              <td className="p-3.5 text-center">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    promptDelete(
-                                      "reservation",
-                                      r.id,
-                                      `${r.customer} (${r.date})`,
-                                    )}
-                                  className="h-7 w-7 text-slate-500 hover:text-rose-500"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* ==================================================================== */}
-              {/* 5. REPORTS SECTION                                                   */}
-              {/* ==================================================================== */}
-              {activeSection === "reports" && (
-                <Card
-                  className={theme === "dark"
-                    ? "bg-slate-900/80 border-slate-800"
-                    : "bg-white border-slate-200 shadow-sm"}
-                >
-                  <CardHeader
-                    className={`flex flex-row items-center justify-between pb-4 border-b ${
-                      theme === "dark" ? "border-slate-800" : "border-slate-200"
-                    }`}
-                  >
-                    <div>
-                      <CardTitle
-                        className={`text-base font-bold ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        Mali Raporlar & Döküm
-                      </CardTitle>
-                      <CardDescription
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Tüm mekanların gelir, tahsilat ve alacak durumları.
-                      </CardDescription>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toast.info("Excel raporu indirildi.")}
-                        className={`text-xs h-8 text-emerald-500 ${
-                          theme === "dark"
-                            ? "border-slate-800"
-                            : "border-slate-300"
-                        }`}
-                      >
-                        <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />{" "}
-                        Excel Raporu
-                      </Button>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="p-4 space-y-4">
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div
-                        className={`p-4 rounded-xl border ${
-                          theme === "dark"
-                            ? "bg-slate-950 border-slate-800"
-                            : "bg-slate-50 border-slate-200"
-                        }`}
-                      >
-                        <p
-                          className={`text-xs ${
-                            theme === "dark"
-                              ? "text-slate-400"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          Toplam Tahakkuk
-                        </p>
-                        <p
-                          className={`text-xl font-bold mt-1 ${
-                            theme === "dark"
-                              ? "text-slate-100"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          {money(monthStats.totalRev)}
-                        </p>
-                      </div>
-                      <div
-                        className={`p-4 rounded-xl border ${
-                          theme === "dark"
-                            ? "bg-slate-950 border-slate-800"
-                            : "bg-slate-50 border-slate-200"
-                        }`}
-                      >
-                        <p
-                          className={`text-xs ${
-                            theme === "dark"
-                              ? "text-slate-400"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          Toplam Tahsilat
-                        </p>
-                        <p className="text-xl font-bold text-emerald-500 mt-1">
-                          {money(monthStats.totalPaid)}
-                        </p>
-                      </div>
-                      <div
-                        className={`p-4 rounded-xl border ${
-                          theme === "dark"
-                            ? "bg-slate-950 border-slate-800"
-                            : "bg-slate-50 border-slate-200"
-                        }`}
-                      >
-                        <p
-                          className={`text-xs ${
-                            theme === "dark"
-                              ? "text-slate-400"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          Kalan Alacak
-                        </p>
-                        <p className="text-xl font-bold text-amber-500 mt-1">
-                          {money(monthStats.remaining)}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* ==================================================================== */}
-              {/* 5.5. PERSONNEL SECTION                                               */}
-              {/* ==================================================================== */}
-              {activeSection === "personnel" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3
-                        className={`text-lg font-bold ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        👥 Personel Kadrosu & Tesis Sorumluları
-                      </h3>
-                      <p
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Kurum personel kadrosu, tesis amirleri, görevliler ve yetkili iletişim bilgileri.
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => setPersonnelModalOpen(true)}
-                      className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold"
-                    >
-                      <Plus className="h-4 w-4 mr-1.5" /> Yeni Personel Ekle
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Add Personnel Form Card */}
-                    <Card className={theme === "dark" ? "md:col-span-1 bg-slate-900/80 border-slate-800" : "md:col-span-1 bg-white border-slate-200 shadow-sm"}>
-                      <CardHeader className="pb-3 border-b border-slate-800/40">
-                        <CardTitle className="text-sm font-bold flex items-center gap-2">
-                          <Users className="h-4 w-4 text-sky-400" /> Hızlı Personel Kaydı
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-4">
-                        <form onSubmit={handleCreatePersonnel} className="space-y-3">
-                          <div>
-                            <Label className="text-xs">Ad Soyad *</Label>
-                            <Input
-                              required
-                              placeholder="örn: Mehmet Akif Yılmaz"
-                              value={personnelName}
-                              onChange={(e) => setPersonnelName(e.target.value)}
-                              className="mt-1 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Görevi / Unvanı</Label>
-                            <Input
-                              placeholder="örn: Tesis Sorumlusu / Zabıta Amiri"
-                              value={personnelTitle}
-                              onChange={(e) => setPersonnelTitle(e.target.value)}
-                              className="mt-1 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">İletişim Telefonu</Label>
-                            <Input
-                              placeholder="0532 000 00 00"
-                              value={personnelPhone}
-                              onChange={(e) => setPersonnelPhone(e.target.value)}
-                              className="mt-1 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">E-posta Adresi</Label>
-                            <Input
-                              type="email"
-                              placeholder="mehmet@kurum.bel.tr"
-                              value={personnelEmail}
-                              onChange={(e) => setPersonnelEmail(e.target.value)}
-                              className="mt-1 text-xs"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Özel Notlar</Label>
-                            <Input
-                              placeholder="örn: Gece vardiya amiri"
-                              value={personnelNotes}
-                              onChange={(e) => setPersonnelNotes(e.target.value)}
-                              className="mt-1 text-xs"
-                            />
-                          </div>
-                          <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold mt-2">
-                            <Plus className="h-3.5 w-3.5 mr-1" /> Kadroya Ekle
-                          </Button>
-                        </form>
-                      </CardContent>
-                    </Card>
-
-                    {/* Personnel Cards List */}
-                    <div className="md:col-span-2 space-y-4">
-                      {(!store.personnel || store.personnel.length === 0) ? (
-                        <Card className={`p-8 text-center ${
-                          theme === "dark" ? "bg-slate-900/60 border-slate-800" : "bg-white border-slate-200"
-                        }`}>
-                          <Users className="h-10 w-10 text-slate-500 mx-auto mb-2 opacity-50" />
-                          <p className="text-sm font-semibold text-slate-300">Henüz personel tanımlanmadı.</p>
-                          <p className="text-xs text-slate-500 mt-1">Sol taraftaki formdan kurum personel kadrosunu ekleyebilirsiniz.</p>
-                        </Card>
-                      ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {store.personnel.map((p) => {
-                            const boundVenues = store.venues.filter((v) => v.managerName === p.name || v.managerPhone === p.phone);
-                            return (
-                              <Card key={p.id} className={`p-4 space-y-3 relative ${
-                                theme === "dark" ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"
-                              }`}>
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <h4 className={`text-sm font-bold ${
-                                        theme === "dark" ? "text-slate-100" : "text-slate-900"
-                                      }`}>👤 {p.name}</h4>
-                                      <Badge variant="outline" className="text-[10px] bg-sky-500/10 border-sky-500/30 text-sky-400">
-                                        {p.title || "Tesis Sorumlusu"}
-                                      </Badge>
-                                    </div>
-                                    <div className="mt-2 space-y-1 text-xs text-slate-400 font-mono">
-                                      {p.phone && (
-                                        <div className="flex items-center gap-1.5">
-                                          <span>📞</span>
-                                          <a
-                                            href={`https://wa.me/90${(p.phone || "").replace(/\D/g, "")}`}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            onClick={(e) => {
-                                              if (window.electronAPI?.openExternalLink) {
-                                                e.preventDefault();
-                                                window.electronAPI.openExternalLink(`https://wa.me/90${(p.phone || "").replace(/\D/g, "")}`);
-                                              }
-                                            }}
-                                            className="text-emerald-400 hover:underline font-bold"
-                                          >
-                                            {p.phone}
-                                          </a>
-                                        </div>
-                                      )}
-                                      {p.email && (
-                                        <div className="flex items-center gap-1.5">
-                                          <span>✉️</span>
-                                          <a
-                                            href={`mailto:${p.email}`}
-                                            className="text-sky-400 hover:underline"
-                                          >
-                                            {p.email}
-                                          </a>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    onClick={() => removePersonnel(p.id)}
-                                    className="h-7 w-7 text-slate-500 hover:text-rose-500"
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-
-                                {boundVenues.length > 0 && (
-                                  <div className="pt-2 border-t border-slate-800/60 text-[11px]">
-                                    <span className="text-slate-400">🏢 Sorumlu Olduğu Tesisler:</span>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                      {boundVenues.map((bv) => (
-                                        <Badge key={bv.id} variant="outline" className="text-[9px] bg-indigo-500/10 border-indigo-500/30 text-indigo-300">
-                                          {bv.name}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                              </Card>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ==================================================================== */}
-              {/* 6. SETTINGS SECTION                                                  */}
-              {/* ==================================================================== */}
-              {activeSection === "settings" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card
-                    className={theme === "dark"
-                      ? "bg-slate-900/80 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"}
-                  >
-                    <CardHeader>
-                      <CardTitle
-                        className={`text-base font-bold flex items-center gap-2 ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        <Mail className="h-5 w-5 text-indigo-500" />{" "}
-                        E-posta & SMTP Entegrasyonu
-                      </CardTitle>
-                      <CardDescription
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Müşterilere rezervasyon dökümü ve bildirim e-postası
-                        göndermek için SMTP sunucusu.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <Button
-                        onClick={() => setMailModalOpen(true)}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-xs w-full"
-                      >
-                        SMTP Ayarlarını Düzenle & Mail Gönder
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card
-                    className={theme === "dark"
-                      ? "bg-slate-900/80 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"}
-                  >
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle
-                          className={`text-base font-bold flex items-center gap-2 ${
-                            theme === "dark"
-                              ? "text-slate-100"
-                              : "text-slate-900"
-                          }`}
-                        >
-                          <PartyPopper className="h-5 w-5 text-indigo-500" />
-                          {" "}
-                          Etkinlik Kategori & Tür Yönetimi
-                        </CardTitle>
-                        <CardDescription
-                          className={`text-xs mt-0.5 ${
-                            theme === "dark"
-                              ? "text-slate-400"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          Sistemdeki tüm etkinlik türlerini ekleyin veya silin.
-                        </CardDescription>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleResetEventTypes}
-                        className={`text-xs h-7 px-2.5 font-medium border ${
-                          theme === "dark"
-                            ? "bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800"
-                            : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
-                        }`}
-                        title="Öntanımlı türleri geri yükle"
-                      >
-                        Varsayılana Sıfırla
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Yeni özel etkinlik türü (örn: Doğum Günü)"
-                          value={newEventTypeInput}
-                          onChange={(e) => setNewEventTypeInput(e.target.value)}
-                          onKeyDown={(e) =>
-                            e.key === "Enter" && handleAddCustomEventType()}
-                          className={`text-xs ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-100"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        />
-                        <Button
-                          onClick={() => handleAddCustomEventType()}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs shrink-0 font-medium"
-                        >
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Ekle
-                        </Button>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1.5 pt-1 max-h-48 overflow-y-auto">
-                        {allEventTypes.map((t) => {
-                          const colorClass = getEventTypeColor(t);
-                          return (
-                            <span
-                              key={t}
-                              className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1.5 ${colorClass}`}
-                            >
-                              {t}
-                              <button
-                                onClick={() => handleRemoveEventType(t)}
-                                className="hover:text-rose-500 ml-1 text-xs font-bold transition-colors"
-                                title={`"${t}" türünü sil`}
-                              >
-                                &times;
-                              </button>
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Institutional Identity & Base64 Logo Card with Save & Cancel */}
-                  {/* Google Drive API Cloud Backup Card */}
-                  <Card
-                    className={theme === "dark"
-                      ? "bg-slate-900/80 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"}
-                  >
-                    <CardHeader>
-                      <CardTitle
-                        className={`text-base font-bold flex items-center gap-2 ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        <Cloud className="h-5 w-5 text-sky-500" />{" "}
-                        Google Drive API (OAuth Token) Bulut Yedekleme
-                      </CardTitle>
-                      <CardDescription
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Veritabanını (.vke) Google Drive hesabınıza otomatik olarak yedekleyin.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-xs">Google Drive Access Token / OAuth Key</Label>
-                        <Input
-                          type="password"
-                          placeholder="ya29.a0AxM35... (Google Cloud API Access Token)"
-                          value={gdriveToken}
-                          onChange={(e) => setGdriveToken(e.target.value)}
-                          className={`text-xs mt-1 ${
-                            theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-300"
-                          }`}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Google Drive Hedef Klasör ID (İsteğe Bağlı)</Label>
-                        <Input
-                          placeholder="1A2b3C4d5E6f... (Drive Klasör ID)"
-                          value={gdriveFolderId}
-                          onChange={(e) => setGdriveFolderId(e.target.value)}
-                          className={`text-xs mt-1 ${
-                            theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-300"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex gap-2 pt-1">
-                        <Button
-                          onClick={() => {
-                            localStorage.setItem("gdrive_token", gdriveToken);
-                            localStorage.setItem("gdrive_folder_id", gdriveFolderId);
-                            toast.success("Google Drive API token ve ayarları kaydedildi!");
-                          }}
-                          variant="outline"
-                          className="text-xs flex-1"
-                        >
-                          Token Kaydet
-                        </Button>
-                        <Button
-                          onClick={async () => {
-                            if (!gdriveToken) {
-                              toast.error("Lütfen önce Google Drive OAuth Token bilgisini girin.");
-                              return;
-                            }
-                            toast.loading("Veritabanı (.vke) Google Drive sunucularına yedekleniyor...", { id: "gdrive-backup" });
-                            try {
-                              if ((window.electronAPI as any)?.backupDatabase) {
-                                await (window.electronAPI as any).backupDatabase();
-                              }
-                              setTimeout(() => {
-                                toast.success("Bulut Yedekleme Başarılı! Veritabanı Google Drive klasörünüze senkronize edildi.", { id: "gdrive-backup" });
-                              }, 1200);
-                            } catch (err: any) {
-                              toast.error(`Yedekleme hatası: ${err.message || err}`, { id: "gdrive-backup" });
-                            }
-                          }}
-                          className="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex-1"
-                        >
-                          <Cloud className="h-3.5 w-3.5 mr-1" /> Drive'a Yedekle
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card
-                    className={theme === "dark"
-                      ? "bg-slate-900/80 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"}
-                  >
-                    <CardHeader>
-                      <CardTitle
-                        className={`text-base font-bold flex items-center gap-2 ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        <User className="h-5 w-5 text-indigo-500" />{" "}
-                        Kurumsal Kimlik & Logo Yönetimi (Base64)
-                      </CardTitle>
-                      <CardDescription
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Resmi evrak, döküm ve raporlarda kullanılacak kurum adı
-                        ve logosu.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label
-                          className={`text-xs font-medium ${
-                            theme === "dark"
-                              ? "text-slate-300"
-                              : "text-slate-700"
-                          }`}
-                        >
-                          Kurum / İşletme Resmi Adı
-                        </Label>
-                        <Input
-                          placeholder="örn: Ankara İl Milli Eğitim Müdürlüğü"
-                          value={draftInstitutionName}
-                          onChange={(e) =>
-                            setDraftInstitutionName(e.target.value)}
-                          className={`text-xs mt-1 ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-100"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        />
-                      </div>
-
-                      <div>
-                        <Label
-                          className={`text-xs font-medium block mb-1.5 ${
-                            theme === "dark"
-                              ? "text-slate-300"
-                              : "text-slate-700"
-                          }`}
-                        >
-                          Kurum Logosu (Base64)
-                        </Label>
-                        <div className="flex items-center gap-3">
-                          {draftInstitutionLogo
-                            ? (
-                              <div className="relative h-14 w-14 rounded-lg overflow-hidden border border-slate-700 bg-slate-900 shrink-0">
-                                <img
-                                  src={draftInstitutionLogo}
-                                  alt="Kurum Logosu"
-                                  className="h-full w-full object-contain p-1"
-                                />
-                              </div>
-                            )
-                            : (
-                              <div className="h-14 w-14 rounded-lg border border-dashed border-slate-400 dark:border-slate-700 flex items-center justify-center text-[10px] text-slate-500 shrink-0">
-                                Logo Yok
-                              </div>
-                            )}
-                          <div className="space-y-1.5 flex-1">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              id="logo-upload-input"
-                              onChange={handleDraftLogoUpload}
-                              className="hidden"
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() =>
-                                  document.getElementById("logo-upload-input")
-                                    ?.click()}
-                                variant="outline"
-                                className={`text-xs h-8 px-3 border font-medium ${
-                                  theme === "dark"
-                                    ? "bg-slate-900 border-slate-800 text-slate-200 hover:bg-slate-800"
-                                    : "bg-slate-100 border-slate-300 text-slate-800 hover:bg-slate-200"
-                                }`}
-                              >
-                                Logo Yükle
-                              </Button>
-                              {draftInstitutionLogo && (
-                                <Button
-                                  onClick={handleRemoveDraftLogo}
-                                  variant="ghost"
-                                  className="text-xs h-8 text-rose-500 hover:text-rose-600"
-                                >
-                                  Kaldır
-                                </Button>
-                              )}
-                            </div>
-                            <p
-                              className={`text-[10px] ${
-                                theme === "dark"
-                                  ? "text-slate-500"
-                                  : "text-slate-400"
-                              }`}
-                            >
-                              PNG / JPG (Maks. 2MB). Dosya Base64 olarak
-                              saklanır.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons: Kaydet & Vazgeç */}
-                      <div
-                        className={`flex items-center justify-end gap-2 pt-3 border-t ${
-                          theme === "dark"
-                            ? "border-slate-800/80"
-                            : "border-slate-200"
-                        }`}
-                      >
-                        <Button
-                          variant="ghost"
-                          onClick={handleCancelInstitutionSettings}
-                          className={`text-xs h-8 px-3 font-semibold transition-colors ${
-                            theme === "dark"
-                              ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          Vazgeç
-                        </Button>
-                        <Button
-                          onClick={handleSaveInstitutionSettings}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" />{" "}
-                          Değişiklikleri Kaydet
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Official Tariff & Council Decision Basis Card with Save & Cancel */}
-                  <Card
-                    className={theme === "dark"
-                      ? "bg-slate-900/80 border-slate-800"
-                      : "bg-white border-slate-200 shadow-sm"}
-                  >
-                    <CardHeader>
-                      <CardTitle
-                        className={`text-base font-bold flex items-center gap-2 ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
-                      >
-                        <Scale className="h-5 w-5 text-amber-500" />{" "}
-                        Resmi Tarife & Encümen Kararı Dayanağı
-                      </CardTitle>
-                      <CardDescription
-                        className={`text-xs ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}
-                      >
-                        Belediye encümeni veya meclis kararı ücret tarifesi
-                        dayanağı.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <Label
-                          className={`text-xs font-medium ${
-                            theme === "dark"
-                              ? "text-slate-300"
-                              : "text-slate-700"
-                          }`}
-                        >
-                          Varsayılan Karar & Tarife Dayanağı
-                        </Label>
-                        <Input
-                          placeholder="örn: Belediye Encümeni Kararı: 15/01/2026 - Karar No: 42 (2464 Sayılı Kanun Md. 97)"
-                          value={draftTariffBasis}
-                          onChange={(e) => setDraftTariffBasis(e.target.value)}
-                          className={`text-xs mt-1 ${
-                            theme === "dark"
-                              ? "bg-slate-950 border-slate-800 text-slate-100"
-                              : "bg-slate-50 border-slate-300 text-slate-900"
-                          }`}
-                        />
-                      </div>
-
-                      {/* Action Buttons: Kaydet & Vazgeç */}
-                      <div
-                        className={`flex items-center justify-end gap-2 pt-3 border-t ${
-                          theme === "dark"
-                            ? "border-slate-800/80"
-                            : "border-slate-200"
-                        }`}
-                      >
-                        <Button
-                          variant="ghost"
-                          onClick={handleCancelTariffSettings}
-                          className={`text-xs h-8 px-3 font-semibold transition-colors ${
-                            theme === "dark"
-                              ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                              : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                          }`}
-                        >
-                          Vazgeç
-                        </Button>
-                        <Button
-                          onClick={handleSaveTariffSettings}
-                          className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
-                        >
-                          <Check className="h-3.5 w-3.5 mr-1" />{" "}
-                          Değişiklikleri Kaydet
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
+            <div>
+              <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5">
+                <span>{institutionName}</span>
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono">
+                  v1.0.0-beta.12
+                </Badge>
+              </h1>
+              <p
+                className={`text-[10px] ${
+                  theme === "dark" ? "text-slate-400" : "text-slate-500"
+                }`}
+              >
+                İşletme Kiralama & Etkinlik Takip Sistemi (SQLite Cloud Sync)
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Global Application Footer */}
-        <Footer currentFilePath={currentFilePath} institutionName={institutionName} theme={theme} />
-
-        {/* ======================================================================== */}
-        {/* DIALOG MODALS                                                            */}
-        {/* ======================================================================== */}
-
-        {/* 1. New Reservation Dialog */}
-        <Dialog open={resModalOpen} onOpenChange={setResModalOpen}>
-          <DialogContent
-            className={theme === "dark"
-              ? "sm:max-w-[520px] bg-slate-900 border-slate-800 text-slate-100"
-              : "sm:max-w-[520px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
-          >
-            <DialogHeader>
-              <DialogTitle
-                className={`text-lg font-bold ${
-                  theme === "dark" ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
-                Yeni Etkinlik & Salon Kiralama
-              </DialogTitle>
-              <DialogDescription
-                className={`text-xs ${
-                  theme === "dark" ? "text-slate-400" : "text-slate-600"
-                }`}
-              >
-                Tarih:{" "}
-                <strong className="text-indigo-500">{selectedDay}</strong>
-              </DialogDescription>
-            </DialogHeader>
-
-            {/* Past Date Warning Banner */}
-            {selectedDay < toKey(new Date()) && (
-              <div
-                className={`p-2.5 rounded-lg border text-xs flex items-center gap-2 ${
-                  theme === "dark"
-                    ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                    : "bg-amber-50 border-amber-300 text-amber-800"
-                }`}
-              >
-                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
-                <span>
-                  Uyarı: <strong>{selectedDay}</strong>{" "}
-                  geçmiş bir tarihtir! Etkinlik geçmiş tarihli olarak
-                  kaydedilecektir.
-                </span>
-              </div>
-            )}
-
-            <form onSubmit={handleCreateReservation} className="space-y-4 py-2">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Mekan / Tesis
-                  </Label>
-                  <Select
-                    value={resVenueId}
-                    onValueChange={(v) => {
-                      setResVenueId(v);
-                      const found = store.venues.find((x) => x.id === v);
-                      if (found && found.halls.length > 0) {
-                        setResHallId(found.halls[0].id);
-                      }
-                    }}
-                  >
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue placeholder="Mekan seçin" />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={theme === "dark"
-                        ? "bg-slate-900 border-slate-800 text-slate-200"
-                        : "bg-white border-slate-200 text-slate-900"}
-                    >
-                      {store.venues.map((v) => (
-                        <SelectItem key={v.id} value={v.id}>
-                          {v.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Salon
-                  </Label>
-                  <Select value={resHallId} onValueChange={setResHallId}>
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue placeholder="Salon seçin" />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={theme === "dark"
-                        ? "bg-slate-900 border-slate-800 text-slate-200"
-                        : "bg-white border-slate-200 text-slate-900"}
-                    >
-                      {(store.venues.find((x) => x.id === resVenueId)?.halls ??
-                        []).map((h) => (
-                          <SelectItem key={h.id} value={h.id}>
-                            {h.name} ({money(h.hourlyPrice)}/s)
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Etkinlik Türü
-                  </Label>
-                  <Select value={resEventType} onValueChange={setResEventType}>
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={theme === "dark"
-                        ? "bg-slate-900 border-slate-800 text-slate-200"
-                        : "bg-white border-slate-200 text-slate-900"}
-                    >
-                      {allEventTypes.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Müşteri / Kurum Adı *
-                  </Label>
-                  <Input
-                    required
-                    list="customer-suggestions"
-                    placeholder="örn: Yılmaz Ailesi / XYZ A.Ş."
-                    value={resCustomer}
-                    onChange={(e) => setResCustomer(e.target.value)}
-                    className={`mt-1 text-xs ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                  <datalist id="customer-suggestions">
-                    {customerSuggestions.map((c) => (
-                      <option
-                        key={c}
-                        value={c}
-                      />
-                    ))}
-                  </datalist>
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-xs font-medium">Tarife Tipi & Ücret Hesaplama</Label>
-                <div className="grid grid-cols-2 gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => setPricingMode("hourly")}
-                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-                      pricingMode === "hourly"
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                        : theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                        : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    ⏱️ Saatlik Tarife (Saat x Fiyat)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPricingMode("daily")}
-                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-                      pricingMode === "daily"
-                        ? "bg-amber-600 text-white border-amber-600 shadow-xs"
-                        : theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                        : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
-                    }`}
-                  >
-                    ☀️ Günlük / Seanslık Sabit (İndi-Bindi)
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Başlangıç Saati
-                  </Label>
-                  <Select value={resStart} onValueChange={setResStart}>
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={`max-h-48 ${
-                        theme === "dark"
-                          ? "bg-slate-900 border-slate-800 text-slate-200"
-                          : "bg-white border-slate-200 text-slate-900"
-                      }`}
-                    >
-                      {timeSlots.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Bitiş Saati
-                  </Label>
-                  <Select value={resEnd} onValueChange={setResEnd}>
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={`max-h-48 ${
-                        theme === "dark"
-                          ? "bg-slate-900 border-slate-800 text-slate-200"
-                          : "bg-white border-slate-200 text-slate-900"
-                      }`}
-                    >
-                      {timeSlots.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {t}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Telefon No *
-                  </Label>
-                  <Input
-                    required
-                    list="phone-suggestions"
-                    placeholder="05xx xxx xx xx"
-                    value={resPhone}
-                    onChange={(e) => setResPhone(e.target.value)}
-                    className={`mt-1 text-xs ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                  <datalist id="phone-suggestions">
-                    {phoneSuggestions.map((p) => <option key={p} value={p} />)}
-                  </datalist>
-                </div>
-
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Hesaplanan Toplam Ücret (TL)
-                  </Label>
-                  <Input
-                    type="number"
-                    value={resPrice}
-                    onChange={(e) =>
-                      setResPrice(e.target.value ? Number(e.target.value) : "")}
-                    className={`mt-1 text-xs font-bold ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Alınan Peşinat (TL)
-                  </Label>
-                  <Input
-                    type="number"
-                    value={resPaid}
-                    onChange={(e) =>
-                      setResPaid(e.target.value ? Number(e.target.value) : "")}
-                    className={`mt-1 text-xs font-bold ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-emerald-400"
-                        : "bg-slate-50 border-slate-300 text-emerald-600"
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Rezervasyon Statüsü (Şerh)
-                  </Label>
-                  <Select value={resStatus} onValueChange={setResStatus}>
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={theme === "dark"
-                        ? "bg-slate-900 border-slate-800 text-slate-200"
-                        : "bg-white border-slate-200 text-slate-900"}
-                    >
-                      <SelectItem value="option">
-                        ⚠️ Opsiyonlu / Şerhli (Ön Kayıt)
-                      </SelectItem>
-                      <SelectItem value="confirmed">
-                        ✅ Kesinleşti (Kesin Kayıt)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Ödeme Makbuzu / Dekont No
-                  </Label>
-                  <Input
-                    placeholder="örn: MKB-2026-0042"
-                    value={resReceiptNo}
-                    onChange={(e) => setResReceiptNo(e.target.value)}
-                    className={`mt-1 text-xs ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                </div>
-
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Ödeme Yöntemi
-                  </Label>
-                  <Select value={resPaymentMethod} onValueChange={setResPaymentMethod}>
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={theme === "dark"
-                        ? "bg-slate-900 border-slate-800 text-slate-200"
-                        : "bg-white border-slate-200 text-slate-900"}
-                    >
-                      <SelectItem value="Nakit">Nakit</SelectItem>
-                      <SelectItem value="Havale/EFT">Havale / EFT</SelectItem>
-                      <SelectItem value="Kredi Kartı">Kredi Kartı</SelectItem>
-                      <SelectItem value="Dekont">Resmi Dekont</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label
-                  className={`text-xs font-medium flex items-center gap-1.5 ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  <Scale className="h-3.5 w-3.5 text-amber-500" />{" "}
-                  Resmi Tarife & Encümen Kararı Dayanağı
-                </Label>
-                <Input
-                  list="decision-suggestions"
-                  placeholder="örn: Belediye Encümeni Kararı: 15/01/2026 - No: 42 (2464 Sayılı Kanun Md. 97)"
-                  value={resDecisionInfo}
-                  onChange={(e) => setResDecisionInfo(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-                <datalist id="decision-suggestions">
-                  {decisionSuggestions.map((d) => <option key={d} value={d} />)}
-                </datalist>
-              </div>
-
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Açıklama / Notlar
-                </Label>
-                <Input
-                  placeholder="Etkinlik detayları veya hatırlatmalar..."
-                  value={resNote}
-                  onChange={(e) => setResNote(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-
-              <DialogFooter className="mt-4">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setResModalOpen(false)}
-                  className="text-xs"
-                >
-                  İptal
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
-                >
-                  Etkinliği Kaydet (SQLite)
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* 2. New Venue Dialog */}
-        <Dialog open={venueModalOpen} onOpenChange={setVenueModalOpen}>
-          <DialogContent
-            className={theme === "dark"
-              ? "sm:max-w-[420px] bg-slate-900 border-slate-800 text-slate-100"
-              : "sm:max-w-[420px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
-          >
-            <DialogHeader>
-              <DialogTitle
-                className={`text-base font-bold ${
-                  theme === "dark" ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
-                Yeni Mekan / Tesis Tanımla
-              </DialogTitle>
-            </DialogHeader>
-
-            <form onSubmit={handleCreateVenue} className="space-y-4 py-2">
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Mekan / İşletme Adı
-                </Label>
-                <Input
-                  required
-                  placeholder="örn: Grand Plaza Kongre & Balo Merkezi"
-                  value={newVenueName}
-                  onChange={(e) => setNewVenueName(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Konum / İlçe *
-                </Label>
-                <Input
-                  required
-                  placeholder="örn: Kadıköy / Çankaya"
-                  value={newVenueDistrict}
-                  onChange={(e) => setNewVenueDistrict(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Açık Adres Açıklaması (İsteğe Bağlı)
-                </Label>
-                <Textarea
-                  rows={2}
-                  placeholder="örn: Atatürk Mah. Cumhuriyet Cad. No:142 Kadıköy / İstanbul"
-                  value={newVenueAddress}
-                  onChange={(e) => setNewVenueAddress(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Google Maps / Konum Linki (İsteğe Bağlı)
-                </Label>
-                <Input
-                  type="url"
-                  placeholder="https://maps.google.com/..."
-                  value={newVenueMapUrl}
-                  onChange={(e) => setNewVenueMapUrl(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-
-              {store.personnel && store.personnel.length > 0 && (
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Kayıtlı Personel Kadrosundan Seç
-                  </Label>
-                  <Select
-                    onValueChange={(pId) => {
-                      const p = store.personnel?.find((x) => x.id === pId);
-                      if (p) {
-                        setNewVenueManagerName(p.name);
-                        setNewVenueManagerTitle(p.title || "Tesis Sorumlusu");
-                        setNewVenueManagerPhone(p.phone || "");
-                      }
-                    }}
-                  >
-                    <SelectTrigger
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-200"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    >
-                      <SelectValue placeholder="Kadro dışı / Manuel Gir" />
-                    </SelectTrigger>
-                    <SelectContent
-                      className={theme === "dark"
-                        ? "bg-slate-900 border-slate-800 text-slate-200"
-                        : "bg-white border-slate-200 text-slate-900"}
-                    >
-                      {store.personnel.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          👤 {p.name} ({p.title || "Personel"}) - 📞 {p.phone || "Tel Yok"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="pt-2 border-t border-slate-800/40 space-y-3">
-                <p className="text-[11px] font-bold text-indigo-400">
-                  🏢 Tesis / İşletme Sorumlusu İletişim Bilgileri
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-[11px]">Sorumlu Adı Soyadı</Label>
-                    <Input
-                      placeholder="örn: Ahmet Yılmaz"
-                      value={newVenueManagerName}
-                      onChange={(e) => setNewVenueManagerName(e.target.value)}
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-100"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">Görevi / Unvanı</Label>
-                    <Input
-                      placeholder="örn: Tesis Sorumlusu"
-                      value={newVenueManagerTitle}
-                      onChange={(e) => setNewVenueManagerTitle(e.target.value)}
-                      className={`mt-1 text-xs ${
-                        theme === "dark"
-                          ? "bg-slate-950 border-slate-800 text-slate-100"
-                          : "bg-slate-50 border-slate-300 text-slate-900"
-                      }`}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-[11px]">Sorumlu İletişim Telefonu</Label>
-                  <Input
-                    placeholder="0532 000 00 00"
-                    value={newVenueManagerPhone}
-                    onChange={(e) => setNewVenueManagerPhone(e.target.value)}
-                    className={`mt-1 text-xs ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Mekan Kategorisi
-                </Label>
-                <Select
-                  value={newVenueCategory}
-                  onValueChange={setNewVenueCategory}
-                >
-                  <SelectTrigger
-                    className={`mt-1 text-xs ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-200"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent
-                    className={theme === "dark"
-                      ? "bg-slate-900 border-slate-800 text-slate-200"
-                      : "bg-white border-slate-200 text-slate-900"}
-                  >
-                    <SelectItem value="Kongre & Balo">
-                      Kongre & Balo Merkezi
-                    </SelectItem>
-                    <SelectItem value="Kültür Merkezi">
-                      Kültür Merkezi
-                    </SelectItem>
-                    <SelectItem value="Otel & Balo">
-                      Otel Balo Salonu
-                    </SelectItem>
-                    <SelectItem value="Düğün & Davet">
-                      Düğün & Davet Alanı
-                    </SelectItem>
-                    <SelectItem value="Performans Sahnesi">
-                      Performans Sahnesi & Amfi
-                    </SelectItem>
-                    <SelectItem value="Toplantı Alanı">
-                      Toplantı & Seminer Alanı
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label
-                  className={`text-xs font-medium block mb-1.5 ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  🎨 Mekan Takvim Etkinlik Rengi
-                </Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {[
-                    { name: "İndigo", hex: "#6366f1" },
-                    { name: "Zümrüt", hex: "#10b981" },
-                    { name: "Kehribar", hex: "#f59e0b" },
-                    { name: "Gül", hex: "#ef4444" },
-                    { name: "Mor", hex: "#8b5cf6" },
-                    { name: "Gök Mavisi", hex: "#0284c7" },
-                    { name: "Teal", hex: "#14b8a6" },
-                    { name: "Pembe", hex: "#ec4899" },
-                    { name: "Kayrak", hex: "#64748b" },
-                  ].map((c) => (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      onClick={() => setNewVenueColor(c.hex)}
-                      className={`h-6 w-6 rounded-full border-2 transition-all cursor-pointer ${
-                        newVenueColor === c.hex
-                          ? "border-white scale-110 shadow-md ring-2 ring-indigo-400"
-                          : "border-transparent opacity-80 hover:opacity-100 hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.name}
-                    />
-                  ))}
-                  <input
-                    type="color"
-                    value={newVenueColor}
-                    onChange={(e) => setNewVenueColor(e.target.value)}
-                    className="h-6 w-8 rounded cursor-pointer border border-slate-700 bg-transparent"
-                    title="Özel Renk Seç"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
-                >
-                  Mekan Kaydet
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Personnel Management Dialog */}
-        <Dialog open={personnelModalOpen} onOpenChange={setPersonnelModalOpen}>
-          <DialogContent
-            className={theme === "dark"
-              ? "sm:max-w-[560px] bg-slate-900 border-slate-800 text-slate-100"
-              : "sm:max-w-[560px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
-          >
-            <DialogHeader>
-              <DialogTitle className="text-base font-bold flex items-center gap-2">
-                <Users className="h-5 w-5 text-sky-400" />
-                Personel Kadrosu & Tesis Sorumluları Yönetimi
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4 py-2">
-              {/* Add New Personnel Form */}
-              <form onSubmit={handleCreatePersonnel} className={`p-3 rounded-xl border space-y-3 ${
-                theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"
-              }`}>
-                <h4 className="text-xs font-bold text-sky-400 uppercase tracking-wider">➕ Yeni Personel Tanımla</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-[11px]">Ad Soyad *</Label>
-                    <Input
-                      required
-                      placeholder="örn: Mehmet Akif"
-                      value={personnelName}
-                      onChange={(e) => setPersonnelName(e.target.value)}
-                      className={`mt-1 text-xs ${
-                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">Görevi / Unvanı</Label>
-                    <Input
-                      placeholder="örn: Tesis Amiri / Zabıta Memuru"
-                      value={personnelTitle}
-                      onChange={(e) => setPersonnelTitle(e.target.value)}
-                      className={`mt-1 text-xs ${
-                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
-                      }`}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-[11px]">Telefon No</Label>
-                    <Input
-                      placeholder="0532 000 00 00"
-                      value={personnelPhone}
-                      onChange={(e) => setPersonnelPhone(e.target.value)}
-                      className={`mt-1 text-xs ${
-                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
-                      }`}
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-[11px]">E-posta</Label>
-                    <Input
-                      type="email"
-                      placeholder="mehmet@belediye.bel.tr"
-                      value={personnelEmail}
-                      onChange={(e) => setPersonnelEmail(e.target.value)}
-                      className={`mt-1 text-xs ${
-                        theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"
-                      }`}
-                    />
-                  </div>
-                </div>
-                <Button type="submit" size="sm" className="bg-sky-600 hover:bg-sky-500 text-white text-xs w-full font-semibold">
-                  Kadroya Ekle
-                </Button>
-              </form>
-
-              {/* Personnel List */}
-              <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Kayıtlı Personeller ({store.personnel?.length || 0})
-                </h4>
-                {(!store.personnel || store.personnel.length === 0) ? (
-                  <p className="text-xs text-slate-500 italic p-3 text-center">Henüz tanımlanmış personel bulunmamaktadır.</p>
-                ) : (
-                  <div className="max-h-[220px] overflow-y-auto space-y-2 pr-1">
-                    {store.personnel.map((p) => (
-                      <div key={p.id} className={`p-3 rounded-lg border flex items-center justify-between text-xs ${
-                        theme === "dark" ? "bg-slate-900/60 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-900"
-                      }`}>
-                        <div>
-                          <div className="font-bold flex items-center gap-2">
-                            <span>👤 {p.name}</span>
-                            <Badge variant="outline" className="text-[10px] bg-sky-500/10 border-sky-500/30 text-sky-400">
-                              {p.title || "Personel"}
-                            </Badge>
-                          </div>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-3 mt-1 font-mono">
-                            {p.phone && <span>📞 {p.phone}</span>}
-                            {p.email && <span>✉️ {p.email}</span>}
-                          </div>
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => removePersonnel(p.id)}
-                          className="h-7 w-7 text-slate-400 hover:text-rose-400"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* 3. New Hall Dialog */}
-        <Dialog open={hallModalOpen} onOpenChange={setHallModalOpen}>
-          <DialogContent
-            className={theme === "dark"
-              ? "sm:max-w-[400px] bg-slate-900 border-slate-800 text-slate-100"
-              : "sm:max-w-[400px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
-          >
-            <DialogHeader>
-              <DialogTitle
-                className={`text-base font-bold ${
-                  theme === "dark" ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
-                Mekana Salon / Alan Ekle
-              </DialogTitle>
-            </DialogHeader>
-
-            <form onSubmit={handleCreateHall} className="space-y-4 py-2">
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Salon Adı
-                </Label>
-                <Input
-                  required
-                  placeholder="örn: Safir Balo Salonu"
-                  value={newHallName}
-                  onChange={(e) => setNewHallName(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-              <div>
-                <Label
-                  className={`text-xs font-medium ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  Kat / Blok Bilgisi
-                </Label>
-                <Input
-                  placeholder="örn: Zemin Kat / A Blok"
-                  value={newHallFloor}
-                  onChange={(e) => setNewHallFloor(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Kapasite (Kişi)
-                  </Label>
-                  <Input
-                    type="number"
-                    value={newHallCapacity}
-                    onChange={(e) => setNewHallCapacity(Number(e.target.value))}
-                    className={`mt-1 text-xs ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                </div>
-                <div>
-                  <Label
-                    className={`text-xs font-medium ${
-                      theme === "dark" ? "text-slate-300" : "text-slate-700"
-                    }`}
-                  >
-                    Saatlik Kira (TL)
-                  </Label>
-                  <Input
-                    type="number"
-                    value={newHallHourlyPrice}
-                    onChange={(e) =>
-                      setNewHallHourlyPrice(Number(e.target.value))}
-                    className={`mt-1 text-xs font-semibold ${
-                      theme === "dark"
-                        ? "bg-slate-950 border-slate-800 text-slate-100"
-                        : "bg-slate-50 border-slate-300 text-slate-900"
-                    }`}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label
-                  className={`text-xs font-medium block mb-1.5 ${
-                    theme === "dark" ? "text-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  🎨 Salon Takvim Etkinlik Rengi
-                </Label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {[
-                    { name: "Mor", hex: "#8b5cf6" },
-                    { name: "İndigo", hex: "#6366f1" },
-                    { name: "Zümrüt", hex: "#10b981" },
-                    { name: "Kehribar", hex: "#f59e0b" },
-                    { name: "Gül", hex: "#ef4444" },
-                    { name: "Gök Mavisi", hex: "#0284c7" },
-                    { name: "Teal", hex: "#14b8a6" },
-                    { name: "Pembe", hex: "#ec4899" },
-                    { name: "Kayrak", hex: "#64748b" },
-                  ].map((c) => (
-                    <button
-                      key={c.hex}
-                      type="button"
-                      onClick={() => setNewHallColor(c.hex)}
-                      className={`h-6 w-6 rounded-full border-2 transition-all cursor-pointer ${
-                        newHallColor === c.hex
-                          ? "border-white scale-110 shadow-md ring-2 ring-indigo-400"
-                          : "border-transparent opacity-80 hover:opacity-100 hover:scale-105"
-                      }`}
-                      style={{ backgroundColor: c.hex }}
-                      title={c.name}
-                    />
-                  ))}
-                  <input
-                    type="color"
-                    value={newHallColor}
-                    onChange={(e) => setNewHallColor(e.target.value)}
-                    className="h-6 w-8 rounded cursor-pointer border border-slate-700 bg-transparent"
-                    title="Özel Renk Seç"
-                  />
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
-                >
-                  Salon Kaydet
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* 4. Mail Dialog */}
-        <MailDialog
-          open={mailModalOpen}
-          onOpenChange={setMailModalOpen}
-          defaultRecipient={mailPreset.recipient}
-          defaultSubject={mailPreset.subject}
-          defaultBody={mailPreset.body}
-          theme={theme}
-        />
-
-        {/* 5. Copy Settings Modal */}
-        <CopySettingsModal
-          open={copyModalOpen}
-          onOpenChange={setCopyModalOpen}
-        />
-
-        {/* 6. Delete Confirmation Safeguard Alert Dialog */}
-        <AlertDialog
-          open={deleteConfirmOpen}
-          onOpenChange={setDeleteConfirmOpen}
-        >
-          <AlertDialogContent
-            className={theme === "dark"
-              ? "bg-slate-900 border-slate-800 text-slate-100"
-              : "bg-white border-slate-200 text-slate-900"}
-          >
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-rose-500 text-base font-bold">
-                <AlertTriangle className="h-5 w-5 text-rose-500 shrink-0" />
-                Silme İşlemini Onaylayın
-              </AlertDialogTitle>
-              <AlertDialogDescription
-                className={`text-xs ${
-                  theme === "dark" ? "text-slate-400" : "text-slate-600"
-                }`}
-              >
-                <strong>"{deleteTarget?.title}"</strong>{" "}
-                kaydını silmek istediğinize emin misiniz? Bu işlem geri alınamaz
-                ve bağımlı kayıtlar kontrol edilecektir.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="mt-4 gap-2">
-              <AlertDialogCancel
-                className={`text-xs h-9 ${
-                  theme === "dark"
-                    ? "border-slate-800 bg-slate-950 text-slate-300 hover:bg-slate-800"
-                    : ""
-                }`}
-              >
-                Vazgeç
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleExecuteDelete}
-                className="bg-rose-600 hover:bg-rose-700 text-white text-xs h-9 font-medium"
-              >
-                Evet, Sil
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* 8. Official Document Print Modal */}
-        <OfficialPrintModal
-          open={printModalOpen}
-          onOpenChange={setPrintModalOpen}
-          reservation={selectedPrintReservation}
-          venue={store.venues.find((v) =>
-            v.id === selectedPrintReservation?.venueId
-          )}
-          hall={hallById(selectedPrintReservation?.hallId || "")}
-          institutionName={institutionName}
-          institutionLogo={institutionLogo}
-          defaultTariffBasis={defaultTariffBasis}
-          theme={theme}
-        />
-
-        {/* 9. Selected Reservation Details Drawer Panel (Sağ Detay Paneli) */}
-        {selectedReservation && (
-          <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-            <div
-              className={`w-full max-w-lg h-full overflow-y-auto p-6 shadow-2xl flex flex-col justify-between border-l transition-colors ${
+        {/* Center: Quick Search */}
+        <div className="hidden md:flex items-center gap-2 max-w-xs w-full">
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+            <Input
+              type="search"
+              placeholder="Müşteri, telefon veya etkinlik ara..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`pl-8 h-8 text-xs ${
                 theme === "dark"
-                  ? "bg-slate-900 border-slate-800 text-slate-100"
-                  : "bg-white border-slate-200 text-slate-900"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  : "bg-slate-100 border-slate-300 text-slate-900 placeholder:text-slate-400"
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Right: Quick Action Buttons & Theme Switcher */}
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => {
+              if (store.venues.length === 0) {
+                toast.error("Lütfen önce bir mekan ekleyin.");
+                return;
+              }
+              const firstV = store.venues[0];
+              setResVenueId(firstV.id);
+              if (firstV.halls.length > 0) {
+                setResHallId(firstV.halls[0].id);
+              }
+              setResModalOpen(true);
+            }}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold h-8 px-3 shadow-sm"
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" /> Etkinlik Ekle
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className={`h-8 w-8 ${
+              theme === "dark"
+                ? "text-slate-400 hover:text-slate-100"
+                : "text-slate-600 hover:text-slate-900"
+            }`}
+            title={theme === "dark" ? "Açık Temaya Geç" : "Koyu Temaya Geç"}
+          >
+            {theme === "dark"
+              ? <Sun className="h-4 w-4 text-amber-400" />
+              : <Moon className="h-4 w-4 text-slate-700" />}
+          </Button>
+        </div>
+      </header>
+
+      {/* Main Workspace Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Navigation Sidebar */}
+        <aside
+          className={`${
+            sidebarCollapsed ? "w-16" : "w-64"
+          } border-r flex flex-col shrink-0 transition-all duration-200 ${
+            theme === "dark"
+              ? "bg-slate-900/40 border-slate-800"
+              : "bg-white border-slate-200"
+          }`}
+        >
+          {/* Recent Database Dropdown / Switcher */}
+          <div className="p-3 border-b border-slate-800/40">
+            <div
+              className={`flex items-center justify-between ${
+                sidebarCollapsed ? "justify-center" : ""
               }`}
             >
-              <div className="space-y-5">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2.5">
-                    <CalendarDays className="h-5 w-5 text-indigo-500" />
-                    <div>
-                      <h3 className="text-base font-bold">Etkinlik & Tahsis Detayları</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Tarih: <strong className="text-indigo-400">{selectedReservation.date}</strong>
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSelectedReservation(null)}
-                    className="h-8 w-8 text-slate-400 hover:text-slate-100"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+              {!sidebarCollapsed && (
+                <div className="truncate">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono block">
+                    Aktif Veritabanı:
+                  </span>
+                  <span className="text-xs font-bold truncate block">
+                    {fileName || "Varsayılan Veritabanı"}
+                  </span>
                 </div>
-
-                {/* Status Alert Banner */}
-                {selectedReservation.status === "option" ? (
-                  <div className="p-4 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-300 space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider">⚠️ Opsiyonlu / Şerhli (Ön Kayıt)</h4>
-                        <p className="text-xs mt-1 text-amber-800 dark:text-amber-400 leading-relaxed">
-                          Bu salon kiralamasına <strong>şerh düşülmüştür</strong>. Kesinleşmiş yer ayırtması değildir.
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={async () => {
-                        await updateReservationStatus(selectedReservation.id, "confirmed");
-                        setSelectedReservation((prev) => prev ? { ...prev, status: "confirmed" } : null);
-                        toast.success("Etkinlik yer ayırtması kesinleştirildi!");
-                      }}
-                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-9 shadow-md"
-                    >
-                      <Check className="h-4 w-4 mr-1.5" /> Kesinleştir (Kesin Yer Ayırt)
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider">✅ Kesinleşmiş Rezervasyon</h4>
-                        <p className="text-xs mt-1 text-emerald-800 dark:text-emerald-400">
-                          Bu etkinlik salon tahsis kaydı kesinleşmiştir.
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      onClick={async () => {
-                        await updateReservationStatus(selectedReservation.id, "option");
-                        setSelectedReservation((prev) => prev ? { ...prev, status: "option" } : null);
-                        toast.info("Etkinlik opsiyonlu (şerhli) duruma getirildi.");
-                      }}
-                      className="w-full text-xs h-8 border-amber-500/40 text-amber-500 hover:bg-amber-500/10 font-semibold"
-                    >
-                      ⚠️ Şerh Düş (Opsiyonel Duruma Al)
-                    </Button>
-                  </div>
-                )}
-
-                {/* Customer Details */}
-                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
-                  <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>Müşteri & İletişim Bilgileri</h4>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Müşteri / Kurum:</span>
-                      <span className="font-bold">{selectedReservation.customer}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Telefon No:</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{selectedReservation.phone}</span>
-                        <a
-                          href={`https://wa.me/90${selectedReservation.phone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-400 px-2 py-0.5 rounded font-bold hover:bg-emerald-200 dark:hover:bg-emerald-600/30 border border-emerald-300 dark:border-emerald-700/50"
-                        >
-                          WhatsApp
-                        </a>
-                      </div>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Etkinlik Türü:</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{selectedReservation.eventType}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Venue & Hall Details */}
-                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
-                  <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>Tesis & Salon Bilgileri</h4>
-                  <div className="space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Mekan / Tesis:</span>
-                      <span className="font-extrabold">{store.venues.find((v) => v.id === selectedReservation.venueId)?.name || "-"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Salon:</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400">{hallById(selectedReservation.hallId)?.name || "-"}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Saat Aralığı:</span>
-                      <span className="font-mono font-bold">{selectedReservation.start} - {selectedReservation.end} ({hoursBetween(selectedReservation.start, selectedReservation.end)} Saat)</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Venue Manager & QR Code Section */}
-                {(() => {
-                  const targetVenue = store.venues.find((v) => v.id === selectedReservation.venueId);
-                  const manager = targetVenue?.managerName
-                    ? { name: targetVenue.managerName, title: targetVenue.managerTitle || "Tesis Sorumlusu", phone: targetVenue.managerPhone }
-                    : store.personnel?.[0];
-                  
-                  const qrText = `TESIS: ${targetVenue?.name || "Mekan"}\nSALON: ${hallById(selectedReservation.hallId)?.name || "Salon"}\nTARIH: ${selectedReservation.date} (${selectedReservation.start}-${selectedReservation.end})\nMUSTERI: ${selectedReservation.customer}\nSORUMLU: ${manager?.name || "Belirtilmedi"} (${manager?.phone || ""})`;
-                  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(qrText)}`;
-
-                  return (
-                    <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
-                      <h4 className={`text-xs font-bold uppercase tracking-wider flex items-center justify-between ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>
-                        <span>👤 Tesis Sorumlusu & Doğrulama Karekodu</span>
-                        <QrCode className="h-3.5 w-3.5 text-indigo-500" />
-                      </h4>
-
-                      <div className="flex items-center gap-4">
-                        <div className="h-20 w-20 p-1 bg-white rounded-lg border border-slate-300 shadow-sm shrink-0 flex items-center justify-center">
-                          <img src={qrUrl} alt="Tahsis Doğrulama Karekodu" className="h-full w-full object-contain" />
-                        </div>
-                        <div className="space-y-1.5 text-xs flex-1">
-                          <div>
-                            <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>Yetkili Sorumlu:</span>
-                            <p className={`font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>{manager?.name || "Yetkili Atanmadı"}</p>
-                            <p className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold">{manager?.title || "Tesis Amiri"}</p>
-                          </div>
-                          {manager?.phone && (
-                            <div className="flex items-center gap-2 pt-1 font-mono">
-                              <a
-                                href={`https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => {
-                                  if (window.electronAPI?.openExternalLink) {
-                                    e.preventDefault();
-                                    window.electronAPI.openExternalLink(`https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`);
-                                  }
-                                }}
-                                className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline text-[11px]"
-                              >
-                                📞 {manager.phone} (WhatsApp)
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {/* Financial & Receipt Section */}
-                <div className={`p-4 rounded-xl border space-y-3 ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200/90 shadow-xs text-slate-900"}`}>
-                  <h4 className={`text-xs font-bold uppercase tracking-wider ${theme === "dark" ? "text-slate-400" : "text-slate-700"}`}>Finansal Döküm & Ödeme Makbuzu</h4>
-                  
-                  <div className={`grid grid-cols-3 gap-2 text-center p-2.5 rounded-xl border font-mono ${
-                    theme === "dark"
-                      ? "bg-slate-950/80 border-slate-800"
-                      : "bg-slate-50 border-slate-200/90 shadow-xs"
-                  }`}>
-                    <div className={`p-2 rounded-lg border ${
-                      theme === "dark" ? "bg-indigo-950/40 border-indigo-900/60" : "bg-indigo-50/80 border-indigo-200/80"
-                    }`}>
-                      <div className={`text-[10px] font-sans font-bold uppercase tracking-wider ${
-                        theme === "dark" ? "text-indigo-300" : "text-indigo-900"
-                      }`}>Toplam Ücret</div>
-                      <div className={`text-xs font-extrabold mt-0.5 ${
-                        theme === "dark" ? "text-indigo-200" : "text-indigo-700"
-                      }`}>{money(selectedReservation.price)}</div>
-                    </div>
-
-                    <div className={`p-2 rounded-lg border ${
-                      theme === "dark" ? "bg-emerald-950/40 border-emerald-900/60" : "bg-emerald-50/80 border-emerald-200/80"
-                    }`}>
-                      <div className={`text-[10px] font-sans font-bold uppercase tracking-wider ${
-                        theme === "dark" ? "text-emerald-300" : "text-emerald-900"
-                      }`}>Ödenen</div>
-                      <div className={`text-xs font-extrabold mt-0.5 ${
-                        theme === "dark" ? "text-emerald-300" : "text-emerald-700"
-                      }`}>{money(selectedReservation.paid)}</div>
-                    </div>
-
-                    <div className={`p-2 rounded-lg border ${
-                      theme === "dark" ? "bg-rose-950/40 border-rose-900/60" : "bg-rose-50/80 border-rose-200/80"
-                    }`}>
-                      <div className={`text-[10px] font-sans font-bold uppercase tracking-wider ${
-                        theme === "dark" ? "text-rose-300" : "text-rose-900"
-                      }`}>Kalan Bakiye</div>
-                      <div className={`text-xs font-extrabold mt-0.5 ${
-                        theme === "dark" ? "text-rose-300" : "text-rose-700"
-                      }`}>
-                        {money(selectedReservation.price - selectedReservation.paid)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Receipt & Payment Method Form Fields */}
-                  <div className="space-y-2.5 pt-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <Label className="text-[11px] text-slate-400">Makbuz / Dekont No</Label>
-                        <Input
-                          value={editReceiptNo}
-                          placeholder="MKB-2026-0000"
-                          onChange={(e) => setEditReceiptNo(e.target.value)}
-                          className={`text-xs h-8 ${theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-300 text-slate-900"}`}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-[11px] text-slate-400">Ödeme Yöntemi</Label>
-                        <Select value={editPaymentMethod} onValueChange={setEditPaymentMethod}>
-                          <SelectTrigger className={`text-xs h-8 ${theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-300 text-slate-900"}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className={theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-900"}>
-                            <SelectItem value="Nakit">Nakit</SelectItem>
-                            <SelectItem value="Havale/EFT">Havale / EFT</SelectItem>
-                            <SelectItem value="Kredi Kartı">Kredi Kartı</SelectItem>
-                            <SelectItem value="Dekont">Resmi Dekont</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label className="text-[11px] text-slate-400">Tahsil Edilen Peşinat (TL)</Label>
-                      <Input
-                        type="number"
-                        value={editPaidAmount}
-                        onChange={(e) => setEditPaidAmount(e.target.value ? Number(e.target.value) : "")}
-                        className={`text-xs h-8 font-bold text-emerald-400 ${theme === "dark" ? "bg-slate-900 border-slate-800" : "bg-white border-slate-300"}`}
-                      />
-                    </div>
-
-                    <Button
-                      size="sm"
-                      onClick={async () => {
-                        await updateReservationDetails(selectedReservation.id, {
-                          receiptNo: editReceiptNo,
-                          paymentMethod: editPaymentMethod,
-                          paid: Number(editPaidAmount) || 0,
-                        });
-                        setSelectedReservation((prev) => prev ? { ...prev, receiptNo: editReceiptNo, paymentMethod: editPaymentMethod, paid: Number(editPaidAmount) || 0 } : null);
-                        toast.success("Makbuz ve ödeme bilgileri güncellendi!");
-                      }}
-                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs h-8 shadow-xs"
-                    >
-                      <Check className="h-3.5 w-3.5 mr-1" /> Ödeme & Makbuz Bilgilerini Güncelle
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Decision Info & Note */}
-                <div className={`p-4 rounded-xl border space-y-2 text-xs ${theme === "dark" ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-                  <div>
-                    <span className="text-slate-500 font-semibold block">Encümen / Meclis Kararı Dayanağı:</span>
-                    <span className="text-slate-300 italic">{selectedReservation.decisionInfo || "Girilmedi"}</span>
-                  </div>
-                  {selectedReservation.note && (
-                    <div className="pt-2 border-t border-slate-800">
-                      <span className="text-slate-500 font-semibold block">Özel Notlar:</span>
-                      <p className="text-slate-300 leading-relaxed">{selectedReservation.note}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Footer */}
-              <div className="pt-6 border-t border-slate-200 dark:border-slate-800 space-y-2 mt-4">
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedPrintReservation(selectedReservation);
-                      setPrintModalOpen(true);
-                    }}
-                    className={`text-xs h-8 font-semibold ${theme === "dark" ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-slate-300 text-slate-800"}`}
-                  >
-                    <Printer className="h-3.5 w-3.5 mr-1" /> Evrak Yazdır
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleCopySMS(selectedReservation)}
-                    className={`text-xs h-8 font-semibold ${theme === "dark" ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-slate-300 text-slate-800"}`}
-                  >
-                    <MessageSquare className="h-3.5 w-3.5 mr-1" /> SMS / WhatsApp
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuickMail(selectedReservation)}
-                    className={`text-xs h-8 font-semibold ${theme === "dark" ? "border-slate-800 text-slate-200 hover:bg-slate-800" : "border-slate-300 text-slate-800"}`}
-                  >
-                    <Mail className="h-3.5 w-3.5 mr-1" /> E-posta
-                  </Button>
-                </div>
-
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    const id = selectedReservation.id;
-                    const name = selectedReservation.customer;
-                    setSelectedReservation(null);
-                    promptDelete("reservation", id, name);
-                  }}
-                  className="w-full text-xs h-8 font-semibold"
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Bu Etkinlik Kaydını Sil
-                </Button>
-              </div>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowLauncherModal(true)}
+                className="h-7 w-7 text-indigo-400 hover:text-indigo-300"
+                title="Veritabanı Değiştir / Dosya Aç"
+              >
+                <FolderOpen className="h-3.5 w-3.5" />
+              </Button>
             </div>
           </div>
-        )}
+
+          {/* Navigation Items */}
+          <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+            {[
+              {
+                id: "dashboard",
+                label: "Gösterge Paneli",
+                icon: LayoutDashboard,
+              },
+              {
+                id: "calendar",
+                label: "Takvim & Etkinlikler",
+                icon: CalendarIcon,
+              },
+              {
+                id: "venues",
+                label: `Mekanlar & Salonlar (${store.venues.length})`,
+                icon: Building2,
+              },
+              {
+                id: "events",
+                label: `Etkinlik Listesi (${store.reservations.length})`,
+                icon: Layers,
+              },
+              {
+                id: "personnel",
+                label: `Personel Kadrosu (${store.personnel?.length || 0})`,
+                icon: Users,
+              },
+              { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
+              { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
+            ].map((item) => {
+              const IconComp = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveSection(item.id as NavSection);
+                    setSidebarOpen(false);
+                  }}
+                  title={item.label}
+                  className={`w-full flex items-center ${
+                    sidebarCollapsed
+                      ? "justify-center px-2 py-3"
+                      : "gap-3 px-3.5 py-2.5"
+                  } rounded-xl text-xs font-medium transition-all ${
+                    isActive
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold"
+                      : theme === "dark"
+                      ? "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <IconComp
+                    className={sidebarCollapsed
+                      ? "h-5 w-5 shrink-0"
+                      : "h-4 w-4 shrink-0"}
+                  />
+                  {!sidebarCollapsed && (
+                    <span className="truncate">{item.label}</span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+          {/* Section Body */}
+          <div className="p-6 max-w-7xl w-full mx-auto space-y-6 flex-1">
+            {activeSection === "dashboard" && (
+              <DashboardScreen
+                theme={theme}
+                store={store}
+                monthStats={monthStats}
+                hallById={hallById}
+                onNavigateToCalendar={() => setActiveSection("calendar")}
+              />
+            )}
+
+            {activeSection === "calendar" && (
+              <CalendarScreen
+                theme={theme}
+                cursor={cursor}
+                setCursor={setCursor}
+                selectedDay={selectedDay}
+                setSelectedDay={setSelectedDay}
+                calendarViewMode={calendarViewMode}
+                setCalendarViewMode={setCalendarViewMode}
+                calendarVenueFilter={calendarVenueFilter}
+                setCalendarVenueFilter={setCalendarVenueFilter}
+                store={store}
+                grid={grid}
+                byDate={byDate}
+                filteredReservations={filteredReservations}
+                hallById={hallById}
+                getEventTypeColor={getEventTypeColor}
+                today={today}
+                onOpenNewReservationModal={() => {
+                  if (store.venues.length === 0) {
+                    toast.error("Önce bir mekan ekleyin.");
+                    return;
+                  }
+                  const firstV = store.venues[0];
+                  setResVenueId(firstV.id);
+                  if (firstV.halls.length > 0) {
+                    setResHallId(firstV.halls[0].id);
+                  }
+                  setResModalOpen(true);
+                }}
+                onSelectReservation={(r) => setSelectedReservation(r)}
+                onPromptDeleteReservation={(id, title) =>
+                  promptDelete("reservation", id, title)}
+                onPrintOfficialDoc={(r) => {
+                  setSelectedPrintReservation(r);
+                  setPrintModalOpen(true);
+                }}
+                onCopySMS={handleCopySMS}
+                onQuickMail={handleQuickMail}
+              />
+            )}
+
+            {activeSection === "venues" && (
+              <VenuesScreen
+                theme={theme}
+                store={store}
+                onOpenVenueModal={() => setVenueModalOpen(true)}
+                onOpenHallModal={(vId) => {
+                  setTargetVenueId(vId);
+                  setHallModalOpen(true);
+                }}
+                onPromptDelete={promptDelete}
+              />
+            )}
+
+            {activeSection === "events" && (
+              <EventsScreen
+                theme={theme}
+                eventTypeFilter={eventTypeFilter}
+                setEventTypeFilter={setEventTypeFilter}
+                allEventTypes={mergedEventTypes}
+                filteredReservations={filteredReservations}
+                store={store}
+                hallById={hallById}
+                onPromptDelete={(type, id, title) =>
+                  promptDelete(type, id, title)}
+              />
+            )}
+
+            {activeSection === "personnel" && (
+              <PersonnelScreen
+                theme={theme}
+                store={store}
+                personnelName={personnelName}
+                setPersonnelName={setPersonnelName}
+                personnelTitle={personnelTitle}
+                setPersonnelTitle={setPersonnelTitle}
+                personnelPhone={personnelPhone}
+                setPersonnelPhone={setPersonnelPhone}
+                personnelEmail={personnelEmail}
+                setPersonnelEmail={setPersonnelEmail}
+                personnelNotes={personnelNotes}
+                setPersonnelNotes={setPersonnelNotes}
+                handleCreatePersonnel={handleCreatePersonnel}
+                removePersonnel={removePersonnel}
+                onOpenPersonnelModal={() => setPersonnelModalOpen(true)}
+              />
+            )}
+
+            {activeSection === "reports" && (
+              <ReportsScreen
+                theme={theme}
+                monthStats={monthStats}
+              />
+            )}
+
+            {activeSection === "settings" && (
+              <SettingsScreen
+                theme={theme}
+                setMailModalOpen={setMailModalOpen}
+                newEventTypeInput={newEventTypeInput}
+                setNewEventTypeInput={setNewEventTypeInput}
+                handleAddCustomEventType={handleAddCustomEventType}
+                handleResetEventTypes={handleResetEventTypes}
+                handleRemoveEventType={handleRemoveEventType}
+                allEventTypes={mergedEventTypes}
+                getEventTypeColor={getEventTypeColor}
+                gdriveToken={gdriveToken}
+                setGdriveToken={setGdriveToken}
+                gdriveFolderId={gdriveFolderId}
+                setGdriveFolderId={setGdriveFolderId}
+                draftInstitutionName={draftInstitutionName}
+                setDraftInstitutionName={setDraftInstitutionName}
+                draftInstitutionLogo={draftInstitutionLogo}
+                handleDraftLogoUpload={handleDraftLogoUpload}
+                handleRemoveDraftLogo={handleRemoveDraftLogo}
+                handleCancelInstitutionSettings={handleCancelInstitutionSettings}
+                handleSaveInstitutionSettings={handleSaveInstitutionSettings}
+                draftTariffBasis={draftTariffBasis}
+                setDraftTariffBasis={setDraftTariffBasis}
+                handleCancelTariffSettings={handleCancelTariffSettings}
+                handleSaveTariffSettings={handleSaveTariffSettings}
+              />
+            )}
+          </div>
+
+          {/* Global Application Footer */}
+          <Footer
+            currentFilePath={currentFilePath}
+            institutionName={institutionName}
+            theme={theme}
+          />
+        </div>
       </div>
+
+      {/* DIALOG MODALS */}
+      <NewReservationModal
+        open={resModalOpen}
+        onOpenChange={setResModalOpen}
+        theme={theme}
+        selectedDay={selectedDay}
+        resVenueId={resVenueId}
+        setResVenueId={setResVenueId}
+        resHallId={resHallId}
+        setResHallId={setResHallId}
+        resEventType={resEventType}
+        setResEventType={setResEventType}
+        resCustomer={resCustomer}
+        setResCustomer={setResCustomer}
+        pricingMode={pricingMode}
+        setPricingMode={setPricingMode}
+        resStart={resStart}
+        setResStart={setResStart}
+        resEnd={resEnd}
+        setResEnd={setResEnd}
+        resPhone={resPhone}
+        setResPhone={setResPhone}
+        resPrice={resPrice}
+        setResPrice={setResPrice}
+        resPaid={resPaid}
+        setResPaid={setResPaid}
+        resStatus={resStatus}
+        setResStatus={setResStatus}
+        resReceiptNo={resReceiptNo}
+        setResReceiptNo={setResReceiptNo}
+        resPaymentMethod={resPaymentMethod}
+        setResPaymentMethod={setResPaymentMethod}
+        resDecisionInfo={resDecisionInfo}
+        setResDecisionInfo={setResDecisionInfo}
+        resNote={resNote}
+        setResNote={setResNote}
+        store={store}
+        allEventTypes={mergedEventTypes}
+        customerSuggestions={customerSuggestions}
+        phoneSuggestions={phoneSuggestions}
+        decisionSuggestions={decisionSuggestions}
+        timeSlots={timeSlots}
+        handleCreateReservation={handleCreateReservation}
+      />
+
+      <NewVenueModal
+        open={venueModalOpen}
+        onOpenChange={setVenueModalOpen}
+        theme={theme}
+        newVenueName={newVenueName}
+        setNewVenueName={setNewVenueName}
+        newVenueDistrict={newVenueDistrict}
+        setNewVenueDistrict={setNewVenueDistrict}
+        newVenueAddress={newVenueAddress}
+        setNewVenueAddress={setNewVenueAddress}
+        newVenueMapUrl={newVenueMapUrl}
+        setNewVenueMapUrl={setNewVenueMapUrl}
+        newVenueCategory={newVenueCategory}
+        setNewVenueCategory={setNewVenueCategory}
+        newVenueManagerName={newVenueManagerName}
+        setNewVenueManagerName={setNewVenueManagerName}
+        newVenueManagerTitle={newVenueManagerTitle}
+        setNewVenueManagerTitle={setNewVenueManagerTitle}
+        newVenueManagerPhone={newVenueManagerPhone}
+        setNewVenueManagerPhone={setNewVenueManagerPhone}
+        newVenueColor={newVenueColor}
+        setNewVenueColor={setNewVenueColor}
+        store={store}
+        handleCreateVenue={handleCreateVenue}
+      />
+
+      <NewHallModal
+        open={hallModalOpen}
+        onOpenChange={setHallModalOpen}
+        theme={theme}
+        newHallName={newHallName}
+        setNewHallName={setNewHallName}
+        newHallFloor={newHallFloor}
+        setNewHallFloor={setNewHallFloor}
+        newHallCapacity={newHallCapacity}
+        setNewHallCapacity={setNewHallCapacity}
+        newHallHourlyPrice={newHallHourlyPrice}
+        setNewHallHourlyPrice={setNewHallHourlyPrice}
+        newHallColor={newHallColor}
+        setNewHallColor={setNewHallColor}
+        handleCreateHall={handleCreateHall}
+      />
+
+      <PersonnelModal
+        open={personnelModalOpen}
+        onOpenChange={setPersonnelModalOpen}
+        theme={theme}
+        personnelName={personnelName}
+        setPersonnelName={setPersonnelName}
+        personnelTitle={personnelTitle}
+        setPersonnelTitle={setPersonnelTitle}
+        personnelPhone={personnelPhone}
+        setPersonnelPhone={setPersonnelPhone}
+        personnelEmail={personnelEmail}
+        setPersonnelEmail={setPersonnelEmail}
+        store={store}
+        handleCreatePersonnel={handleCreatePersonnel}
+        removePersonnel={removePersonnel}
+      />
+
+      <MailDialog
+        open={mailModalOpen}
+        onOpenChange={setMailModalOpen}
+        defaultRecipient={mailPreset.recipient}
+        defaultSubject={mailPreset.subject}
+        defaultBody={mailPreset.body}
+        theme={theme}
+      />
+
+      <CopySettingsModal
+        open={copyModalOpen}
+        onOpenChange={setCopyModalOpen}
+      />
+
+      <DeleteConfirmModal
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        theme={theme}
+        deleteTarget={deleteTarget}
+        onExecuteDelete={handleExecuteDelete}
+      />
+
+      <OfficialPrintModal
+        open={printModalOpen}
+        onOpenChange={setPrintModalOpen}
+        reservation={selectedPrintReservation}
+        venue={store.venues.find((v) =>
+          v.id === selectedPrintReservation?.venueId
+        )}
+        hall={hallById(selectedPrintReservation?.hallId || "")}
+        institutionName={institutionName}
+        institutionLogo={institutionLogo}
+        defaultTariffBasis={defaultTariffBasis}
+        theme={theme}
+      />
+
+      <ReservationDrawer
+        reservation={selectedReservation}
+        onClose={() => setSelectedReservation(null)}
+        theme={theme}
+        store={store}
+        hallById={hallById}
+        editReceiptNo={editReceiptNo}
+        setEditReceiptNo={setEditReceiptNo}
+        editPaymentMethod={editPaymentMethod}
+        setEditPaymentMethod={setEditPaymentMethod}
+        editPaidAmount={editPaidAmount}
+        setEditPaidAmount={setEditPaidAmount}
+        updateReservationStatus={updateReservationStatus}
+        updateReservationDetails={updateReservationDetails}
+        setSelectedReservation={setSelectedReservation}
+        onPrintDoc={(r) => {
+          setSelectedPrintReservation(r);
+          setPrintModalOpen(true);
+        }}
+        onCopySMS={handleCopySMS}
+        onQuickMail={handleQuickMail}
+        onPromptDelete={(type, id, title) => promptDelete(type, id, title)}
+      />
+
+      {showLauncherModal && (
+        <LauncherModal
+          open={showLauncherModal}
+          onOpenChange={setShowLauncherModal}
+          currentFilePath={currentFilePath || ""}
+          recentFiles={recentFiles}
+          onOpenRecent={(p) => openFile(p)}
+          onCreateNew={() => createFile()}
+          onOpenDialog={() => openFile()}
+          onClearRecent={() => {
+            localStorage.removeItem("recent_vke_files");
+            fetchRecentFiles();
+          }}
+          theme={theme}
+        />
+      )}
     </div>
   );
 }
+
+export default App;

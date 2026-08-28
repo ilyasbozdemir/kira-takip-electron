@@ -1,22 +1,147 @@
 import { useState, useEffect, useCallback } from "react";
-import { type Store, type Hall, type Venue, type Reservation } from "./rental-store";
+import { type Store, type Hall, type Venue, type Reservation, type Personnel } from "./rental-store";
+
+let currentStoreData: Store = { venues: [], reservations: [], personnel: [] };
+const listeners = new Set<() => void>();
+
+function notifyListeners() {
+  listeners.forEach((cb) => cb());
+}
+
+export const sqliteStore = {
+  getSnapshot(): Store {
+    return currentStoreData;
+  },
+  subscribe(cb: () => void) {
+    listeners.add(cb);
+    return () => listeners.delete(cb);
+  },
+  async loadFromDb(): Promise<Store> {
+    try {
+      if (window.electronAPI?.db?.getStore) {
+        const data = await window.electronAPI.db.getStore();
+        currentStoreData = data || { venues: [], reservations: [], personnel: [] };
+      } else {
+        const raw = localStorage.getItem("venuekeeper-store-backup");
+        if (raw) currentStoreData = JSON.parse(raw);
+      }
+    } catch (err) {
+      console.error("Failed to load sqlite store:", err);
+    }
+    notifyListeners();
+    return currentStoreData;
+  },
+  async addReservation(r: any) {
+    if (window.electronAPI?.db?.addReservation) {
+      await window.electronAPI.db.addReservation(r);
+    } else {
+      currentStoreData.reservations.push({ ...r, id: Math.random().toString(36).slice(2) });
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async deleteReservation(id: string) {
+    if (window.electronAPI?.db?.deleteReservation) {
+      await window.electronAPI.db.deleteReservation(id);
+    } else {
+      currentStoreData.reservations = currentStoreData.reservations.filter((x) => x.id !== id);
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async updateReservationStatus(id: string, status: string) {
+    if (window.electronAPI?.db?.updateReservationStatus) {
+      await window.electronAPI.db.updateReservationStatus(id, status);
+    } else {
+      const res = currentStoreData.reservations.find((x) => x.id === id);
+      if (res) res.status = status;
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async updateReservationDetails(id: string, details: any) {
+    if (window.electronAPI?.db?.updateReservationDetails) {
+      await window.electronAPI.db.updateReservationDetails(id, details);
+    } else {
+      const res = currentStoreData.reservations.find((x) => x.id === id);
+      if (res) Object.assign(res, details);
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async addVenue(data: any) {
+    if (window.electronAPI?.db?.addVenue) {
+      await window.electronAPI.db.addVenue(data);
+    } else {
+      currentStoreData.venues.push({ ...data, id: Math.random().toString(36).slice(2), halls: [] });
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async deleteVenue(id: string) {
+    if (window.electronAPI?.db?.deleteVenue) {
+      await window.electronAPI.db.deleteVenue(id);
+    } else {
+      currentStoreData.venues = currentStoreData.venues.filter((x) => x.id !== id);
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async addHall(data: any) {
+    if (window.electronAPI?.db?.addHall) {
+      await window.electronAPI.db.addHall(data);
+    } else {
+      const v = currentStoreData.venues.find((x) => x.id === data.venueId);
+      if (v) v.halls.push({ ...data, id: Math.random().toString(36).slice(2) });
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async deleteHall(venueId: string, hallId: string) {
+    if (window.electronAPI?.db?.deleteHall) {
+      await window.electronAPI.db.deleteHall(venueId, hallId);
+    } else {
+      const v = currentStoreData.venues.find((x) => x.id === venueId);
+      if (v) v.halls = v.halls.filter((h) => h.id !== hallId);
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async addPersonnel(p: any) {
+    if (window.electronAPI?.db?.addPersonnel) {
+      await window.electronAPI.db.addPersonnel(p);
+    } else {
+      if (!currentStoreData.personnel) currentStoreData.personnel = [];
+      currentStoreData.personnel.push({ ...p, id: Math.random().toString(36).slice(2) });
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async deletePersonnel(id: string) {
+    if (window.electronAPI?.db?.deletePersonnel) {
+      await window.electronAPI.db.deletePersonnel(id);
+    } else {
+      if (currentStoreData.personnel) {
+        currentStoreData.personnel = currentStoreData.personnel.filter((x) => x.id !== id);
+      }
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+};
 
 export function useSQLiteStore() {
-  const [store, setStore] = useState<Store>({ venues: [], reservations: [] });
+  const [store, setStore] = useState<Store>({ venues: [], reservations: [], personnel: [] });
   const [ready, setReady] = useState(false);
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
 
   const fetchStore = useCallback(async () => {
     try {
-      if (window.electronAPI?.db?.getStore) {
-        const data = await window.electronAPI.db.getStore();
-        setStore(data);
+      const data = await sqliteStore.loadFromDb();
+      setStore(data);
+      if (window.electronAPI?.db?.getCurrentPath) {
         const path = await window.electronAPI.db.getCurrentPath();
         setCurrentFilePath(path);
-      } else {
-        // Fallback for browser preview mode
-        const raw = localStorage.getItem("venuekeeper-store-backup");
-        if (raw) setStore(JSON.parse(raw));
       }
     } catch (err) {
       console.error("Failed to load database store:", err);
@@ -38,216 +163,20 @@ export function useSQLiteStore() {
     }
   }, [fetchStore]);
 
-  const addVenue = useCallback(
-    async (venueData: { name: string; district: string; category?: string; address?: string; mapUrl?: string; managerName?: string; managerPhone?: string; managerTitle?: string; color?: string } | string, district?: string, category: string = "Genel") => {
-      const data = typeof venueData === "string" ? { name: venueData, district: district || "", category, color: "#6366f1" } : venueData;
-      if (window.electronAPI?.db?.addVenue) {
-        await window.electronAPI.db.addVenue(data);
-        await fetchStore();
-      } else {
-        setStore((s) => ({
-          ...s,
-          venues: [...s.venues, { id: Math.random().toString(36).slice(2), ...data, color: data.color || "#6366f1", halls: [] }],
-        }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const removeVenue = useCallback(
-    async (venueId: string): Promise<{ success: boolean; error?: string }> => {
-      if (window.electronAPI?.db?.deleteVenue) {
-        const res = await window.electronAPI.db.deleteVenue(venueId);
-        if (res?.success) {
-          await fetchStore();
-        }
-        return res || { success: true };
-      } else {
-        const v = store.venues.find((x) => x.id === venueId);
-        if (v && v.halls.length > 0) {
-          return { success: false, error: "Bu mekana ait bağlı salonlar bulunmaktadır. Önce salonları silmelisiniz!" };
-        }
-        setStore((s) => ({
-          venues: s.venues.filter((v) => v.id !== venueId),
-          reservations: s.reservations.filter((r) => r.venueId !== venueId),
-        }));
-        return { success: true };
-      }
-    },
-    [fetchStore, store.venues]
-  );
-
-  const addHall = useCallback(
-    async (venueId: string, hall: Omit<Hall, "id">) => {
-      if (window.electronAPI?.db?.addHall) {
-        await window.electronAPI.db.addHall({ venueId, hall });
-        await fetchStore();
-      } else {
-        setStore((s) => ({
-          ...s,
-          venues: s.venues.map((v) =>
-            v.id === venueId ? { ...v, halls: [...v.halls, { ...hall, id: Math.random().toString(36).slice(2) }] } : v
-          ),
-        }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const removeHall = useCallback(
-    async (venueId: string, hallId: string): Promise<{ success: boolean; error?: string }> => {
-      if (window.electronAPI?.db?.deleteHall) {
-        const res = await window.electronAPI.db.deleteHall(venueId, hallId);
-        if (res?.success) {
-          await fetchStore();
-        }
-        return res || { success: true };
-      } else {
-        const resCount = store.reservations.filter((r) => r.hallId === hallId).length;
-        if (resCount > 0) {
-          return { success: false, error: "Bu salona ait aktif etkinlik rezervasyonu bulunmaktadır!" };
-        }
-        setStore((s) => ({
-          venues: s.venues.map((v) => (v.id === venueId ? { ...v, halls: v.halls.filter((h) => h.id !== hallId) } : v)),
-          reservations: s.reservations.filter((r) => r.hallId !== hallId),
-        }));
-        return { success: true };
-      }
-    },
-    [fetchStore, store.reservations]
-  );
-
-  const addReservation = useCallback(
-    async (res: {
-      venueId: string;
-      hallId: string;
-      date: string;
-      start: string;
-      end: string;
-      customer: string;
-      phone: string;
-      eventType: string;
-      price: number;
-      paid: number;
-      note?: string;
-      decisionInfo?: string;
-      status?: string;
-      receiptNo?: string;
-      paymentMethod?: string;
-    }): Promise<{ success: boolean; error?: string }> => {
-      if (window.electronAPI?.db?.addReservation) {
-        const result = await window.electronAPI.db.addReservation(res);
-        if (result.success) {
-          await fetchStore();
-        }
-        return result;
-      } else {
-        setStore((s) => ({
-          ...s,
-          reservations: [
-            ...s.reservations,
-            { ...res, id: Math.random().toString(36).slice(2) },
-          ],
-        }));
-        return { success: true };
-      }
-    },
-    [fetchStore]
-  );
-
-  const removeReservation = useCallback(
-    async (id: string) => {
-      if (window.electronAPI?.db?.deleteReservation) {
-        await window.electronAPI.db.deleteReservation(id);
-        await fetchStore();
-      } else {
-        setStore((s) => ({ ...s, reservations: s.reservations.filter((r) => r.id !== id) }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const updatePaid = useCallback(
-    async (id: string, paid: number) => {
-      if (window.electronAPI?.db?.updatePaid) {
-        await window.electronAPI.db.updatePaid(id, paid);
-        await fetchStore();
-      } else {
-        setStore((s) => ({ ...s, reservations: s.reservations.map((r) => (r.id === id ? { ...r, paid } : r)) }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const updateReservationStatus = useCallback(
-    async (id: string, status: string) => {
-      if (window.electronAPI?.db?.updateReservationStatus) {
-        await window.electronAPI.db.updateReservationStatus(id, status);
-        await fetchStore();
-      } else {
-        setStore((s) => ({ ...s, reservations: s.reservations.map((r) => (r.id === id ? { ...r, status } : r)) }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const updateReservationDetails = useCallback(
-    async (id: string, details: { receiptNo?: string; paymentMethod?: string; paid?: number; status?: string; note?: string }) => {
-      if (window.electronAPI?.db?.updateReservationDetails) {
-        await window.electronAPI.db.updateReservationDetails(id, details);
-        await fetchStore();
-      } else {
-        setStore((s) => ({ ...s, reservations: s.reservations.map((r) => (r.id === id ? { ...r, ...details } : r)) }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const addPersonnel = useCallback(
-    async (personnel: { name: string; title?: string; phone?: string; email?: string; notes?: string }) => {
-      if (window.electronAPI?.db?.addPersonnel) {
-        await window.electronAPI.db.addPersonnel(personnel);
-        await fetchStore();
-      } else {
-        setStore((s) => ({
-          ...s,
-          personnel: [...(s.personnel || []), { id: Math.random().toString(36).slice(2), ...personnel }],
-        }));
-      }
-    },
-    [fetchStore]
-  );
-
-  const removePersonnel = useCallback(
-    async (id: string) => {
-      if (window.electronAPI?.db?.deletePersonnel) {
-        await window.electronAPI.db.deletePersonnel(id);
-        await fetchStore();
-      } else {
-        setStore((s) => ({
-          ...s,
-          personnel: (s.personnel || []).filter((p) => p.id !== id),
-        }));
-      }
-    },
-    [fetchStore]
-  );
-
   return {
     store,
     ready,
     currentFilePath,
     fetchStore,
-    addVenue,
-    removeVenue,
-    addHall,
-    removeHall,
-    addReservation,
-    removeReservation,
-    updatePaid,
-    updateReservationStatus,
-    updateReservationDetails,
-    addPersonnel,
-    removePersonnel,
+    addVenue: sqliteStore.addVenue.bind(sqliteStore),
+    removeVenue: sqliteStore.deleteVenue.bind(sqliteStore),
+    addHall: sqliteStore.addHall.bind(sqliteStore),
+    removeHall: sqliteStore.deleteHall.bind(sqliteStore),
+    addReservation: sqliteStore.addReservation.bind(sqliteStore),
+    removeReservation: sqliteStore.deleteReservation.bind(sqliteStore),
+    updateReservationStatus: sqliteStore.updateReservationStatus.bind(sqliteStore),
+    updateReservationDetails: sqliteStore.updateReservationDetails.bind(sqliteStore),
+    addPersonnel: sqliteStore.addPersonnel.bind(sqliteStore),
+    removePersonnel: sqliteStore.deletePersonnel.bind(sqliteStore),
   };
 }
