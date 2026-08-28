@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import {
   allEventTypes,
   hoursBetween,
+  toKey,
   type PricingMode,
   type Store,
 } from "@/lib/rental-store";
@@ -100,6 +101,14 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     e.preventDefault();
     if (!resVenueId || !resHallId || !resCustomer || !resPhone) {
       toast.error("Lütfen tüm zorunlu alanları doldurun.");
+      return;
+    }
+
+    const todayKey = toKey(new Date());
+    if (selectedDay < todayKey) {
+      toast.error(
+        "Geçmiş bir tarihe yeni etkinlik kaydı oluşturulamaz! Yalnızca bugün ve gelecek tarihler için yeni rezervasyon eklenebilir."
+      );
       return;
     }
 

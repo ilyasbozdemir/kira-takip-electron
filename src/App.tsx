@@ -32,6 +32,7 @@ import { EventsScreen } from "@/screens/events.screen";
 import { PersonnelScreen } from "@/screens/personnel.screen";
 import { ReportsScreen } from "@/screens/reports.screen";
 import { SettingsScreen } from "@/screens/settings.screen";
+import { HelpScreen } from "@/screens/help.screen";
 
 export function App(): React.JSX.Element {
   // Theme State
@@ -427,6 +428,15 @@ export function App(): React.JSX.Element {
     title: string,
     venueId?: string
   ) => {
+    if (type === "reservation") {
+      const res = store.reservations.find((r) => r.id === id);
+      if (res && res.date < toKey(new Date())) {
+        toast.error(
+          "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!"
+        );
+        return;
+      }
+    }
     setDeleteTarget({ type, id, title, venueId });
     setDeleteConfirmOpen(true);
   };
@@ -441,6 +451,13 @@ export function App(): React.JSX.Element {
         await sqliteStore.deleteHall(deleteTarget.venueId, deleteTarget.id);
         toast.success(`"${deleteTarget.title}" salonu silindi.`);
       } else if (deleteTarget.type === "reservation") {
+        const res = store.reservations.find((r) => r.id === deleteTarget.id);
+        if (res && res.date < toKey(new Date())) {
+          toast.error(
+            "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!"
+          );
+          return;
+        }
         await sqliteStore.deleteReservation(deleteTarget.id);
         toast.success(`"${deleteTarget.title}" rezervasyonu silindi.`);
       }
@@ -658,6 +675,8 @@ export function App(): React.JSX.Element {
                 handleSaveTariffSettings={handleSaveTariffSettings}
               />
             )}
+
+            {activeSection === "help" && <HelpScreen theme={theme} />}
           </div>
 
           {/* Global Application Footer */}

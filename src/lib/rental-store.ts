@@ -53,7 +53,7 @@ export type Reservation = {
   paymentMethod?: string;
 };
 
-export type NavSection = "dashboard" | "calendar" | "venues" | "events" | "personnel" | "reports" | "settings";
+export type NavSection = "dashboard" | "calendar" | "venues" | "events" | "personnel" | "reports" | "settings" | "help";
 export type PricingMode = "hourly" | "daily";
 
 export const allEventTypes = [

@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderOpen,
+  HelpCircle,
   Layers,
   LayoutDashboard,
   PanelLeftClose,
@@ -110,6 +111,7 @@ export function AppSidebar({
           },
           { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
           { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
+          { id: "help", label: "Yardım & Rehber", icon: HelpCircle },
         ].map((item) => {
           const IconComp = item.icon;
           const isActive = activeSection === item.id;
