@@ -492,6 +492,9 @@ export function App(): React.JSX.Element {
         setSidebarCollapsed={setSidebarCollapsed}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        institutionName={institutionName}
+        institutionSubHeader={institutionSubHeader}
+        institutionLogo={institutionLogo}
         onOpenNewReservation={() => {
           if (store.venues.length === 0) {
             toast.error("Lütfen önce bir mekan ekleyin.");
@@ -512,6 +515,7 @@ export function App(): React.JSX.Element {
         <AppSidebar
           theme={theme}
           sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
           fileName={fileName || ""}
           onOpenLauncher={() => setShowLauncherModal(true)}
           activeSection={activeSection}

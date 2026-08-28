@@ -3,9 +3,13 @@ import {
   BarChart3,
   Building2,
   Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
   FolderOpen,
   Layers,
   LayoutDashboard,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings,
   User,
   Users,
@@ -17,6 +21,7 @@ import { APP_ROUTES } from "@/constants/routeConstants";
 interface AppSidebarProps {
   theme: "dark" | "light";
   sidebarCollapsed: boolean;
+  setSidebarCollapsed: (v: boolean) => void;
   fileName: string;
   onOpenLauncher: () => void;
   activeSection: NavSection;
@@ -30,6 +35,7 @@ interface AppSidebarProps {
 export function AppSidebar({
   theme,
   sidebarCollapsed,
+  setSidebarCollapsed,
   fileName,
   onOpenLauncher,
   activeSection,
@@ -39,6 +45,7 @@ export function AppSidebar({
   institutionName,
   institutionLogo,
 }: AppSidebarProps): React.JSX.Element {
+  // Active operator / user personnel data
   const activePersonnel =
     store.personnel && store.personnel.length > 0 ? store.personnel[0] : null;
 
@@ -139,53 +146,76 @@ export function AppSidebar({
         })}
       </nav>
 
-      {/* Sidebar Footer: Institution Logo & Active Personnel Profile */}
+      {/* Sidebar Bottom Footer: Sidebar Toggle & User Operator Personnel Card */}
       <div
-        className={`p-3 border-t shrink-0 ${
+        className={`p-3 border-t shrink-0 space-y-2 ${
           theme === "dark"
             ? "border-slate-800 bg-slate-950/40"
             : "border-slate-200 bg-slate-50/80"
         }`}
       >
+        {/* Sidebar Collapse/Expand Toggle Button at Bottom */}
         <div
           className={`flex items-center ${
-            sidebarCollapsed ? "justify-center" : "gap-3"
+            sidebarCollapsed ? "justify-center" : "justify-between"
           }`}
         >
-          {/* Institution Logo / Avatar */}
-          <div className="relative shrink-0" title={institutionName}>
-            {institutionLogo ? (
-              <img
-                src={institutionLogo}
-                alt="Kurum Logosu"
-                className="h-9 w-9 rounded-xl object-contain border border-slate-700/60 bg-slate-900 p-0.5 shadow-xs"
-              />
+          {!sidebarCollapsed && (
+            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+              Menü Kontrolü
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className={`h-7 w-7 rounded-lg text-indigo-400 hover:text-indigo-300 ${
+              theme === "dark"
+                ? "bg-slate-900 border-slate-800"
+                : "bg-white border-slate-200 shadow-xs"
+            }`}
+            title={sidebarCollapsed ? "Menüyü Genişlet" : "Menüyü Daralt"}
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
             ) : (
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-                VK
-              </div>
+              <ChevronLeft className="h-4 w-4" />
             )}
+          </Button>
+        </div>
+
+        {/* User / Operator Personnel Profile Card */}
+        <div
+          onClick={() => setActiveSection("personnel")}
+          className={`flex items-center cursor-pointer p-1.5 rounded-xl border transition-all ${
+            sidebarCollapsed ? "justify-center" : "gap-2.5"
+          } ${
+            theme === "dark"
+              ? "bg-slate-900/80 border-slate-800 hover:bg-slate-800/80"
+              : "bg-white border-slate-200 hover:bg-slate-100/80 shadow-xs"
+          }`}
+          title="Aktif Operatör / Personel Kadrosu"
+        >
+          {/* User Avatar with Green Online Badge */}
+          <div className="relative shrink-0">
+            <div className="h-8 w-8 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center font-bold text-xs shadow-xs">
+              {activePersonnel ? activePersonnel.name.slice(0, 2).toUpperCase() : "SY"}
+            </div>
             <span
               className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900"
-              title="Sistem Çevrimiçi"
+              title="Operatör Çevrimiçi"
             />
           </div>
 
           {!sidebarCollapsed && (
             <div className="min-w-0 flex-1">
-              <h4 className="text-xs font-extrabold truncate tracking-tight text-indigo-500">
-                {institutionName}
-              </h4>
-              <div className="flex items-center gap-1 mt-0.5">
-                <User className="h-3 w-3 text-slate-400 shrink-0" />
+              <div className="flex items-center justify-between">
                 <span
-                  className={`text-[11px] font-semibold truncate ${
-                    theme === "dark" ? "text-slate-200" : "text-slate-800"
+                  className={`text-xs font-bold truncate ${
+                    theme === "dark" ? "text-slate-100" : "text-slate-900"
                   }`}
                 >
-                  {activePersonnel
-                    ? activePersonnel.name
-                    : "Sistem Yetkilisi"}
+                  {activePersonnel ? activePersonnel.name : "Sistem Yetkilisi"}
                 </span>
               </div>
               <span
@@ -194,7 +224,7 @@ export function AppSidebar({
                 }`}
               >
                 {activePersonnel
-                  ? activePersonnel.title || "Tesis & Salon Amiri"
+                  ? activePersonnel.title || "Tesis İdarecisi"
                   : "Nöbetçi İşletme Personeli"}
               </span>
             </div>
