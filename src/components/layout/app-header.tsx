@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import packageJson from "../../../package.json";
 import {
   Minus,
   Moon,
@@ -35,6 +36,15 @@ export function AppHeader({
   institutionSubHeader,
   institutionLogo,
 }: AppHeaderProps): React.JSX.Element {
+  const [appVersion, setAppVersion] = useState<string>(packageJson.version || "1.0.0");
+
+  useEffect(() => {
+    if (window.electronAPI?.getAppVersion) {
+      window.electronAPI.getAppVersion().then((v: string) => {
+        if (v) setAppVersion(v);
+      });
+    }
+  }, []);
   return (
     <header
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
@@ -68,7 +78,7 @@ export function AppHeader({
                 variant="outline"
                 className="text-[9px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono shrink-0"
               >
-                v1.0.0-beta.24
+                v{appVersion}
               </Badge>
             </h1>
             <p
