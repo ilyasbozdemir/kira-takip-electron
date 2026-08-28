@@ -290,7 +290,7 @@ export function VenuesScreen({
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-emerald-500 mr-1">
-                          {money(h.hourlyPrice)} / Saat
+                          {money(h.hourlyPrice)} / Seans
                         </span>
                         <Button
                           size="icon"

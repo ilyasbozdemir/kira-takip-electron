@@ -53,23 +53,15 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     }
   };
 
-  // Price Calculation & Default Setting Logic
+  // Default Lump-Sum Session Price Initialization
   useEffect(() => {
     if (!resVenueId || !resHallId) return;
     const venue = store.venues.find((v) => v.id === resVenueId);
     const hall = venue?.halls.find((h) => h.id === resHallId);
     if (!hall) return;
 
-    if (pricingMode === "hourly") {
-      const hrs = hoursBetween(resStart, resEnd);
-      setResPrice(hrs * hall.hourlyPrice);
-    } else {
-      // Fixed Lump-Sum Daily/Session rental price
-      if (resPrice === 0 || resPrice === "") {
-        setResPrice(hall.hourlyPrice);
-      }
-    }
-  }, [resVenueId, resHallId, resStart, resEnd, pricingMode, store.venues]);
+    setResPrice(hall.hourlyPrice);
+  }, [resVenueId, resHallId, store.venues]);
 
   // Customer Suggestions
   const customerSuggestions = useMemo(() => {
