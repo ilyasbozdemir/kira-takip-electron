@@ -171,6 +171,27 @@ function ensureDynamicColumns(d: Database.Database) {
 
       CREATE VIEW settings AS 
       SELECT key, value FROM TANIM_Ayar;
+
+      CREATE TRIGGER IF NOT EXISTS trg_delete_venues INSTEAD OF DELETE ON venues BEGIN
+        DELETE FROM TANIM_Mekan WHERE id = OLD.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS trg_delete_halls INSTEAD OF DELETE ON halls BEGIN
+        DELETE FROM TANIM_Salon WHERE id = OLD.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS trg_delete_reservations INSTEAD OF DELETE ON reservations BEGIN
+        DELETE FROM DATA_Rezervasyon WHERE id = OLD.id;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS trg_update_reservations INSTEAD OF UPDATE ON reservations BEGIN
+        UPDATE DATA_Rezervasyon SET 
+          paid = COALESCE(NEW.paid, DATA_Rezervasyon.paid),
+          status = COALESCE(NEW.status, DATA_Rezervasyon.status),
+          receiptNo = COALESCE(NEW.receipt_no, DATA_Rezervasyon.receiptNo),
+          paymentMethod = COALESCE(NEW.payment_method, DATA_Rezervasyon.paymentMethod)
+        WHERE id = OLD.id OR id = NEW.id;
+      END;
     `);
   } catch {}
 }
@@ -460,7 +481,7 @@ export function deleteVenue(venueId: string): { success: boolean; error?: string
     };
   }
 
-  db!.prepare("DELETE FROM venues WHERE id = ?").run(venueId);
+  db!.prepare("DELETE FROM TANIM_Mekan WHERE id = ?").run(venueId);
   saveWorkspaceIfActive();
   return { success: true };
 }
@@ -494,7 +515,7 @@ export function deleteHall(venueId: string, hallId: string): { success: boolean;
     };
   }
 
-  db!.prepare("DELETE FROM halls WHERE id = ?").run(hallId);
+  db!.prepare("DELETE FROM TANIM_Salon WHERE id = ?").run(hallId);
   saveWorkspaceIfActive();
   return { success: true };
 }
@@ -594,14 +615,14 @@ export function updateReservationDetails(id: string, details: { receiptNo?: stri
 
 export function deleteReservation(id: string): { success: boolean } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
-  db!.prepare("DELETE FROM reservations WHERE id = ?").run(id);
+  db!.prepare("DELETE FROM DATA_Rezervasyon WHERE id = ?").run(id);
   saveWorkspaceIfActive();
   return { success: true };
 }
 
 export function updatePaid(id: string, paid: number) {
   if (!db && currentDbPath) initDatabase(currentDbPath);
-  db!.prepare("UPDATE reservations SET paid = ? WHERE id = ?").run(paid, id);
+  db!.prepare("UPDATE DATA_Rezervasyon SET paid = ? WHERE id = ?").run(paid, id);
   saveWorkspaceIfActive();
 }
 
