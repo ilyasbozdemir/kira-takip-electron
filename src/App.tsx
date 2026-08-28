@@ -22,6 +22,7 @@ import {
   Settings,
   Square,
   Sun,
+  User,
   Users,
   X,
 } from "lucide-react";
@@ -772,24 +773,17 @@ export function App(): React.JSX.Element {
           </Button>
 
           <div className="flex items-center gap-2">
-            {institutionLogo
-              ? (
-                <img
-                  src={institutionLogo}
-                  alt="Logo"
-                  className="h-7 w-7 object-contain rounded"
-                />
-              )
-              : (
-                <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
-                  VK
-                </div>
-              )}
+            <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xs shadow-md">
+              VK
+            </div>
             <div>
               <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5">
-                <span>{institutionName}</span>
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono">
-                  v1.0.0-beta.16
+                <span>VenueKeeper App Pro</span>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono"
+                >
+                  v1.0.0-beta.17
                 </Badge>
               </h1>
               <p
@@ -797,8 +791,7 @@ export function App(): React.JSX.Element {
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                Kamu & Kurumsal Tesis, Mekan & Etkinlik Yönetim Sistemi (SQLite
-                Cloud Sync)
+                Kamu & Kurumsal Tesis, Mekan & Etkinlik Yönetim Sistemi
               </p>
             </div>
           </div>
@@ -1010,6 +1003,71 @@ export function App(): React.JSX.Element {
               );
             })}
           </nav>
+
+          {/* Sidebar Footer: Institution Logo & Active Personnel Profile */}
+          <div
+            className={`p-3 border-t shrink-0 ${
+              theme === "dark"
+                ? "border-slate-800 bg-slate-950/40"
+                : "border-slate-200 bg-slate-50/80"
+            }`}
+          >
+            <div
+              className={`flex items-center ${
+                sidebarCollapsed ? "justify-center" : "gap-3"
+              }`}
+            >
+              {/* Institution Logo / Avatar */}
+              <div className="relative shrink-0" title={institutionName}>
+                {institutionLogo
+                  ? (
+                    <img
+                      src={institutionLogo}
+                      alt="Kurum Logosu"
+                      className="h-9 w-9 rounded-xl object-contain border border-slate-700/60 bg-slate-900 p-0.5 shadow-xs"
+                    />
+                  )
+                  : (
+                    <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                      VK
+                    </div>
+                  )}
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900"
+                  title="Sistem Çevrimiçi"
+                />
+              </div>
+
+              {!sidebarCollapsed && (
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs font-extrabold truncate tracking-tight text-indigo-500">
+                    {institutionName}
+                  </h4>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <User className="h-3 w-3 text-slate-400 shrink-0" />
+                    <span
+                      className={`text-[11px] font-semibold truncate ${
+                        theme === "dark" ? "text-slate-200" : "text-slate-800"
+                      }`}
+                    >
+                      {store.personnel && store.personnel.length > 0
+                        ? store.personnel[0].name
+                        : "Sistem Yetkilisi"}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-[10px] block truncate ${
+                      theme === "dark" ? "text-slate-400" : "text-slate-500"
+                    }`}
+                  >
+                    {store.personnel && store.personnel.length > 0
+                      ? store.personnel[0].title || "Tesis & Salon Amiri"
+                      : "Nöbetçi İşletme Personeli"}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </aside>
 
         {/* Main Content Area */}
