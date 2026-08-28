@@ -141,11 +141,13 @@ function runMigrations(database: Database.Database) {
       version: 2,
       name: "002_performance_indexes",
       up: (d: Database.Database) => {
-        d.exec(`
-          CREATE INDEX IF NOT EXISTS idx_reservations_hall_date ON reservations(hall_id, date);
-          CREATE INDEX IF NOT EXISTS idx_reservations_venue_date ON reservations(venue_id, date);
-          CREATE INDEX IF NOT EXISTS idx_halls_venue ON halls(venue_id);
-        `);
+        try {
+          d.exec(`
+            CREATE INDEX IF NOT EXISTS idx_data_rezervasyon_hall_date ON DATA_Rezervasyon(hallId, date);
+            CREATE INDEX IF NOT EXISTS idx_data_rezervasyon_venue_date ON DATA_Rezervasyon(venueId, date);
+            CREATE INDEX IF NOT EXISTS idx_tanim_salon_venue ON TANIM_Salon(venueId);
+          `);
+        } catch {}
       },
     },
     {
