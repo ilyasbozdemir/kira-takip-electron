@@ -585,7 +585,7 @@ function initAutoUpdater() {
     win?.webContents.send("updater-status", { status: "error", error: err.message });
   });
 
-  ipcMain.handle("check-for-updates", async () => {
+  safeHandle("check-for-updates", async () => {
     try {
       const result = await autoUpdater.checkForUpdates();
       return result?.updateInfo;
@@ -594,12 +594,19 @@ function initAutoUpdater() {
     }
   });
 
-  ipcMain.handle("download-update", async () => {
+  safeHandle("download-update", async () => {
     await autoUpdater.downloadUpdate();
     return true;
   });
 
-  ipcMain.handle("quit-and-install", () => {
+  safeHandle("quit-and-install", () => {
     autoUpdater.quitAndInstall();
   });
+
+  // Check for updates automatically 5s after app startup in production mode
+  setTimeout(() => {
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdates().catch(() => {});
+    }
+  }, 5000);
 }

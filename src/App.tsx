@@ -24,6 +24,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppModals } from "@/components/layout/app-modals";
 import { Footer } from "@/components/footer";
 import { WelcomeStartScreen } from "@/components/welcome-start-screen";
+import { UpdateBanner } from "@/components/update-banner";
 
 import { DashboardScreen } from "@/screens/dashboard.screen";
 import { CalendarScreen } from "@/screens/calendar.screen";
@@ -525,6 +526,9 @@ export function App(): React.JSX.Element {
           setResModalOpen(true);
         }}
       />
+
+      {/* Auto-Updater Banner Notification */}
+      <UpdateBanner />
 
       {/* Main Workspace Layout */}
       <div className="flex-1 flex overflow-hidden">
