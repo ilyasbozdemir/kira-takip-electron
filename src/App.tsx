@@ -12,6 +12,7 @@ import {
   Layers,
   LayoutDashboard,
   Menu,
+  Minus,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
@@ -19,8 +20,10 @@ import {
   RefreshCw,
   Search,
   Settings,
+  Square,
   Sun,
   Users,
+  X,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
@@ -780,7 +783,7 @@ export function App(): React.JSX.Element {
               <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5">
                 <span>{institutionName}</span>
                 <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono">
-                  v1.0.0-beta.12
+                  v1.0.0-beta.13
                 </Badge>
               </h1>
               <p
@@ -848,6 +851,43 @@ export function App(): React.JSX.Element {
               ? <Sun className="h-4 w-4 text-amber-400" />
               : <Moon className="h-4 w-4 text-slate-700" />}
           </Button>
+
+          {/* Native Window Controls */}
+          <div
+            className={`flex items-center ml-1.5 border-l pl-1.5 ${
+              theme === "dark" ? "border-slate-800" : "border-slate-300"
+            }`}
+          >
+            <button
+              onClick={() => window.electronAPI?.windowControls?.minimize()}
+              className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
+                theme === "dark"
+                  ? "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                  : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+              }`}
+              title="Simge Durumuna Küçült"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => window.electronAPI?.windowControls?.maximize()}
+              className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${
+                theme === "dark"
+                  ? "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+                  : "text-slate-600 hover:bg-slate-200 hover:text-slate-900"
+              }`}
+              title="Tam Ekran / Pencere"
+            >
+              <Square className="h-3 w-3" />
+            </button>
+            <button
+              onClick={() => window.electronAPI?.windowControls?.close()}
+              className="h-7 w-7 flex items-center justify-center rounded hover:bg-rose-600 hover:text-white transition-colors"
+              title="Kapat"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </header>
 
