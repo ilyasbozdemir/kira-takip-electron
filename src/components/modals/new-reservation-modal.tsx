@@ -445,51 +445,7 @@ export function NewReservationModal({
             </div>
           </div>
 
-          {/* Pricing Mode Toggle: Lump-Sum (Daily/Session) vs Hourly */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <Label
-                className={`text-xs font-semibold ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Kiralama & Ücret Tarifesi *
-              </Label>
-              <span className="text-[10px] text-indigo-400 font-mono">
-                {pricingMode === "daily"
-                  ? "Sabit Paket (1 saat de dursa aynı ücret)"
-                  : `${hoursBetween(resStart, resEnd)} Saat x Saatlik Fiyat`}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setPricingMode("daily")}
-                className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-                  pricingMode === "daily"
-                    ? "bg-amber-600 text-white border-amber-600 shadow-xs"
-                    : theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                    : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                ☀️ Günlük / Seanslık Sabit Ücret
-              </button>
-              <button
-                type="button"
-                onClick={() => setPricingMode("hourly")}
-                className={`py-1.5 px-2.5 rounded-lg text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-                  pricingMode === "hourly"
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-xs"
-                    : theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200"
-                    : "bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200"
-                }`}
-              >
-                ⏱️ Saatlik Sayaç (Saat x Fiyat)
-              </button>
-            </div>
-          </div>
+
 
           {/* Contact Phone & Price Fields */}
           <div className="grid grid-cols-3 gap-2">
