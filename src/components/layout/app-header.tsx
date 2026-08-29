@@ -40,7 +40,7 @@ export function AppHeader({
   return (
     <header
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
-      className={`sticky top-0 z-40 border-b flex items-center justify-between px-4 py-2.5 transition-colors select-none ${
+      className={`sticky top-0 z-40 border-b flex items-center justify-between px-4 py-2.5 transition-colors select-none shrink-0 ${
         theme === "dark"
           ? "bg-slate-900/90 border-slate-800 backdrop-blur-md"
           : "bg-white/90 border-slate-200 backdrop-blur-md shadow-xs"

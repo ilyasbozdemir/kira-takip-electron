@@ -497,7 +497,7 @@ export function App(): React.JSX.Element {
 
   return (
     <div
-      className={`min-h-screen flex flex-col font-sans transition-colors ${
+      className={`h-screen max-h-screen overflow-hidden flex flex-col font-sans transition-colors ${
         theme === "dark" ? "bg-slate-950 text-slate-100 dark" : "bg-slate-50 text-slate-900 light"
       }`}
     >
@@ -532,7 +532,7 @@ export function App(): React.JSX.Element {
       <UpdateBanner />
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Extracted Sidebar Navigation */}
         <AppSidebar
           theme={theme}
@@ -549,7 +549,7 @@ export function App(): React.JSX.Element {
         />
 
         {/* Main Content View Screens */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
           <div className="p-6 max-w-7xl w-full mx-auto space-y-6 flex-1">
             {activeSection === "dashboard" && (
               <DashboardScreen
@@ -706,7 +706,7 @@ export function App(): React.JSX.Element {
 
           {/* Global Application Footer */}
           <Footer currentFilePath={currentFilePath} institutionName={institutionName} theme={theme} />
-        </div>
+        </main>
       </div>
 
       {/* Extracted Application Dialog Modals & Drawers */}
