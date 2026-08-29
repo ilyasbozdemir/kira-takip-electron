@@ -412,6 +412,19 @@ export function AppModals({
         defaultSubject={mailPreset.subject}
         defaultBody={mailPreset.body}
         theme={theme}
+        reservationData={
+          selectedReservation
+            ? {
+                id: selectedReservation.id,
+                customer: selectedReservation.customer,
+                phone: selectedReservation.phone,
+                date: selectedReservation.date,
+                start: selectedReservation.start,
+                end: selectedReservation.end,
+                eventType: selectedReservation.eventType,
+              }
+            : undefined
+        }
       />
 
       <CopySettingsModal
