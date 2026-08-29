@@ -35,6 +35,7 @@ import { ReportsScreen } from "@/screens/reports.screen";
 import { SettingsScreen } from "@/screens/settings.screen";
 import { CustomersScreen } from "@/screens/customers.screen";
 import { HelpScreen } from "@/screens/help.screen";
+import { generateEmailHTMLTemplate } from "@/lib/email-template";
 
 export function App(): React.JSX.Element {
   // Theme State
@@ -160,18 +161,22 @@ export function App(): React.JSX.Element {
     const v = store.venues.find((x) => x.id === r.venueId);
     const h = store.venues.flatMap((x) => x.halls).find((x) => x.id === r.hallId);
     const subject = `Etkinlik Rezervasyon Teyidi - ${r.customer} (${r.date})`;
-    const body =
-      `Sayın ${r.customer},\n\n` +
-      `Mekan: ${v?.name || "-"}\n` +
-      `Salon: ${h?.name || "-"}\n` +
-      `Tarih: ${r.date} (${r.start} - ${r.end})\n` +
-      `Etkinlik Türü: ${r.eventType || "Genel"}\n` +
-      `Toplam Ücret: ${money(r.price)}\n` +
-      `Ödenen Peşinat: ${money(r.paid)}\n` +
-      `Kalan Bakiye: ${money(r.price - r.paid)}\n\n` +
-      `Detaylı bilgi için bizimle iletişime geçebilirsiniz.`;
+    const htmlBody = generateEmailHTMLTemplate({
+      customer: r.customer,
+      venueName: v?.name || "Tesis",
+      hallName: h?.name || "Salon",
+      date: r.date,
+      start: r.start,
+      end: r.end,
+      eventType: r.eventType || "Genel",
+      price: r.price,
+      paid: r.paid,
+      institutionName: institutionName || "GÜNEYYURT BELEDİYESİ",
+      institutionSubHeader: institutionSubHeader || "Emlak & Tahsilat İşleri Tesis Yönetimi",
+      institutionLogo,
+    });
 
-    setMailPreset({ recipient: "", subject, body });
+    setMailPreset({ recipient: "", subject, body: htmlBody });
     setMailModalOpen(true);
   };
 
