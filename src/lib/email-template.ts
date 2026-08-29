@@ -91,6 +91,29 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
             </td>
           </tr>
 
+          <!-- Navigation Buttons (Google Maps & Apple Maps for iPhone) -->
+          <tr>
+            <td style="padding: 0 28px 20px 28px;">
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #e0e7ff; border-radius: 12px; padding: 14px; border: 1px solid #c7d2fe; text-align: center;">
+                <tr>
+                  <td style="padding-bottom: 8px; font-size: 12px; font-weight: 700; color: #3730a3;">
+                    🗺️ Haritalarda Etkinlik Alanı Yol Tarifi Alın:
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(options.venueName + " " + options.hallName + " " + address)}" target="_blank" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-block; margin-right: 6px;">
+                      📍 Google Maps Yol Tarifi
+                    </a>
+                    <a href="https://maps.apple.com/?q=${encodeURIComponent(options.venueName + " " + options.hallName + " " + address)}" target="_blank" style="background-color: #000000; color: #ffffff; text-decoration: none; padding: 8px 14px; border-radius: 8px; font-size: 11px; font-weight: 700; display: inline-block;">
+                      🍏 Apple Maps (iPhone/iOS)
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
           <!-- Financial Table -->
           <tr>
             <td style="padding: 0 28px 24px 28px;">

@@ -15,6 +15,10 @@ import {
   Upload,
   Code,
   Copy,
+  BookOpen,
+  MapPin,
+  Smartphone,
+  Sparkles,
 } from "lucide-react";
 import type { Reservation, Store, Venue } from "@/lib/rental-store";
 import { Button } from "@/components/ui/button";
@@ -303,14 +307,14 @@ export function SettingsScreen({
           Sistem Ayarları & Entegrasyonlar
         </h2>
         <p className={`text-xs mt-1 ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-          Kurumsal kimlik, logo, SMTP e-posta, Google Drive bulut yedekleme ve tarife dayanak ayarlarını buradan yönetin.
+          Kurumsal kimlik, logo, SMTP e-posta, Google Drive bulut yedekleme, tarife ve sistem kullanım rehberini yönetin.
         </p>
       </div>
 
       <Tabs defaultValue="identity" className="w-full space-y-4">
         {/* Navigation Tab Triggers */}
         <TabsList
-          className={`grid grid-cols-2 md:grid-cols-4 h-auto p-1 border gap-1 ${
+          className={`grid grid-cols-2 md:grid-cols-5 h-auto p-1 border gap-1 ${
             theme === "dark"
               ? "bg-slate-900/80 border-slate-800 text-slate-400"
               : "bg-slate-100 border-slate-200 text-slate-600"
@@ -318,27 +322,33 @@ export function SettingsScreen({
         >
           <TabsTrigger
             value="identity"
-            className="flex items-center justify-center gap-2 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
           >
-            <User className="h-4 w-4" /> Kurumsal Kimlik & Logo
+            <User className="h-3.5 w-3.5" /> Kimlik & Logo
           </TabsTrigger>
           <TabsTrigger
             value="tariff"
-            className="flex items-center justify-center gap-2 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
           >
-            <Scale className="h-4 w-4" /> Tarife & Karar Dayanağı
+            <Scale className="h-3.5 w-3.5" /> Tarife Dayanağı
           </TabsTrigger>
           <TabsTrigger
             value="integrations"
-            className="flex items-center justify-center gap-2 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
           >
-            <Mail className="h-4 w-4" /> E-posta & Bulut Entegrasyonu
+            <Mail className="h-3.5 w-3.5" /> E-posta & Bulut
           </TabsTrigger>
           <TabsTrigger
             value="categories"
-            className="flex items-center justify-center gap-2 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
           >
-            <PartyPopper className="h-4 w-4" /> Etkinlik Türleri
+            <PartyPopper className="h-3.5 w-3.5" /> Etkinlik Türleri
+          </TabsTrigger>
+          <TabsTrigger
+            value="guide"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-emerald-600 data-[state=active]:text-white shadow-xs"
+          >
+            <BookOpen className="h-3.5 w-3.5 text-emerald-400" /> Sistem Rehberi
           </TabsTrigger>
         </TabsList>
 
@@ -1040,6 +1050,83 @@ export function SettingsScreen({
                     </span>
                   );
                 })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 5: Sistem Kullanım Rehberi & İşletme Kuralları */}
+        <TabsContent value="guide" className="space-y-4 pt-1">
+          <Card className={theme === "dark" ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+            <CardHeader className="pb-3">
+              <CardTitle className={`text-base font-bold flex items-center gap-2 ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                <BookOpen className="h-5 w-5 text-emerald-500" /> Sistem Kullanım Rehberi & İşletme Kuralları
+              </CardTitle>
+              <CardDescription className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                İşletmeTakipAppPro otomasyonunun tüm gelişmiş modül ve kullanım standartları aşağıda özetlenmiştir.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* 1. MAPS & NAVIGATION GUIDE */}
+                <div className="p-4 rounded-2xl border border-indigo-500/20 bg-slate-950/40 space-y-2">
+                  <h4 className="text-xs font-extrabold text-indigo-400 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-indigo-500" /> 1. Akıllı Yol Tarifi & Harita Entegrasyonu (Google & Apple Maps)
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Müşterilerinize gönderilen e-posta ve takvim davetiyelerinde etkinlik alanının yol tarifi otomatik üretilir:
+                  </p>
+                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                    <li><strong className="text-slate-200">Google Maps (Android / Web):</strong> Android ve masaüstü tarayıcılarda tek tıkla canlı Google Haritalar navigasyonunu başlatır.</li>
+                    <li><strong className="text-slate-200">Apple Maps (iPhone / iOS / Mac):</strong> iPhone ve iPad kullanıcılarında otomatik yerleşik Apple Haritalar (Apple Maps) uygulamasını açar.</li>
+                    <li><strong className="text-slate-200">Dinamik Cihaz Algılama:</strong> Sistem kullanıcının cihaz tipine göre en uygun harita linkini otomatik oluşturur.</li>
+                  </ul>
+                </div>
+
+                {/* 2. SMTP & EMAIL GUIDE */}
+                <div className="p-4 rounded-2xl border border-emerald-500/20 bg-slate-950/40 space-y-2">
+                  <h4 className="text-xs font-extrabold text-emerald-400 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-emerald-500" /> 2. Kurumsal SMTP & E-posta Bildirimleri
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Müşterilere rezervasyon dökümü, ödeme bilgisi ve evrak belgesi göndermek için SMTP entegrasyonu:
+                  </p>
+                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                    <li><strong className="text-slate-200">JSON İçe / Dışa Aktar:</strong> Masaüstünden <code>asut_smtp_sablonu.json</code> dosyasını sürükleyip bırakarak veya yapıştırarak ayarları saniyeler içinde yükleyebilirsiniz.</li>
+                    <li><strong className="text-slate-200">Akıllı TLS/SSL Tespiti:</strong> Port 587 (STARTTLS) ve Port 465 (Implicit SSL) otomatik ayrıştırılır.</li>
+                    <li><strong className="text-slate-200">Kibar Özet Kartı:</strong> Ayarlar kaydedildiğinde şifre ve kritik veriler gizlenip derli toplu özet kartı gösterilir.</li>
+                  </ul>
+                </div>
+
+                {/* 3. CALENDAR & ICS GUIDE */}
+                <div className="p-4 rounded-2xl border border-sky-500/20 bg-slate-950/40 space-y-2">
+                  <h4 className="text-xs font-extrabold text-sky-400 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-sky-500" /> 3. iCal (.ics) & Google Calendar Entegrasyonu
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Rezervasyonlarınızı Google Calendar, Outlook ve Apple Takvim uygulamalarına canlı aktarın:
+                  </p>
+                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                    <li><strong className="text-slate-200">Mail Eki (.ics Attachment):</strong> Gönderilen e-postada <code>.ics</code> takvim dosyası eklenir ve Gmail/Outlook kutusunda <b>"Takvime Ekle"</b> düğmesi çıkar.</li>
+                    <li><strong className="text-slate-200">Görsel Takvim Kartı:</strong> <code>.ics</code> dosyasını indirmeden önce görsel davetiye kartı olarak önizleyebilirsiniz.</li>
+                    <li><strong className="text-slate-200">Google Calendar OAuth Sync:</strong> Tüm mekan kiralamalarını Google Takvim ile çift yönlü senkronize eder.</li>
+                  </ul>
+                </div>
+
+                {/* 4. CRM & CUSTOMERS GUIDE */}
+                <div className="p-4 rounded-2xl border border-purple-500/20 bg-slate-950/40 space-y-2">
+                  <h4 className="text-xs font-extrabold text-purple-400 flex items-center gap-2">
+                    <User className="h-4 w-4 text-purple-500" /> 4. Otomatik CRM Müşteri Kataloğu & Bağımsız Kayıt
+                  </h4>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Müşteri bilgileri rezervasyon verilerinden otomatik derlenir ve CRM kataloğuna aktarılır:
+                  </p>
+                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                    <li><strong className="text-slate-200">Otomatik Derleme:</strong> Rezervasyon yazılırken yazılan müşteri ad ve telefonları CRM listesine otomatik işlenir.</li>
+                    <li><strong className="text-slate-200">Cascading Olmayan Esneklik:</strong> Rezervasyon üzerindeki müşteri adı değiştirildiğinde geçmiş kayıtlar bozulmaz.</li>
+                    <li><strong className="text-slate-200">CRM Rehberine Terfi Et:</strong> Otomatik derlenen müşterileri tek tıkla kalıcı kayıtlı müşteriye dönüştürebilirsiniz.</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>

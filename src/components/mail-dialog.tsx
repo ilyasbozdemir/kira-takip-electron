@@ -500,6 +500,33 @@ export function MailDialog({
                     <span className="font-mono text-slate-200 font-bold">{reservationData.phone}</span>
                   </div>
                 )}
+
+                {/* Google & Apple Maps Action Pill Buttons */}
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={handleDownloadICS}
+                    className="px-3 py-1.5 rounded-full bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                  >
+                    📅 Takvime ekle
+                  </button>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((reservationData?.venueName || "Tesis") + " " + (reservationData?.hallName || "Salon") + " Güneyyurt")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 hover:bg-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center gap-1 transition-colors"
+                  >
+                    🗺️ Yol tarifi (Google)
+                  </a>
+                  <a
+                    href={`https://maps.apple.com/?q=${encodeURIComponent((reservationData?.venueName || "Tesis") + " " + (reservationData?.hallName || "Salon") + " Güneyyurt")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1 transition-colors"
+                  >
+                    🍏 Yol tarifi (Apple / iPhone)
+                  </a>
+                </div>
               </div>
             ) : (
               <div>
