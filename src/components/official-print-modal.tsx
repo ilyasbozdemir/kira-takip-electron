@@ -7,7 +7,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { FileText, Printer, ShieldCheck, Receipt, FileCheck } from "lucide-react";
+import {
+  FileCheck,
+  FileText,
+  Printer,
+  Receipt,
+  ShieldCheck,
+} from "lucide-react";
 import { Hall, Reservation, Venue } from "../lib/rental-store";
 
 interface OfficialPrintModalProps {
@@ -35,7 +41,9 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
   defaultTariffBasis,
   theme,
 }) => {
-  const [docType, setDocType] = useState<"accrual" | "receipt" | "combined">("combined");
+  const [docType, setDocType] = useState<"accrual" | "receipt" | "combined">(
+    "combined",
+  );
 
   if (!reservation) return null;
 
@@ -47,7 +55,9 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
   const decisionInfo = reservation.decisionInfo || defaultTariffBasis;
   const remaining = reservation.price - reservation.paid;
   const docNo = docType === "receipt"
-    ? (reservation.receiptNo ? `MAK-${reservation.receiptNo}` : `MAK-2026-${reservation.id.slice(0, 6).toUpperCase()}`)
+    ? (reservation.receiptNo
+      ? `MAK-${reservation.receiptNo}`
+      : `MAK-2026-${reservation.id.slice(0, 6).toUpperCase()}`)
     : `VK-2026-${reservation.id.slice(0, 6).toUpperCase()}`;
   const todayStr = new Date().toLocaleDateString("tr-TR");
 
@@ -82,7 +92,8 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
                   isDark ? "text-slate-400" : "text-slate-600"
                 }`}
               >
-                Tahakkuk protokolü veya ödeme sonrası alındı makbuzu seçip resmi belge basın.
+                Tahakkuk protokolü veya ödeme sonrası alındı makbuzu seçip resmi
+                belge basın.
               </DialogDescription>
             </div>
           </div>
@@ -142,17 +153,19 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
           {/* Header Section */}
           <div className="border-b-2 border-slate-800 pb-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              {institutionLogo ? (
-                <img
-                  src={institutionLogo}
-                  alt="Kurum Logosu"
-                  className="h-16 w-16 object-contain shrink-0"
-                />
-              ) : (
-                <div className="h-14 w-14 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-lg shrink-0">
-                  T.C.
-                </div>
-              )}
+              {institutionLogo
+                ? (
+                  <img
+                    src={institutionLogo}
+                    alt="Kurum Logosu"
+                    className="h-16 w-16 object-contain shrink-0"
+                  />
+                )
+                : (
+                  <div className="h-14 w-14 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-lg shrink-0">
+                    T.C.
+                  </div>
+                )}
               <div>
                 <h1 className="text-sm font-extrabold uppercase tracking-wide text-slate-900">
                   {institutionName || "T.C. KURUM / MÜDÜRLÜK YÖNETİMİ"}
@@ -177,9 +190,11 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
 
           {/* Document Title & Basis */}
           <div className="text-center space-y-1.5 py-1">
-            <h2 className={`text-base font-black uppercase tracking-wider ${
-              docType === "receipt" ? "text-emerald-800" : "text-indigo-950"
-            }`}>
+            <h2
+              className={`text-base font-black uppercase tracking-wider ${
+                docType === "receipt" ? "text-emerald-800" : "text-indigo-950"
+              }`}
+            >
               {docType === "accrual"
                 ? "MEKAN & SALON TAHSİS VE TAHAKKUK PROTOKOLÜ"
                 : docType === "receipt"
@@ -187,7 +202,6 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
                 : "MEKAN & SALON TAHSİS PROTOKOLÜ VE ALINDI BELGESİ"}
             </h2>
             <div className="inline-block bg-slate-100 border border-slate-300 rounded-md px-3 py-1 text-[10px] font-semibold text-slate-700">
-              📌 Karar & Tarife Dayanağı:{" "}
               <span className="font-mono text-slate-900">{decisionInfo}</span>
             </div>
           </div>
@@ -242,7 +256,8 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
                     Tahsis Tarihi ve Saat Dilimi
                   </th>
                   <td className="p-2.5 font-mono font-bold text-indigo-950">
-                    📅 {reservation.date} | ⏰ {reservation.start} - {reservation.end}
+                    📅 {reservation.date} | ⏰ {reservation.start} -{" "}
+                    {reservation.end}
                   </td>
                 </tr>
 
@@ -280,11 +295,13 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
           </div>
 
           {/* Financial Breakdown Box */}
-          <div className={`p-4 rounded-lg border grid grid-cols-3 gap-4 text-center ${
-            docType === "receipt"
-              ? "bg-emerald-50/60 border-emerald-300"
-              : "bg-slate-50 border-slate-300"
-          }`}>
+          <div
+            className={`p-4 rounded-lg border grid grid-cols-3 gap-4 text-center ${
+              docType === "receipt"
+                ? "bg-emerald-50/60 border-emerald-300"
+                : "bg-slate-50 border-slate-300"
+            }`}
+          >
             <div>
               <p className="text-[10px] font-bold uppercase text-slate-500">
                 Toplam Tahakkuk Ücreti
@@ -319,7 +336,9 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
           <div className="pt-8 grid grid-cols-2 gap-8 text-center text-[11px]">
             <div>
               <p className="font-bold text-slate-800">
-                {docType === "receipt" ? "TAHSİLAT YAPAN GÖREVLİ / VEZNEDAR" : "TAHSİS EDEN KURUM / YETKİLİ"}
+                {docType === "receipt"
+                  ? "TAHSİLAT YAPAN GÖREVLİ / VEZNEDAR"
+                  : "TAHSİS EDEN KURUM / YETKİLİ"}
               </p>
               <p className="text-slate-500 text-[10px] mt-0.5">
                 İmza / Mühür

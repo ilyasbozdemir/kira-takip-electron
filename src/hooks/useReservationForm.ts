@@ -143,11 +143,17 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
           const hall = venue?.halls?.find((h) => h.id === resHallId);
           const venueName = venue?.name || "Tesis";
           const hallName = hall?.name || "Salon";
+          const venueAddress = venue?.address;
+          const venueMapUrl = venue?.mapUrl;
+          const venueDistrict = venue?.district;
 
           const emailHtml = generateEmailHTMLTemplate({
             customer: resCustomer,
             venueName,
             hallName,
+            venueAddress,
+            venueMapUrl,
+            venueDistrict,
             date: selectedDay,
             start: resStart,
             end: resEnd,
@@ -162,6 +168,8 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
                 customer: resCustomer,
                 venueName,
                 hallName,
+                venueAddress,
+                venueMapUrl,
                 date: selectedDay,
                 start: resStart,
                 end: resEnd,

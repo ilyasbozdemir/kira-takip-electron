@@ -455,6 +455,15 @@ export function AppModals({
               venueName:
                 store.venues.find((x) => x.id === selectedReservation.venueId)
                   ?.name || "Tesis",
+              venueAddress:
+                store.venues.find((x) => x.id === selectedReservation.venueId)
+                  ?.address,
+              venueMapUrl:
+                store.venues.find((x) => x.id === selectedReservation.venueId)
+                  ?.mapUrl,
+              venueDistrict:
+                store.venues.find((x) => x.id === selectedReservation.venueId)
+                  ?.district,
               hallName:
                 store.venues.flatMap((x) => x.halls).find((x) =>
                   x.id === selectedReservation.hallId

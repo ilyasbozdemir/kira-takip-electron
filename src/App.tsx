@@ -227,6 +227,9 @@ export function App(): React.JSX.Element {
       customer: r.customer,
       venueName: v?.name || "Tesis",
       hallName: h?.name || "Salon",
+      venueAddress: v?.address,
+      venueMapUrl: v?.mapUrl,
+      venueDistrict: v?.district,
       date: r.date,
       start: r.start,
       end: r.end,
@@ -253,6 +256,9 @@ export function App(): React.JSX.Element {
         end: r.end,
         venueName: v?.name || "Tesis",
         hallName: h?.name || "Salon",
+        venueAddress: v?.address,
+        venueMapUrl: v?.mapUrl,
+        venueDistrict: v?.district,
         eventType: r.eventType || "Genel",
       },
     });
@@ -280,7 +286,7 @@ export function App(): React.JSX.Element {
       subject: `[VARDİYA GÖREV BİLDİRİMİ] ${r.date} - ${v?.name} (${h?.name})`,
       body: `Sayın ${
         staffName || "Tesis Sorumlusu / Görevlisi"
-      },\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Etkinlik Türü: ${
+      },\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Mekan Adresi: ${v?.address || "Belirtilmedi"}\n- Etkinlik Türü: ${
         r.eventType || "Genel"
       }\n- Müşteri Adı: ${r.customer}\n- İletişim Tel: ${r.phone}\n\nLütfen salon iklimlendirme, temizlik ve ses/ışık teknik ekipman kontrollerini zamanında gerçekleştiriniz.\n\nİyi çalışmalar dileriz.`,
       reservationData: {
@@ -292,6 +298,9 @@ export function App(): React.JSX.Element {
         end: r.end,
         venueName: v?.name || "Tesis",
         hallName: h?.name || "Salon",
+        venueAddress: v?.address,
+        venueMapUrl: v?.mapUrl,
+        venueDistrict: v?.district,
         eventType: r.eventType || "Genel",
       },
     });

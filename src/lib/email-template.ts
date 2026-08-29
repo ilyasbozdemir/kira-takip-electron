@@ -22,6 +22,9 @@ export interface EmailTemplateOptions extends EmailTemplateConfig {
   customer: string;
   venueName: string;
   hallName: string;
+  venueAddress?: string;
+  venueMapUrl?: string;
+  venueDistrict?: string;
   date: string;
   start: string;
   end: string;
@@ -118,6 +121,20 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
   const introFormatted = replacePlaceholders(config.introText || "Tesislerimizde gerçekleştireceğiniz etkinlik kayıt altına alınmıştır.");
   const footerDisclaimerFormatted = replacePlaceholders(config.footerDisclaimer || "Bu e-posta VenueKeeper tarafından üretilmiştir.");
 
+  // Map Navigation Destination Construction (Prioritizing Venue Address)
+  const mapSearchQuery = [
+    config.venueName,
+    config.hallName,
+    config.venueAddress,
+    config.venueDistrict,
+  ].filter(Boolean).join(" ");
+
+  const googleMapsLink = config.venueMapUrl && config.venueMapUrl.startsWith("http")
+    ? config.venueMapUrl
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapSearchQuery)}`;
+
+  const appleMapsLink = `https://maps.apple.com/?q=${encodeURIComponent(mapSearchQuery)}`;
+
   return `
 <!DOCTYPE html>
 <html lang="tr">
@@ -139,7 +156,7 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
               <h1 style="margin: 0; font-size: 22px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase;">${instName}</h1>
               <p style="margin: 6px 0 0 0; font-size: 13px; color: #cbd5e1; font-weight: 500;">${instSub}</p>
               
-              <div style="margin-top: 16px; inline-block; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.5px;">
+              <div style="margin-top: 16px; display: inline-block; background-color: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.5px;">
                 📜 EVRAK REF: ${docRefNo} &nbsp;•&nbsp; ✅ RESMİ TAHSİS BİLDİRİMİ
               </div>
             </td>
@@ -167,6 +184,11 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
                   <td style="padding: 7px 0; font-size: 12px; color: #64748b; font-weight: 700;">Tahsis Salonu:</td>
                   <td style="padding: 7px 0; font-size: 13.5px; color: #4338ca; font-weight: 800;">${config.hallName}</td>
                 </tr>
+                ${config.venueAddress ? `
+                <tr>
+                  <td style="padding: 7px 0; font-size: 12px; color: #64748b; font-weight: 700;">Mekan Adresi:</td>
+                  <td style="padding: 7px 0; font-size: 12.5px; color: #0f172a; font-weight: 700;">📍 ${config.venueAddress} ${config.venueDistrict ? `(${config.venueDistrict})` : ""}</td>
+                </tr>` : ""}
                 <tr>
                   <td style="padding: 7px 0; font-size: 12px; color: #64748b; font-weight: 700;">Tarih & Saat Dilimi:</td>
                   <td style="padding: 7px 0; font-size: 13.5px; color: #0f172a; font-weight: 800;">📅 ${config.date} &nbsp;⏰ ${config.start} - ${config.end}</td>
@@ -191,10 +213,10 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
                 </tr>
                 <tr>
                   <td align="center">
-                    <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.venueName + " " + config.hallName + " " + address)}" target="_blank" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 9px 16px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-block; margin-right: 8px; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
+                    <a href="${googleMapsLink}" target="_blank" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 9px 16px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-block; margin-right: 8px; box-shadow: 0 2px 4px rgba(37,99,235,0.2);">
                       📍 Google Maps Yol Tarifi
                     </a>
-                    <a href="https://maps.apple.com/?q=${encodeURIComponent(config.venueName + " " + config.hallName + " " + address)}" target="_blank" style="background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 9px 16px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-block; box-shadow: 0 2px 4px rgba(15,23,42,0.2);">
+                    <a href="${appleMapsLink}" target="_blank" style="background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 9px 16px; border-radius: 8px; font-size: 12px; font-weight: 800; display: inline-block; box-shadow: 0 2px 4px rgba(15,23,42,0.2);">
                       🍏 Apple Maps (iPhone / iOS)
                     </a>
                   </td>

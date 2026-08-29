@@ -42,6 +42,9 @@ interface MailDialogProps {
     end?: string;
     venueName?: string;
     hallName?: string;
+    venueAddress?: string;
+    venueMapUrl?: string;
+    venueDistrict?: string;
     eventType?: string;
   };
   onMailSentSuccess?: (reservationId: string, recipient: string) => void;
@@ -58,6 +61,7 @@ const DEFAULT_SAMPLE_RESERVATION = {
   end: "23:30",
   venueName: "KÜLTÜR MERKEZİ & SOSYAL TESİS",
   hallName: "ZEMİN KAT BÜYÜK BALO SALONU",
+  venueAddress: "Atatürk Mah. Cumhuriyet Cad. No:142",
   eventType: "Düğün & Davet Kiralama Kaydı",
 };
 
@@ -74,6 +78,16 @@ function generateSingleReservationICS(resData?: any) {
   const dtStart = `${dateStr}T${startStr}`;
   const dtEnd = `${dateStr}T${endStr}`;
 
+  const locationStr = data.venueAddress
+    ? `${data.venueName || "Tesis"} (${data.hallName || "Salon"}), ${data.venueAddress}`
+    : `${data.venueName || "Tesis"} - ${data.hallName || "Salon"}`;
+
+  const googleMapsUrl = data.venueMapUrl && data.venueMapUrl.startsWith("http")
+    ? data.venueMapUrl
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationStr)}`;
+
+  const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(locationStr)}`;
+
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -89,8 +103,9 @@ function generateSingleReservationICS(resData?: any) {
     `SUMMARY:${data.eventType || "Salon Kiralama Kaydı"}: ${
       data.customer || "Müşteri Tahsis Kaydı"
     }`,
-    `LOCATION:${data.venueName || "Tesis"} - ${data.hallName || "Salon"}`,
-    `DESCRIPTION:Müşteri: ${data.customer || "-"} | Tel: ${data.phone || "-"}`,
+    `LOCATION:${locationStr}`,
+    `DESCRIPTION:Müşteri: ${data.customer || "-"} | Tel: ${data.phone || "-"}\\n\\n📍 Google Maps: ${googleMapsUrl}\\n🍏 Apple Maps: ${appleMapsUrl}`,
+    `URL:${googleMapsUrl}`,
     "STATUS:CONFIRMED",
     "END:VEVENT",
     "END:VCALENDAR",
@@ -722,12 +737,20 @@ export function MailDialog({
                         🍏 Apple / iPhone Takvim Daveti (.ics)
                       </button>
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${
-                          encodeURIComponent(
-                            (reservationData?.venueName || "Tesis") + " " +
-                              (reservationData?.hallName || "Salon"),
-                          )
-                        }`}
+                        href={
+                          reservationData?.venueMapUrl && reservationData.venueMapUrl.startsWith("http")
+                            ? reservationData.venueMapUrl
+                            : `https://www.google.com/maps/search/?api=1&query=${
+                              encodeURIComponent(
+                                [
+                                  reservationData?.venueName,
+                                  reservationData?.hallName,
+                                  reservationData?.venueAddress,
+                                  reservationData?.venueDistrict,
+                                ].filter(Boolean).join(" "),
+                              )
+                            }`
+                        }
                         target="_blank"
                         rel="noreferrer"
                         className="px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 hover:bg-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center gap-1 transition-colors"
@@ -737,8 +760,12 @@ export function MailDialog({
                       <a
                         href={`https://maps.apple.com/?q=${
                           encodeURIComponent(
-                            (reservationData?.venueName || "Tesis") + " " +
-                              (reservationData?.hallName || "Salon"),
+                            [
+                              reservationData?.venueName,
+                              reservationData?.hallName,
+                              reservationData?.venueAddress,
+                              reservationData?.venueDistrict,
+                            ].filter(Boolean).join(" "),
                           )
                         }`}
                         target="_blank"

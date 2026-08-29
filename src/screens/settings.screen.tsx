@@ -1038,7 +1038,7 @@ export function SettingsScreen({
                   Varsayılan Karar & Tarife Dayanağı
                 </Label>
                 <Input
-                  placeholder="örn: Belediye Encümeni Kararı: 15/01/2026 - Karar No: 42 (2464 Sayılı Kanun Md. 97)"
+                  placeholder=""
                   value={draftTariffBasis}
                   onChange={(e) => setDraftTariffBasis(e.target.value)}
                   className={`text-xs mt-1.5 ${

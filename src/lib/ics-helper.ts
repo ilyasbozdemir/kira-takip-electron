@@ -3,6 +3,8 @@ export interface SingleICSProps {
   customer: string;
   venueName: string;
   hallName: string;
+  venueAddress?: string;
+  venueMapUrl?: string;
   date: string;
   start: string;
   end: string;
@@ -16,8 +18,15 @@ export function generateSingleICS(props: SingleICSProps): string {
   const dtEnd = (props.date || "2026-08-29").replace(/-/g, "") + "T" + (props.end || "17:00").replace(":", "") + "00";
   const uid = props.id || `evt-${Date.now()}`;
   const dtStamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
-  const locationStr = `${props.venueName || "Tesis"} - ${props.hallName || "Salon"}`;
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationStr)}`;
+  
+  const locationStr = props.venueAddress
+    ? `${props.venueName || "Tesis"} (${props.hallName || "Salon"}), ${props.venueAddress}`
+    : `${props.venueName || "Tesis"} - ${props.hallName || "Salon"}`;
+
+  const googleMapsUrl = props.venueMapUrl && props.venueMapUrl.startsWith("http")
+    ? props.venueMapUrl
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationStr)}`;
+
   const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(locationStr)}`;
 
   return [

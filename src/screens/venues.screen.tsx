@@ -361,10 +361,28 @@ export function VenuesScreen({
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">Adres</Label>
+              <Label className="text-xs font-semibold flex items-center gap-1">
+                📍 Mekan Açık Adresi (Google & Apple Haritalar İçin)
+              </Label>
               <Input
+                placeholder="örn: Atatürk Mah. Cumhuriyet Cad. No:142 Kadıköy / İstanbul"
                 value={editVenueAddress}
                 onChange={(e) => setEditVenueAddress(e.target.value)}
+                className={`text-xs mt-1 ${isDark ? "bg-slate-950 border-slate-800" : ""}`}
+              />
+              <p className="text-[10px] text-slate-500 mt-1">
+                ℹ️ Bu adres, müşterilere gönderilen e-posta ve davetiyelerdeki <strong>"Google Maps"</strong> ve <strong>"Apple Maps (iPhone)"</strong> butonlarına otomatik aktarılır.
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1">
+                🗺️ Harita / Konum Linki (İsteğe Bağlı)
+              </Label>
+              <Input
+                placeholder="örn: https://maps.app.goo.gl/... veya https://maps.google.com/..."
+                value={editVenueMapUrl}
+                onChange={(e) => setEditVenueMapUrl(e.target.value)}
                 className={`text-xs mt-1 ${isDark ? "bg-slate-950 border-slate-800" : ""}`}
               />
             </div>

@@ -40,7 +40,7 @@ export function useSettingsStore() {
   const [defaultTariffBasis, setDefaultTariffBasisState] = useState<string>(() => {
     return (
       localStorage.getItem("default_tariff_basis") ||
-      "Belediye Encümeni Kararı: 15/01/2026 - Karar No: 42 (2464 Sayılı Kanun Md. 97)"
+      ""
     );
   });
 
