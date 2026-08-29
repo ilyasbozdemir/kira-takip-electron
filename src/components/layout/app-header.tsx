@@ -36,15 +36,7 @@ export function AppHeader({
   institutionSubHeader,
   institutionLogo,
 }: AppHeaderProps): React.JSX.Element {
-  const [appVersion, setAppVersion] = useState<string>(packageJson.version || "1.0.0");
-
-  useEffect(() => {
-    if (window.electronAPI?.getAppVersion) {
-      window.electronAPI.getAppVersion().then((v: string) => {
-        if (v) setAppVersion(v);
-      });
-    }
-  }, []);
+  const appVersion = packageJson.version;
   return (
     <header
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}

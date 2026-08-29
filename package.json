@@ -10,6 +10,7 @@
     "build": "tsc && vite build && electron-builder --config electron/electron-builder.yml",
     "build:vite": "vite build",
     "pack:win": "electron-builder --win --config electron/electron-builder.yml",
+    "release": "tsc && vite build && electron-builder --win --config electron/electron-builder.yml --publish always",
     "rebuild": "electron-rebuild -f -w better-sqlite3"
   },
   "dependencies": {
