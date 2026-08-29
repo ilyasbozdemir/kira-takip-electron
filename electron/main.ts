@@ -483,13 +483,20 @@ safeHandle("save-file-dialog", async (_event, { defaultName }) => {
 
 safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
   try {
+    const portNum = Number(smtpConfig.port) || 587;
+    // Port 465 requires implicit TLS (secure: true). Port 587 requires STARTTLS (secure: false).
+    const isSecure = portNum === 465;
+
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
-      port: Number(smtpConfig.port) || 587,
-      secure: smtpConfig.secure ?? false,
+      port: portNum,
+      secure: isSecure,
       auth: {
         user: smtpConfig.user,
         pass: smtpConfig.pass,
+      },
+      tls: {
+        rejectUnauthorized: false, // Bypass BoringSSL / OpenSSL version mismatch & proxy certificate errors
       },
     });
 
