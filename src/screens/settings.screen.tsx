@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -147,6 +148,7 @@ export function SettingsScreen({
   const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
   const [jsonPasteText, setJsonPasteText] = useState("");
   const [isDragOverSmtp, setIsDragOverSmtp] = useState(false);
+  const [isEditingSmtp, setIsEditingSmtp] = useState(false);
 
   const applyParsedSmtpData = (data: any) => {
     try {
@@ -178,6 +180,7 @@ export function SettingsScreen({
         senderName: senderName || smtpSenderName,
       };
       localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
+      setIsEditingSmtp(false);
 
       toast.success("JSON SMTP şablonu başarıyla içe aktarıldı ve uygulandı!");
       return true;
@@ -619,96 +622,181 @@ export function SettingsScreen({
                 </div>
               </CardHeader>
               <CardContent className="space-y-3.5">
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div className="col-span-2">
-                    <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
-                      SMTP Sunucu Adresi (Host) *
-                    </Label>
-                    <Input
-                      placeholder="smtp.gmail.com / mail.kurum.gov.tr"
-                      value={smtpHost}
-                      onChange={(e) => setSmtpHost(e.target.value)}
-                      className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
-                    />
-                  </div>
-                  <div>
-                    <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
-                      Port *
-                    </Label>
-                    <Input
-                      placeholder="587 / 465"
-                      value={smtpPort}
-                      onChange={(e) => setSmtpPort(e.target.value)}
-                      className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
-                    />
-                  </div>
-                </div>
+                {Boolean(smtpHost && smtpUser && smtpPass) && !isEditingSmtp ? (
+                  /* KİBAR ÖZET ALANI (ACTIVE SMTP SUMMARY CARD) */
+                  <div className="p-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/40 space-y-3.5 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                          <ShieldCheck className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-sm text-slate-100">SMTP Hesabı Aktif & Kaydedildi</span>
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/40 text-[10px] font-bold">
+                              ✓ Bağlantı Hazır
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                            {smtpUser}
+                          </p>
+                        </div>
+                      </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
-                      Kullanıcı Adı / E-posta *
-                    </Label>
-                    <Input
-                      type="email"
-                      placeholder="bilgi@kurum.gov.tr"
-                      value={smtpUser}
-                      onChange={(e) => setSmtpUser(e.target.value)}
-                      className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
-                    />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsEditingSmtp(true)}
+                        className="text-xs h-8 px-3 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10 font-bold shrink-0"
+                      >
+                        ✏️ Ayarları Düzenle
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800 text-xs">
+                      <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Sunucu & Port</span>
+                        <span className="font-bold text-slate-200 font-mono">
+                          {smtpHost}:{smtpPort}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Gönderen Başlığı</span>
+                        <span className="font-bold text-slate-200 truncate block">
+                          {smtpSenderName || "Mekan & Tesis Yönetimi"}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                        <span className="text-[10px] text-slate-400 block font-semibold">Güvenli Bağlantı (SSL)</span>
+                        <span className="font-bold text-indigo-400">
+                          {smtpSecure ? "🔒 SSL/TLS (465)" : "🔓 STARTTLS (587)"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        onClick={() => setMailModalOpen(true)}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex-1 h-9 shadow-xs"
+                      >
+                        <Mail className="h-4 w-4 mr-1.5" /> Test Maili Gönder
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={handleExportSmtpJson}
+                        className="text-xs h-9 border-slate-800 text-slate-300 hover:bg-slate-800 font-semibold"
+                      >
+                        <Download className="h-3.5 w-3.5 mr-1" /> JSON İndir
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
-                      Şifre / Uygulama Şifresi *
-                    </Label>
-                    <Input
-                      type="password"
-                      placeholder="••••••••••••"
-                      value={smtpPass}
-                      onChange={(e) => setSmtpPass(e.target.value)}
-                      className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
-                    />
-                  </div>
-                </div>
+                ) : (
+                  /* GİZLENEN DÜZENLEME INPUTLARI */
+                  <>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      <div className="col-span-2">
+                        <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                          SMTP Sunucu Adresi (Host) *
+                        </Label>
+                        <Input
+                          placeholder="smtp.gmail.com / mail.kurum.gov.tr"
+                          value={smtpHost}
+                          onChange={(e) => setSmtpHost(e.target.value)}
+                          className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                        />
+                      </div>
+                      <div>
+                        <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                          Port *
+                        </Label>
+                        <Input
+                          placeholder="587 / 465"
+                          value={smtpPort}
+                          onChange={(e) => setSmtpPort(e.target.value)}
+                          className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
-                    Gönderen Başlığı (Sender Name)
-                  </Label>
-                  <Input
-                    placeholder="Mekan & Tesis İşletme Müdürlüğü"
-                    value={smtpSenderName}
-                    onChange={(e) => setSmtpSenderName(e.target.value)}
-                    className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
-                  />
-                </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                          Kullanıcı Adı / E-posta *
+                        </Label>
+                        <Input
+                          type="email"
+                          placeholder="bilgi@kurum.gov.tr"
+                          value={smtpUser}
+                          onChange={(e) => setSmtpUser(e.target.value)}
+                          className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                        />
+                      </div>
+                      <div>
+                        <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                          Şifre / Uygulama Şifresi *
+                        </Label>
+                        <Input
+                          type="password"
+                          placeholder="••••••••••••"
+                          value={smtpPass}
+                          onChange={(e) => setSmtpPass(e.target.value)}
+                          className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                        />
+                      </div>
+                    </div>
 
-                <div className="flex items-center space-x-2 pt-0.5">
-                  <Checkbox
-                    id="smtp-secure-settings"
-                    checked={smtpSecure}
-                    onCheckedChange={(c) => setSmtpSecure(!!c)}
-                  />
-                  <Label htmlFor="smtp-secure-settings" className="text-xs font-medium cursor-pointer">
-                    Güvenli Bağlantı (SSL/TLS - Port 465) Kullan
-                  </Label>
-                </div>
+                    <div>
+                      <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                        Gönderen Başlığı (Sender Name)
+                      </Label>
+                      <Input
+                        placeholder="Mekan & Tesis İşletme Müdürlüğü"
+                        value={smtpSenderName}
+                        onChange={(e) => setSmtpSenderName(e.target.value)}
+                        className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                      />
+                    </div>
 
-                <div className="pt-2 flex items-center gap-2">
-                  <Button
-                    onClick={handleSaveSmtpSettings}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex-1 h-9 shadow-xs"
-                  >
-                    <Check className="h-4 w-4 mr-1.5" /> SMTP Ayarlarını Kaydet
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setMailModalOpen(true)}
-                    className="text-xs h-9 border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10 font-semibold"
-                  >
-                    <Mail className="h-3.5 w-3.5 mr-1.5" /> Test Maili Gönder
-                  </Button>
-                </div>
+                    <div className="flex items-center space-x-2 pt-0.5">
+                      <Checkbox
+                        id="smtp-secure-settings"
+                        checked={smtpSecure}
+                        onCheckedChange={(c) => setSmtpSecure(!!c)}
+                      />
+                      <Label htmlFor="smtp-secure-settings" className="text-xs font-medium cursor-pointer">
+                        Güvenli Bağlantı (SSL/TLS - Port 465) Kullan
+                      </Label>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-2">
+                      <Button
+                        onClick={handleSaveSmtpSettings}
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex-1 h-9 shadow-xs"
+                      >
+                        <Check className="h-4 w-4 mr-1.5" /> SMTP Ayarlarını Kaydet
+                      </Button>
+                      {Boolean(smtpHost && smtpUser && smtpPass) && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsEditingSmtp(false)}
+                          className="text-xs h-9 border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold"
+                        >
+                          Özet Alanına Dön
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => setMailModalOpen(true)}
+                        className="text-xs h-9 border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10 font-semibold"
+                      >
+                        <Mail className="h-3.5 w-3.5 mr-1.5" /> Test Maili Gönder
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
 
