@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from "react";
 import {
+  Calendar,
   Check,
   Cloud,
+  Download,
   Mail,
   PartyPopper,
   Plus,
   Scale,
+  Share2,
   User,
   ShieldCheck,
 } from "lucide-react";
+import type { Reservation, Store, Venue } from "@/lib/rental-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +25,44 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const SMTP_STORAGE_KEY = "venue-keeper-smtp-settings";
+const GCAL_STORAGE_KEY = "venue-keeper-gcal-settings";
+
+function generateICSContent(reservations: Reservation[], venues: Venue[]) {
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//VenueKeeper App Pro//TR",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "X-WR-CALNAME:VenueKeeper Salon Kiralamaları",
+  ];
+
+  reservations.forEach((r) => {
+    const venue = venues.find((v) => v.id === r.venueId);
+    const hall = venue?.halls?.find((h) => h.id === r.hallId);
+    const dtStart = r.date.replace(/-/g, "") + "T" + (r.start || "09:00").replace(":", "") + "00";
+    const dtEnd = r.date.replace(/-/g, "") + "T" + (r.end || "17:00").replace(":", "") + "00";
+
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:${r.id}@venuekeeper.pro`,
+      `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
+      `DTSTART:${dtStart}`,
+      `DTEND:${dtEnd}`,
+      `SUMMARY:${r.eventType || "Etkinlik"}: ${r.customer}`,
+      `LOCATION:${venue?.name || ""} - ${hall?.name || ""}`,
+      `DESCRIPTION:Müşteri: ${r.customer} | Tel: ${r.phone} | Not: ${r.note || "-"}`,
+      `STATUS:${r.status === "option" ? "TENTATIVE" : "CONFIRMED"}`,
+      "END:VEVENT"
+    );
+  });
+
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
 
 interface SettingsScreenProps {
   theme: "dark" | "light";
@@ -49,14 +91,12 @@ interface SettingsScreenProps {
   setDraftTariffBasis: (v: string) => void;
   handleCancelTariffSettings: () => void;
   handleSaveTariffSettings: () => void;
+  store: Store;
 }
-
-import { Checkbox } from "@/components/ui/checkbox";
-
-const SMTP_STORAGE_KEY = "venue-keeper-smtp-settings";
 
 export function SettingsScreen({
   theme,
+  store,
   setMailModalOpen,
   newEventTypeInput,
   setNewEventTypeInput,
@@ -90,6 +130,10 @@ export function SettingsScreen({
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpSenderName, setSmtpSenderName] = useState("Mekan & Tesis Yönetimi");
 
+  const [gcalCalendarId, setGcalCalendarId] = useState("");
+  const [gcalOAuthToken, setGcalOAuthToken] = useState("");
+  const [gcalAutoSync, setGcalAutoSync] = useState(true);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(SMTP_STORAGE_KEY);
@@ -101,6 +145,14 @@ export function SettingsScreen({
         setSmtpUser(parsed.user || "");
         setSmtpPass(parsed.pass || "");
         setSmtpSenderName(parsed.senderName || "Mekan & Tesis Yönetimi");
+      }
+
+      const savedGcal = localStorage.getItem(GCAL_STORAGE_KEY);
+      if (savedGcal) {
+        const parsed = JSON.parse(savedGcal);
+        setGcalCalendarId(parsed.calendarId || "");
+        setGcalOAuthToken(parsed.oauthToken || "");
+        setGcalAutoSync(parsed.autoSync ?? true);
       }
     } catch {}
   }, []);
@@ -116,6 +168,33 @@ export function SettingsScreen({
     };
     localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
     toast.success("SMTP Sunucu ayarları başarıyla kaydedildi!");
+  };
+
+  const handleSaveGcalSettings = () => {
+    const config = {
+      calendarId: gcalCalendarId,
+      oauthToken: gcalOAuthToken,
+      autoSync: gcalAutoSync,
+    };
+    localStorage.setItem(GCAL_STORAGE_KEY, JSON.stringify(config));
+    toast.success("Google Calendar entegrasyon ayarları başarıyla kaydedildi!");
+  };
+
+  const handleExportICS = () => {
+    try {
+      const icsData = generateICSContent(store.reservations, store.venues);
+      const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `venuekeeper-takvim-${new Date().toISOString().split("T")[0]}.ics`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Google Calendar / iCal takvim dökümü (.ics) indirildi!");
+    } catch (err: any) {
+      toast.error(`Takvim aktarım hatası: ${err.message || err}`);
+    }
   };
   return (
     <div className="space-y-6">
@@ -460,6 +539,77 @@ export function SettingsScreen({
                     className="text-xs h-9 border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10 font-semibold"
                   >
                     <Mail className="h-3.5 w-3.5 mr-1.5" /> Test Maili Gönder
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Google Calendar & iCal Integration Card */}
+            <Card
+              className={
+                theme === "dark"
+                  ? "bg-slate-900/80 border-slate-800"
+                  : "bg-white border-slate-200 shadow-sm"
+              }
+            >
+              <CardHeader className="pb-3">
+                <CardTitle className={`text-base font-bold flex items-center gap-2 ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                  <Calendar className="h-5 w-5 text-emerald-500" /> Google Calendar & iCal Takvim Entegrasyonu
+                </CardTitle>
+                <CardDescription className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                  Salon kiralamalarını Google Calendar, Outlook ve Apple Takvim uygulamalarıyla canlı senkronize edin.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3.5">
+                <div>
+                  <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                    Google Takvim Kimliği (Calendar ID / E-posta)
+                  </Label>
+                  <Input
+                    placeholder="c_primary / kurum.kiralama@gmail.com"
+                    value={gcalCalendarId}
+                    onChange={(e) => setGcalCalendarId(e.target.value)}
+                    className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                  />
+                </div>
+
+                <div>
+                  <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                    Google Calendar API Access Token / Client Key
+                  </Label>
+                  <Input
+                    type="password"
+                    placeholder="ya29.a0AxM35... (Google Cloud Calendar API Key)"
+                    value={gcalOAuthToken}
+                    onChange={(e) => setGcalOAuthToken(e.target.value)}
+                    className={`mt-1 text-xs ${theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2 pt-0.5">
+                  <Checkbox
+                    id="gcal-auto-sync"
+                    checked={gcalAutoSync}
+                    onCheckedChange={(c) => setGcalAutoSync(!!c)}
+                  />
+                  <Label htmlFor="gcal-auto-sync" className="text-xs font-medium cursor-pointer">
+                    Yeni Rezervasyon Eklendiğinde Otomatik Google Takvime İşle
+                  </Label>
+                </div>
+
+                <div className="pt-2 flex items-center gap-2">
+                  <Button
+                    onClick={handleSaveGcalSettings}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex-1 h-9 shadow-xs"
+                  >
+                    <Check className="h-4 w-4 mr-1.5" /> Entegrasyonu Kaydet
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleExportICS}
+                    className="text-xs h-9 border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 font-semibold"
+                  >
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> iCal (.ics) İndir
                   </Button>
                 </div>
               </CardContent>

@@ -652,6 +652,7 @@ export function App(): React.JSX.Element {
             {activeSection === "settings" && (
               <SettingsScreen
                 theme={theme}
+                store={store}
                 setMailModalOpen={setMailModalOpen}
                 newEventTypeInput={newEventTypeInput}
                 setNewEventTypeInput={setNewEventTypeInput}
