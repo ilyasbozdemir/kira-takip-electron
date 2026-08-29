@@ -138,6 +138,29 @@ export function App(): React.JSX.Element {
   const [customerHistoryOpen, setCustomerHistoryOpen] = useState(false);
   const [customerHistoryName, setCustomerHistoryName] = useState("");
 
+  // Kapanırken yedek alınıyor durumu
+  const [isClosing, setIsClosing] = useState(false);
+
+  /**
+   * Pencere kapatılmadan önce:
+   * 1. Yerel .vke yedeği alınır (son 7 yedek rotasyonu)
+   * 2. SMTP ayarlıysa ve backupEmail doluysa e-posta eki olarak gönderilir
+   * 3. Bittiğinde pencere kapatılır
+   */
+  const handleAppClose = async () => {
+    setIsClosing(true);
+    try {
+      const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
+      const smtpSettings = smtpRaw ? JSON.parse(smtpRaw) : null;
+      await (window.electronAPI as any)?.quitWithBackup?.(smtpSettings);
+    } catch {
+      // yedek başarısız olsa bile kapat
+    } finally {
+      setIsClosing(false);
+      (window.electronAPI as any)?.closeWindow?.();
+    }
+  };
+
   const handleOpenCustomerHistory = (custName: string) => {
     setCustomerHistoryName(custName);
     setCustomerHistoryOpen(true);
@@ -682,6 +705,17 @@ export function App(): React.JSX.Element {
     >
       <Toaster position="top-right" richColors />
 
+      {/* Kapatılıyor overlay'i */}
+      {isClosing && (
+        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-sm gap-3">
+          <svg className="animate-spin h-10 w-10 text-blue-400" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          </svg>
+          <p className="text-slate-300 text-sm font-medium">Yedek alınıyor, lütfen bekleyin…</p>
+        </div>
+      )}
+
       {/* Extracted Header Bar */}
       <AppHeader
         theme={theme}
@@ -694,6 +728,7 @@ export function App(): React.JSX.Element {
         institutionName={institutionName}
         institutionSubHeader={institutionSubHeader}
         institutionLogo={institutionLogo}
+        onClose={handleAppClose}
         onOpenNewReservation={() => {
           if (store.venues.length === 0) {
             toast.error("Lütfen önce bir mekan ekleyin.");

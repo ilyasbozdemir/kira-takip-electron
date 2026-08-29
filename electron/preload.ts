@@ -100,6 +100,9 @@ export const electronAPI = {
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   getLocalIp: () => ipcRenderer.invoke("get-local-ip"),
   backupDatabase: () => ipcRenderer.invoke("backup-database"),
+  quitWithBackup: (smtpSettings?: any) => ipcRenderer.invoke("quit-with-backup", smtpSettings),
+  listBackups: () => ipcRenderer.invoke("list-backups"),
+  openBackupFolder: () => ipcRenderer.invoke("open-backup-folder"),
   openExternalLink: (url: string) => ipcRenderer.invoke("open-external-link", url),
 
   minimizeWindow: () => ipcRenderer.invoke("win:minimize"),

@@ -35,6 +35,77 @@ import { workspaceManager } from "./database/workspace";
 
 const { autoUpdater } = pkg;
 
+/* ========================================================================== */
+/* BACKUP-ON-QUIT HELPERS                                                      */
+/* ========================================================================== */
+
+const MAX_LOCAL_BACKUPS = 7;
+
+/** Yerel yedek alır, eski yedekleri siler (max 7 tutar). Yedek yolunu döner. */
+function makeLocalBackup(currentPath: string): string | null {
+  try {
+    if (!currentPath || !fs.existsSync(currentPath)) return null;
+    const backupDir = path.join(app.getPath("userData"), "backups");
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const baseName = path.basename(currentPath, path.extname(currentPath));
+    const destName = `${baseName}_${timestamp}.vke`;
+    const destPath = path.join(backupDir, destName);
+    fs.copyFileSync(currentPath, destPath);
+
+    // Eski yedekleri temizle (en yeni MAX_LOCAL_BACKUPS adet kalsın)
+    const allBackups = fs
+      .readdirSync(backupDir)
+      .filter((f) => f.startsWith(baseName + "_") && f.endsWith(".vke"))
+      .map((f) => ({ name: f, mtime: fs.statSync(path.join(backupDir, f)).mtime.getTime() }))
+      .sort((a, b) => b.mtime - a.mtime); // en yeni önce
+
+    for (let i = MAX_LOCAL_BACKUPS; i < allBackups.length; i++) {
+      try { fs.unlinkSync(path.join(backupDir, allBackups[i].name)); } catch { /* ignore */ }
+    }
+
+    return destPath;
+  } catch (e) {
+    console.error("[Backup] Yerel yedek hatası:", e);
+    return null;
+  }
+}
+
+/** SMTP ayarları varsa .vke dosyasını e-posta eki olarak gönderir. */
+async function sendBackupEmail(
+  smtpConfig: { host: string; port: string | number; secure: boolean; user: string; pass: string; senderName?: string },
+  backupEmail: string,
+  attachmentPath: string,
+  dbFileName: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const portNum = Number(smtpConfig.port) || 587;
+    const isSecure = portNum === 465;
+    const transporter = nodemailer.createTransport({
+      host: smtpConfig.host,
+      port: portNum,
+      secure: isSecure,
+      auth: { user: smtpConfig.user, pass: smtpConfig.pass },
+      tls: { rejectUnauthorized: false },
+    });
+    const now = new Date().toLocaleString("tr-TR");
+    await transporter.sendMail({
+      from: `"${smtpConfig.senderName || "VenueKeeper Pro"}" <${smtpConfig.user}>`,
+      to: backupEmail,
+      subject: `[VenueKeeper Yedek] ${dbFileName} — ${now}`,
+      text: `VenueKeeper Pro otomatik yedek\n\nDosya: ${dbFileName}\nTarih: ${now}\n\nBu e-posta uygulama kapatılırken otomatik oluşturulmuştur.`,
+      html: `<p><b>VenueKeeper Pro — Otomatik Yedek</b></p><p>Dosya: <code>${dbFileName}</code><br>Tarih: ${now}</p><p>Bu e-posta uygulama kapatılırken otomatik oluşturulmuştur.</p>`,
+      attachments: [
+        { filename: path.basename(attachmentPath), path: attachmentPath },
+      ],
+    });
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: e.message };
+  }
+}
+
 const _dirname = typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 process.env.DIST = path.join(_dirname, "../dist");
@@ -517,16 +588,76 @@ safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
 
 safeHandle("backup-database", () => {
   const currentPath = getCurrentDbPath();
-  if (currentPath && fs.existsSync(currentPath)) {
-    const backupDir = path.join(app.getPath("userData"), "backups");
-    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const destName = `backup_${path.basename(currentPath, ".vke")}_${timestamp}.vke`;
-    const destPath = path.join(backupDir, destName);
-    fs.copyFileSync(currentPath, destPath);
-    return { success: true, path: destPath };
-  }
+  const destPath = makeLocalBackup(currentPath || "");
+  if (destPath) return { success: true, path: destPath };
   return { success: false, error: "Veritabanı dosyası bulunamadı." };
+});
+
+/**
+ * quit-with-backup: Renderer bu IPC'yi çağırır → yerel yedek alınır
+ * → SMTP ayarlıysa e-posta gönderilir → sonuç renderer'a döner.
+ * Renderer aldıktan sonra closeWindow'u çağırır.
+ */
+safeHandle("quit-with-backup", async (_event, smtpSettings: any) => {
+  const currentPath = getCurrentDbPath();
+  if (!currentPath || !fs.existsSync(currentPath)) {
+    return { localBackup: false, emailSent: false, error: "Veritabanı dosyası bulunamadı." };
+  }
+
+  // 1. Yerel yedek al
+  const backupPath = makeLocalBackup(currentPath);
+
+  // 2. SMTP ayarlıysa e-posta gönder
+  let emailSent = false;
+  let emailError: string | undefined;
+  if (
+    smtpSettings &&
+    smtpSettings.host &&
+    smtpSettings.user &&
+    smtpSettings.pass &&
+    smtpSettings.backupEmail &&
+    backupPath
+  ) {
+    const result = await sendBackupEmail(
+      smtpSettings,
+      smtpSettings.backupEmail,
+      backupPath,
+      path.basename(currentPath),
+    );
+    emailSent = result.success;
+    emailError = result.error;
+  }
+
+  return {
+    localBackup: !!backupPath,
+    localBackupPath: backupPath,
+    emailSent,
+    emailError,
+  };
+});
+
+/** Yedek klasörünü Dosya Yöneticisi'nde açar */
+safeHandle("open-backup-folder", () => {
+  const backupDir = path.join(app.getPath("userData"), "backups");
+  if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+  shell.openPath(backupDir);
+  return backupDir;
+});
+
+/** Son N yedeği listeler */
+safeHandle("list-backups", () => {
+  const backupDir = path.join(app.getPath("userData"), "backups");
+  if (!fs.existsSync(backupDir)) return [];
+  return fs
+    .readdirSync(backupDir)
+    .filter((f) => f.endsWith(".vke"))
+    .map((f) => {
+      const fullPath = path.join(backupDir, f);
+      const stat = fs.statSync(fullPath);
+      return { name: f, path: fullPath, size: stat.size, mtime: stat.mtime.toISOString() };
+    })
+    .sort((a, b) => new Date(b.mtime).getTime() - new Date(a.mtime).getTime())
+    .slice(0, MAX_LOCAL_BACKUPS);
 });
 
 /* ========================================================================== */

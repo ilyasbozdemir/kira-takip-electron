@@ -21,6 +21,7 @@ interface AppHeaderProps {
   searchTerm: string;
   setSearchTerm: (v: string) => void;
   onOpenNewReservation: () => void;
+  onClose?: () => void;
   appName?: string;
   institutionName?: string;
   institutionSubHeader?: string;
@@ -33,6 +34,7 @@ export function AppHeader({
   searchTerm,
   setSearchTerm,
   onOpenNewReservation,
+  onClose,
   appName,
   institutionName,
   institutionSubHeader,
@@ -156,7 +158,7 @@ export function AppHeader({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => (window.electronAPI as any)?.closeWindow?.()}
+            onClick={() => onClose ? onClose() : (window.electronAPI as any)?.closeWindow?.()}
             className="h-7 w-7 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10"
             title="Uygulamayı Kapat"
           >

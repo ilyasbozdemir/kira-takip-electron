@@ -163,6 +163,8 @@ export function SettingsScreen({
   const [smtpSenderName, setSmtpSenderName] = useState(
     "Mekan & Tesis Yönetimi",
   );
+  /** Uygulama kapatılırken otomatik yedek gönderilecek e-posta adresi */
+  const [smtpBackupEmail, setSmtpBackupEmail] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
@@ -277,6 +279,7 @@ export function SettingsScreen({
         setSmtpUser(parsed.user || "");
         setSmtpPass(parsed.pass || "");
         setSmtpSenderName(parsed.senderName || "Mekan & Tesis Yönetimi");
+        setSmtpBackupEmail(parsed.backupEmail || "");
       }
 
       const savedGcal = localStorage.getItem(GCAL_STORAGE_KEY);
@@ -352,6 +355,7 @@ export function SettingsScreen({
       user: smtpUser,
       pass: smtpPass,
       senderName: smtpSenderName,
+      backupEmail: smtpBackupEmail,
     };
     localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
     setIsEditingSmtp(false);
@@ -1353,6 +1357,33 @@ export function SettingsScreen({
                             theme === "dark"
                               ? "bg-slate-950 border-slate-800 text-slate-100"
                               : "bg-slate-50 border-slate-300 text-slate-900"
+                          }`}
+                        />
+                      </div>
+
+                      <div>
+                        <Label
+                          className={`text-xs font-semibold ${
+                            theme === "dark"
+                              ? "text-emerald-400"
+                              : "text-emerald-700"
+                          }`}
+                        >
+                          🔒 Otomatik Yedek E-posta Adresi
+                        </Label>
+                        <p className={`text-[11px] mb-1 ${theme === "dark" ? "text-slate-500" : "text-slate-400"}`}>
+                          Uygulama kapatılırken .vke veritabanı dosyası bu adrese otomatik ek olarak gönderilir.
+                          Boş bırakılırsa yalnızca yerel yedek alınır.
+                        </p>
+                        <Input
+                          type="email"
+                          placeholder="yedek@kurumunuz.gov.tr"
+                          value={smtpBackupEmail}
+                          onChange={(e) => setSmtpBackupEmail(e.target.value)}
+                          className={`text-xs ${
+                            theme === "dark"
+                              ? "bg-slate-950 border-emerald-800/60 text-slate-100"
+                              : "bg-slate-50 border-emerald-300 text-slate-900"
                           }`}
                         />
                       </div>
