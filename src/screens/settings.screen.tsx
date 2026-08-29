@@ -760,22 +760,46 @@ export function SettingsScreen({
                 {Boolean(smtpHost && smtpUser && smtpPass) && !isEditingSmtp
                   ? (
                     /* KİBAR ÖZET ALANI (ACTIVE SMTP SUMMARY CARD) */
-                    <div className="p-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/40 space-y-3.5 shadow-md">
+                    <div
+                      className={`p-4 rounded-2xl border transition-all ${
+                        theme === "dark"
+                          ? "border-emerald-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/40 shadow-md text-slate-100"
+                          : "border-emerald-500/40 bg-gradient-to-br from-emerald-50/70 via-slate-50 to-indigo-50/60 shadow-sm text-slate-900"
+                      } space-y-3.5`}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2.5">
-                          <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                          <div
+                            className={`h-10 w-10 rounded-xl flex items-center justify-center font-bold shrink-0 ${
+                              theme === "dark"
+                                ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400"
+                                : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-600"
+                            }`}
+                          >
                             <ShieldCheck className="h-5 w-5" />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-sm text-slate-100">
+                              <span
+                                className={`font-extrabold text-sm ${
+                                  theme === "dark"
+                                    ? "text-slate-100"
+                                    : "text-slate-900"
+                                }`}
+                              >
                                 SMTP Hesabı Aktif & Kaydedildi
                               </span>
-                              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/40 text-[10px] font-bold">
+                              <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/40 text-[10px] font-bold">
                                 ✓ Bağlantı Hazır
                               </Badge>
                             </div>
-                            <p className="text-xs text-slate-400 mt-0.5 font-mono">
+                            <p
+                              className={`text-xs mt-0.5 font-mono ${
+                                theme === "dark"
+                                  ? "text-slate-400"
+                                  : "text-slate-600"
+                              }`}
+                            >
                               {smtpUser}
                             </p>
                           </div>
@@ -785,36 +809,94 @@ export function SettingsScreen({
                           type="button"
                           variant="outline"
                           onClick={() => setIsEditingSmtp(true)}
-                          className="text-xs h-8 px-3 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10 font-bold shrink-0"
+                          className={`text-xs h-8 px-3 font-bold shrink-0 transition-colors ${
+                            theme === "dark"
+                              ? "border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10"
+                              : "border-indigo-400/50 text-indigo-700 bg-white hover:bg-indigo-50 shadow-2xs"
+                          }`}
                         >
                           ✏️ Ayarları Düzenle
                         </Button>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800 text-xs">
-                        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-semibold">
+                      <div
+                        className={`grid grid-cols-3 gap-2.5 pt-2 border-t text-xs ${
+                          theme === "dark"
+                            ? "border-slate-800"
+                            : "border-slate-200"
+                        }`}
+                      >
+                        <div
+                          className={`p-2.5 rounded-xl border ${
+                            theme === "dark"
+                              ? "bg-slate-950/60 border-slate-800/80"
+                              : "bg-white/80 border-slate-200 shadow-2xs"
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] block font-semibold ${
+                              theme === "dark"
+                                ? "text-slate-400"
+                                : "text-slate-500"
+                            }`}
+                          >
                             Sunucu & Port
                           </span>
-                          <span className="font-bold text-slate-200 font-mono">
+                          <span
+                            className={`font-bold font-mono ${
+                              theme === "dark"
+                                ? "text-slate-200"
+                                : "text-slate-800"
+                            }`}
+                          >
                             {smtpHost}:{smtpPort}
                           </span>
                         </div>
 
-                        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-semibold">
+                        <div
+                          className={`p-2.5 rounded-xl border ${
+                            theme === "dark"
+                              ? "bg-slate-950/60 border-slate-800/80"
+                              : "bg-white/80 border-slate-200 shadow-2xs"
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] block font-semibold ${
+                              theme === "dark"
+                                ? "text-slate-400"
+                                : "text-slate-500"
+                            }`}
+                          >
                             Gönderen Başlığı
                           </span>
-                          <span className="font-bold text-slate-200 truncate block">
+                          <span
+                            className={`font-bold truncate block ${
+                              theme === "dark"
+                                ? "text-slate-200"
+                                : "text-slate-800"
+                            }`}
+                          >
                             {smtpSenderName || "Mekan & Tesis Yönetimi"}
                           </span>
                         </div>
 
-                        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-semibold">
+                        <div
+                          className={`p-2.5 rounded-xl border ${
+                            theme === "dark"
+                              ? "bg-slate-950/60 border-slate-800/80"
+                              : "bg-white/80 border-slate-200 shadow-2xs"
+                          }`}
+                        >
+                          <span
+                            className={`text-[10px] block font-semibold ${
+                              theme === "dark"
+                                ? "text-slate-400"
+                                : "text-slate-500"
+                            }`}
+                          >
                             Güvenli Bağlantı (SSL)
                           </span>
-                          <span className="font-bold text-indigo-400">
+                          <span className="font-bold text-indigo-500">
                             {smtpSecure
                               ? "🔒 SSL/TLS (465)"
                               : "🔓 STARTTLS (587)"}
@@ -832,7 +914,11 @@ export function SettingsScreen({
                         <Button
                           variant="outline"
                           onClick={handleExportSmtpJson}
-                          className="text-xs h-9 border-slate-800 text-slate-300 hover:bg-slate-800 font-semibold"
+                          className={`text-xs h-9 font-semibold ${
+                            theme === "dark"
+                              ? "border-slate-800 text-slate-300 hover:bg-slate-800"
+                              : "border-slate-300 text-slate-700 bg-white hover:bg-slate-100 shadow-2xs"
+                          }`}
                         >
                           <Download className="h-3.5 w-3.5 mr-1" /> JSON İndir
                         </Button>
@@ -1041,11 +1127,23 @@ export function SettingsScreen({
                       onClick={() => setAutoEmailMode("instant")}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         autoEmailMode === "instant"
-                          ? "bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold"
-                          : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700"
+                          ? theme === "dark"
+                            ? "bg-indigo-600/20 border-indigo-500 text-indigo-300 font-bold"
+                            : "bg-indigo-50 border-indigo-400 text-indigo-900 font-bold shadow-2xs"
+                          : theme === "dark"
+                          ? "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
-                      <span className="text-xs block font-bold text-indigo-400">
+                      <span
+                        className={`text-xs block font-bold ${
+                          autoEmailMode === "instant"
+                            ? "text-indigo-500"
+                            : theme === "dark"
+                            ? "text-slate-300"
+                            : "text-slate-700"
+                        }`}
+                      >
                         ⚡ Otomatik (Anında)
                       </span>
                       <span className="text-[10px] opacity-80 leading-tight block mt-0.5">
@@ -1058,11 +1156,23 @@ export function SettingsScreen({
                       onClick={() => setAutoEmailMode("prompt")}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         autoEmailMode === "prompt"
-                          ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 font-bold"
-                          : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700"
+                          ? theme === "dark"
+                            ? "bg-emerald-600/20 border-emerald-500 text-emerald-300 font-bold"
+                            : "bg-emerald-50 border-emerald-400 text-emerald-900 font-bold shadow-2xs"
+                          : theme === "dark"
+                          ? "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
-                      <span className="text-xs block font-bold text-emerald-400">
+                      <span
+                        className={`text-xs block font-bold ${
+                          autoEmailMode === "prompt"
+                            ? "text-emerald-600"
+                            : theme === "dark"
+                            ? "text-slate-300"
+                            : "text-slate-700"
+                        }`}
+                      >
                         💬 Görevli Onayı
                       </span>
                       <span className="text-[10px] opacity-80 leading-tight block mt-0.5">
@@ -1075,11 +1185,23 @@ export function SettingsScreen({
                       onClick={() => setAutoEmailMode("manual")}
                       className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                         autoEmailMode === "manual"
-                          ? "bg-slate-800 border-slate-600 text-slate-200 font-bold"
-                          : "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700"
+                          ? theme === "dark"
+                            ? "bg-slate-800 border-slate-600 text-slate-200 font-bold"
+                            : "bg-slate-200 border-slate-400 text-slate-900 font-bold shadow-2xs"
+                          : theme === "dark"
+                          ? "bg-slate-950/40 border-slate-800 text-slate-400 hover:border-slate-700"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
-                      <span className="text-xs block font-bold text-slate-300">
+                      <span
+                        className={`text-xs block font-bold ${
+                          autoEmailMode === "manual"
+                            ? "text-slate-800"
+                            : theme === "dark"
+                            ? "text-slate-300"
+                            : "text-slate-700"
+                        }`}
+                      >
                         ✋ Manuel (Kapalı)
                       </span>
                       <span className="text-[10px] opacity-80 leading-tight block mt-0.5">

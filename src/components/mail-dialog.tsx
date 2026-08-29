@@ -455,49 +455,111 @@ export function MailDialog({
             </div>
 
             {previewMode === "visual" ? (
-              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 text-slate-100 shadow-lg space-y-3">
+              <div
+                className={`p-4 rounded-2xl border transition-all ${
+                  theme === "dark"
+                    ? "border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 text-slate-100 shadow-lg"
+                    : "border-emerald-500/40 bg-gradient-to-br from-emerald-50/70 via-slate-50 to-indigo-50/60 text-slate-900 shadow-sm"
+                } space-y-3`}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-extrabold text-base shrink-0 shadow-md">
+                    <div
+                      className={`h-11 w-11 rounded-2xl flex items-center justify-center font-extrabold text-base shrink-0 shadow-md ${
+                        theme === "dark"
+                          ? "bg-emerald-500/20 border border-emerald-500/40 text-emerald-400"
+                          : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-600"
+                      }`}
+                    >
                       📅
                     </div>
                     <div>
-                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold mb-1">
+                      <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 text-[10px] font-bold mb-1">
                         CONFIRMED • KESİNLEŞMİŞ TAKVİM KAYDI
                       </Badge>
-                      <h3 className="text-sm font-extrabold text-slate-100 leading-snug">
+                      <h3
+                        className={`text-sm font-extrabold leading-snug ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         {reservationData?.eventType || "Salon Tahsis Etkinliği"}: {reservationData?.customer || "Müşteri Tahsis Kaydı"}
                       </h3>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs border-t border-slate-800">
-                  <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                    <span className="text-[10px] text-slate-400 block font-semibold">Tarih & Zaman</span>
-                    <span className="font-bold text-slate-200">
+                <div
+                  className={`grid grid-cols-2 gap-2.5 pt-2 text-xs border-t ${
+                    theme === "dark" ? "border-slate-800" : "border-slate-200"
+                  }`}
+                >
+                  <div
+                    className={`p-2 rounded-xl border ${
+                      theme === "dark"
+                        ? "bg-slate-950/60 border-slate-800/80"
+                        : "bg-white/80 border-slate-200 shadow-2xs"
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] block font-semibold ${
+                        theme === "dark" ? "text-slate-400" : "text-slate-500"
+                      }`}
+                    >
+                      Tarih & Zaman
+                    </span>
+                    <span
+                      className={`font-bold ${
+                        theme === "dark" ? "text-slate-200" : "text-slate-800"
+                      }`}
+                    >
                       📅 {reservationData?.date || "2026-08-29"}
                     </span>
-                    <div className="text-[11px] font-mono text-emerald-400 font-medium mt-0.5">
+                    <div className="text-[11px] font-mono text-emerald-500 font-medium mt-0.5">
                       ⏰ {reservationData?.start || "09:00"} - {reservationData?.end || "17:00"}
                     </div>
                   </div>
 
-                  <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
-                    <span className="text-[10px] text-slate-400 block font-semibold">Mekan & Konum</span>
-                    <span className="font-bold text-slate-200 truncate block">
+                  <div
+                    className={`p-2 rounded-xl border ${
+                      theme === "dark"
+                        ? "bg-slate-950/60 border-slate-800/80"
+                        : "bg-white/80 border-slate-200 shadow-2xs"
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] block font-semibold ${
+                        theme === "dark" ? "text-slate-400" : "text-slate-500"
+                      }`}
+                    >
+                      Mekan & Konum
+                    </span>
+                    <span
+                      className={`font-bold truncate block ${
+                        theme === "dark" ? "text-slate-200" : "text-slate-800"
+                      }`}
+                    >
                       🏛️ {reservationData?.venueName || "Tesis"}
                     </span>
-                    <div className="text-[11px] text-indigo-400 font-medium truncate mt-0.5">
+                    <div className="text-[11px] text-indigo-500 font-medium truncate mt-0.5">
                       📍 {reservationData?.hallName || "Salon"}
                     </div>
                   </div>
                 </div>
 
                 {reservationData?.phone && (
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-0.5">
+                  <div
+                    className={`text-[11px] flex items-center gap-1.5 pt-0.5 ${
+                      theme === "dark" ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
                     <span>👤 Müşteri İletişim:</span>
-                    <span className="font-mono text-slate-200 font-bold">{reservationData.phone}</span>
+                    <span
+                      className={`font-mono font-bold ${
+                        theme === "dark" ? "text-slate-200" : "text-slate-800"
+                      }`}
+                    >
+                      {reservationData.phone}
+                    </span>
                   </div>
                 )}
 
