@@ -199,7 +199,8 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
                     Tahsis Tarihi ve Saat Dilimi
                   </th>
                   <td className="p-2.5 font-mono font-bold text-indigo-950">
-                    📅 {reservation.date} | ⏰ {reservation.start} - {reservation.end}
+                    📅 {reservation.date} | ⏰ {reservation.start} -{" "}
+                    {reservation.end}
                   </td>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
@@ -265,14 +266,18 @@ export const OfficialPrintModal: React.FC<OfficialPrintModalProps> = ({
           {/* Signatures Footer */}
           <div className="pt-8 grid grid-cols-2 gap-8 text-center text-[11px]">
             <div>
-              <p className="font-bold text-slate-800">TAHSİS EDEN KURUM / YETKİLİ</p>
+              <p className="font-bold text-slate-800">
+                TAHSİS EDEN KURUM / YETKİLİ
+              </p>
               <p className="text-slate-500 text-[10px] mt-0.5">
                 Imza / Mühür
               </p>
               <div className="h-16 mt-2 border-b border-dashed border-slate-400" />
             </div>
             <div>
-              <p className="font-bold text-slate-800">KİRALAYAN / İLGİLİ KİŞİ</p>
+              <p className="font-bold text-slate-800">
+                KİRALAYAN / İLGİLİ KİŞİ
+              </p>
               <p className="text-slate-500 text-[10px] mt-0.5">
                 {reservation.customer}
               </p>

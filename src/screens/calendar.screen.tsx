@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Calendar as CalendarIcon,
   CalendarDays,
@@ -10,6 +10,10 @@ import {
   Plus,
   Printer,
   Trash2,
+  Clock,
+  List,
+  LayoutGrid,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +95,7 @@ export function CalendarScreen({
   onCopySMS,
   onQuickMail,
 }: CalendarScreenProps): React.JSX.Element {
+  const [rightPanelViewMode, setRightPanelViewMode] = useState<"list" | "timeline" | "cards">("list");
   return (
     <div className="space-y-4">
       {/* Calendar Toolbar */}
@@ -588,239 +593,350 @@ export function CalendarScreen({
           }`}
         >
           <CardHeader
-            className={`pb-3 border-b flex flex-row items-center justify-between ${
+            className={`pb-3 border-b space-y-3 ${
               theme === "dark" ? "border-slate-800" : "border-slate-200"
             }`}
           >
-            <div>
-              <CardTitle
-                className={`text-sm font-bold flex items-center gap-2 ${
-                  theme === "dark" ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
-                <CalendarIcon className="h-4 w-4 text-indigo-500" />{" "}
-                {selectedDay}
-              </CardTitle>
-              <CardDescription
-                className={`text-[11px] mt-0.5 ${
-                  theme === "dark" ? "text-slate-400" : "text-slate-600"
-                }`}
-              >
-                {(byDate.get(selectedDay) ?? []).length} Kayıtlı Etkinlik
-              </CardDescription>
-            </div>
-
-            <Button
-              size="sm"
-              onClick={onOpenNewReservationModal}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] h-7 px-2.5 font-semibold"
-            >
-              <Plus className="h-3 w-3 mr-1" /> Yeni Kayıt
-            </Button>
-          </CardHeader>
-
-          <CardContent className="p-4 flex-1 overflow-y-auto space-y-4 max-h-[550px]">
-            {(byDate.get(selectedDay) ?? []).length === 0
-              ? (
-                <div
-                  className={`text-center py-12 space-y-2 ${
-                    theme === "dark" ? "text-slate-500" : "text-slate-400"
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle
+                  className={`text-sm font-bold flex items-center gap-1.5 ${
+                    theme === "dark" ? "text-slate-100" : "text-slate-900"
                   }`}
                 >
-                  <CalendarIcon className="h-8 w-8 mx-auto opacity-30 text-indigo-500" />
-                  <p className="text-xs">
-                    Bu tarih için henüz bir etkinlik tanımı bulunmuyor.
-                  </p>
-                  <Button
-                    size="sm"
-                    onClick={onOpenNewReservationModal}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 px-3.5 font-semibold shadow-xs"
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Etkinlik Oluştur
-                  </Button>
-                </div>
-              )
-              : (
-                (byDate.get(selectedDay) ?? []).map((r) => {
+                  <CalendarIcon className="h-4 w-4 text-indigo-500" />{" "}
+                  {selectedDay}
+                </CardTitle>
+                <CardDescription
+                  className={`text-[11px] mt-0.5 ${
+                    theme === "dark" ? "text-slate-400" : "text-slate-600"
+                  }`}
+                >
+                  {(byDate.get(selectedDay) ?? []).length} Kayıtlı Etkinlik
+                </CardDescription>
+              </div>
+
+              <Button
+                size="sm"
+                onClick={onOpenNewReservationModal}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] h-7 px-2.5 font-semibold shadow-xs"
+              >
+                <Plus className="h-3 w-3 mr-1" /> Yeni Kayıt
+              </Button>
+            </div>
+
+            {/* Right Panel View Selector Tabs */}
+            <div className="flex items-center justify-between pt-1">
+              <div className={`flex p-0.5 rounded-lg border w-full justify-between ${
+                theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-100 border-slate-200"
+              }`}>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelViewMode("list")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    rightPanelViewMode === "list"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <List className="h-3 w-3" /> Kibar Liste
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelViewMode("timeline")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    rightPanelViewMode === "timeline"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Clock className="h-3 w-3" /> Günlük Zaman Çizelgesi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelViewMode("cards")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    rightPanelViewMode === "cards"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <LayoutGrid className="h-3 w-3" /> Detay Kartlar
+                </button>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-4 flex-1 overflow-y-auto space-y-3 max-h-[550px]">
+            {(byDate.get(selectedDay) ?? []).length === 0 ? (
+              <div
+                className={`text-center py-12 space-y-2 ${
+                  theme === "dark" ? "text-slate-500" : "text-slate-400"
+                }`}
+              >
+                <CalendarIcon className="h-8 w-8 mx-auto opacity-30 text-indigo-500" />
+                <p className="text-xs">
+                  Bu tarih için henüz bir etkinlik tanımı bulunmuyor.
+                </p>
+                <Button
+                  size="sm"
+                  onClick={onOpenNewReservationModal}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 px-3.5 font-semibold shadow-xs"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Etkinlik Oluştur
+                </Button>
+              </div>
+            ) : rightPanelViewMode === "list" ? (
+              /* VIEW MODE 1: COMPACT KİBAR LİSTE */
+              <div className="space-y-2">
+                {(byDate.get(selectedDay) ?? []).map((r) => {
                   const h = hallById(r.hallId);
                   const v = store.venues.find((x) => x.id === r.venueId);
-                  const rem = r.price - r.paid;
                   const colorClass = getEventTypeColor(r.eventType);
 
                   return (
                     <div
                       key={r.id}
                       onClick={() => onSelectReservation(r)}
-                      className={`p-4 rounded-xl border space-y-3 cursor-pointer transition-all ${
+                      className={`p-3 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-all ${
                         theme === "dark"
-                          ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
-                          : "bg-slate-50 border-slate-200 hover:bg-slate-100 shadow-2xs"
+                          ? "bg-slate-950/80 border-slate-800 hover:bg-slate-800/60 text-slate-200"
+                          : "bg-slate-50 border-slate-200 hover:bg-slate-100 text-slate-900 shadow-2xs"
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4
-                              className={`text-sm font-bold ${
-                                theme === "dark"
-                                  ? "text-slate-100"
-                                  : "text-slate-900"
-                              }`}
-                            >
-                              {r.customer}
-                            </h4>
-                            {r.status === "option"
-                              ? (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] px-1.5 py-0 bg-amber-500/10 border-amber-500/40 text-amber-500 font-bold"
-                                >
-                                  ⚠️ Şerhli (Opsiyon)
-                                </Badge>
-                              )
-                              : (
-                                <Badge
-                                  variant="outline"
-                                  className="text-[9px] px-1.5 py-0 bg-emerald-500/10 border-emerald-500/40 text-emerald-500 font-semibold"
-                                >
-                                  ✅ Kesin
-                                </Badge>
-                              )}
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] ${colorClass}`}
-                            >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`h-2.5 w-2.5 rounded-full shrink-0 ${
+                            r.status === "option" ? "bg-amber-400" : "bg-emerald-400"
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-xs truncate">{r.customer}</span>
+                            <Badge variant="outline" className={`text-[9px] px-1 py-0 ${colorClass}`}>
                               {r.eventType || "Etkinlik"}
                             </Badge>
-                            <span
-                              className={`text-[11px] font-mono ${
-                                theme === "dark"
-                                  ? "text-slate-400"
-                                  : "text-slate-500"
-                              }`}
-                            >
-                              📞 {r.phone}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2 mt-0.5">
+                            <span>⏰ {r.start}-{r.end}</span>
+                            <span>•</span>
+                            <span className="text-indigo-400 font-medium truncate">
+                              🏛️ {v?.name} ({h?.name})
                             </span>
                           </div>
                         </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <Button
                           size="icon"
                           variant="ghost"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onPromptDeleteReservation(
-                              r.id,
-                              `${r.customer} (${r.date})`,
-                            );
-                          }}
-                          className="h-7 w-7 text-slate-500 hover:text-rose-500"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-
-                      <div
-                        className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${
-                          theme === "dark"
-                            ? "bg-slate-900/80 border-slate-800"
-                            : "bg-white border-slate-200"
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <span
-                            className={`font-medium ${
-                              theme === "dark"
-                                ? "text-slate-300"
-                                : "text-slate-700"
-                            }`}
-                          >
-                            {v?.name}
-                          </span>
-                          <span className="text-indigo-500 font-semibold">
-                            {h?.name}
-                          </span>
-                        </div>
-                        <div
-                          className={`text-[11px] flex justify-between items-center border-t pt-1 ${
-                            theme === "dark"
-                              ? "border-slate-800 text-slate-400"
-                              : "border-slate-100 text-slate-600"
-                          }`}
-                        >
-                          <span>Saat Aralığı:</span>
-                          <span className="font-mono font-semibold text-emerald-500">
-                            {r.start} - {r.end} ({hoursBetween(r.start, r.end)}
-                            {" "}
-                            Saat)
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-[11px] pt-0.5">
-                          <span
-                            className={theme === "dark"
-                              ? "text-slate-400"
-                              : "text-slate-600"}
-                          >
-                            Finansal Durum:
-                          </span>
-                          <span className="font-bold text-emerald-500">
-                            {money(r.price)}
-                          </span>
-                        </div>
-                        {rem > 0 && (
-                          <div className="flex justify-between items-center text-[10px] text-amber-500 font-semibold">
-                            <span>Kalan Bakiye:</span>
-                            <span>{money(rem)}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1.5 pt-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
                           onClick={() => onPrintOfficialDoc(r)}
-                          className={`flex-1 text-xs h-7.5 px-2 font-medium ${
-                            theme === "dark"
-                              ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
-                              : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
-                          }`}
-                          title="Resmi Tahsis Belgesi & Rapor Yazdır"
+                          className="h-7 w-7 text-emerald-400 hover:bg-emerald-500/10"
+                          title="Resmi Tahsis Belgesi Yazdır"
                         >
-                          <Printer className="h-3 w-3 mr-1 text-emerald-500" />
-                          Resmi Belge
+                          <Printer className="h-3.5 w-3.5" />
                         </Button>
                         <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onCopySMS(r)}
-                          className={`flex-1 text-xs h-7.5 px-2 ${
-                            theme === "dark"
-                              ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
-                              : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
-                          }`}
-                        >
-                          <Copy className="h-3 w-3 mr-1 text-amber-500" />{" "}
-                          WhatsApp
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
+                          size="icon"
+                          variant="ghost"
                           onClick={() => onQuickMail(r)}
-                          className={`flex-1 text-xs h-7.5 px-2 ${
-                            theme === "dark"
-                              ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
-                              : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
-                          }`}
+                          className="h-7 w-7 text-sky-400 hover:bg-sky-500/10"
+                          title="E-posta & .ics gönder"
                         >
-                          <Mail className="h-3 w-3 mr-1 text-sky-500" /> E-posta
+                          <Mail className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => onSelectReservation(r)}
+                          className="h-7 px-2 text-[10px] border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 font-bold"
+                        >
+                          <ExternalLink className="h-3 w-3 mr-0.5" /> Detay
                         </Button>
                       </div>
                     </div>
                   );
-                })
-              )}
+                })}
+              </div>
+            ) : rightPanelViewMode === "timeline" ? (
+              /* VIEW MODE 2: GOOGLE CALENDAR HOURLY DAY TIMELINE VIEW */
+              <div className="space-y-1 relative pl-12 pr-1 py-2 font-mono">
+                {["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"].map((hourStr) => {
+                  const hourInt = parseInt(hourStr.split(":")[0], 10);
+
+                  // Find reservations spanning this hour
+                  const activeReservations = (byDate.get(selectedDay) ?? []).filter((r) => {
+                    const startH = parseInt(r.start.split(":")[0], 10);
+                    const endH = parseInt(r.end.split(":")[0], 10) || 24;
+                    return hourInt >= startH && hourInt < endH;
+                  });
+
+                  return (
+                    <div key={hourStr} className="relative min-h-[42px] border-t border-slate-800/50 flex items-start">
+                      <span className="absolute -left-12 -top-2.5 text-[10px] text-slate-500 font-bold">
+                        {hourStr}
+                      </span>
+
+                      {activeReservations.length > 0 && (
+                        <div className="w-full space-y-1 py-0.5">
+                          {activeReservations.map((r) => {
+                            const isStartHour = parseInt(r.start.split(":")[0], 10) === hourInt;
+                            if (!isStartHour) return null; // Render event banner at its start hour slot
+
+                            const h = hallById(r.hallId);
+                            const v = store.venues.find((x) => x.id === r.venueId);
+
+                            return (
+                              <div
+                                key={r.id}
+                                onClick={() => onSelectReservation(r)}
+                                className="p-2.5 rounded-xl border bg-gradient-to-r from-indigo-950/80 to-slate-900 border-indigo-500/50 hover:border-indigo-400 cursor-pointer shadow-sm transition-all space-y-1 animate-in fade-in"
+                              >
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-extrabold text-slate-100 flex items-center gap-1.5">
+                                    <Clock className="h-3 w-3 text-indigo-400" /> {r.customer}
+                                  </span>
+                                  <Badge className="bg-indigo-500/20 text-indigo-300 border-indigo-500/40 text-[9px]">
+                                    ⏰ {r.start} - {r.end}
+                                  </Badge>
+                                </div>
+                                <div className="text-[10px] text-slate-300 font-sans flex items-center justify-between">
+                                  <span>🏛️ {v?.name} • 📍 {h?.name}</span>
+                                  <span className="font-bold text-emerald-400">{money(r.price)}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* VIEW MODE 3: DETAILED CARDS */
+              (byDate.get(selectedDay) ?? []).map((r) => {
+                const h = hallById(r.hallId);
+                const v = store.venues.find((x) => x.id === r.venueId);
+                const rem = r.price - r.paid;
+                const colorClass = getEventTypeColor(r.eventType);
+
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => onSelectReservation(r)}
+                    className={`p-4 rounded-xl border space-y-3 cursor-pointer transition-all ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
+                        : "bg-slate-50 border-slate-200 hover:bg-slate-100 shadow-2xs"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className={`text-sm font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                            {r.customer}
+                          </h4>
+                          {r.status === "option" ? (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-amber-500/10 border-amber-500/40 text-amber-500 font-bold">
+                              ⚠️ Şerhli (Opsiyon)
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0 bg-emerald-500/10 border-emerald-500/40 text-emerald-500 font-semibold">
+                              ✅ Kesin
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className={`text-[10px] ${colorClass}`}>
+                            {r.eventType || "Etkinlik"}
+                          </Badge>
+                          <span className={`text-[11px] font-mono ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>
+                            📞 {r.phone}
+                          </span>
+                        </div>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPromptDeleteReservation(r.id, `${r.customer} (${r.date})`);
+                        }}
+                        className="h-7 w-7 text-slate-500 hover:text-rose-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+
+                    <div className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${theme === "dark" ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200"}`}>
+                      <div className="flex justify-between items-center">
+                        <span className={`font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                          {v?.name}
+                        </span>
+                        <span className="text-indigo-500 font-semibold">
+                          {h?.name}
+                        </span>
+                      </div>
+                      <div className={`text-[11px] flex justify-between items-center border-t pt-1 ${theme === "dark" ? "border-slate-800 text-slate-400" : "border-slate-100 text-slate-600"}`}>
+                        <span>Saat Aralığı:</span>
+                        <span className="font-mono font-semibold text-emerald-500">
+                          {r.start} - {r.end} ({hoursBetween(r.start, r.end)} Saat)
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px] pt-0.5">
+                        <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>
+                          Finansal Durum:
+                        </span>
+                        <span className="font-bold text-emerald-500">
+                          {money(r.price)}
+                        </span>
+                      </div>
+                      {rem > 0 && (
+                        <div className="flex justify-between items-center text-[10px] text-amber-500 font-semibold">
+                          <span>Kalan Bakiye:</span>
+                          <span>{money(rem)}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5 pt-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onPrintOfficialDoc(r)}
+                        className={`flex-1 text-xs h-7.5 px-2 font-medium ${
+                          theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white" : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <Printer className="h-3 w-3 mr-1 text-emerald-500" /> Resmi Belge
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onCopySMS(r)}
+                        className={`flex-1 text-xs h-7.5 px-2 ${
+                          theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white" : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <Copy className="h-3 w-3 mr-1 text-amber-500" /> WhatsApp
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onQuickMail(r)}
+                        className={`flex-1 text-xs h-7.5 px-2 ${
+                          theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white" : "bg-white border-slate-300 text-slate-700 hover:text-slate-900"
+                        }`}
+                      >
+                        <Mail className="h-3 w-3 mr-1 text-sky-500" /> E-posta
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </CardContent>
         </Card>
       </div>
