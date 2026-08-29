@@ -502,10 +502,6 @@ safeHandle("backup-database", () => {
   return { success: false, error: "Veritabanı dosyası bulunamadı." };
 });
 
-ipcMain.handle("open-external-link", (_event, url: string) => {
-  shell.openExternal(url);
-});
-
 /* ========================================================================== */
 /* AUTO-UPDATER                                                               */
 /* ========================================================================== */
