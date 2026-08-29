@@ -74,49 +74,60 @@ export function MailDialog({
   theme = "dark",
   reservationData,
 }: MailDialogProps) {
-  // SMTP Configuration State
-  const [host, setHost] = useState("smtp.gmail.com");
-  const [port, setPort] = useState("587");
-  const [secure, setSecure] = useState(false);
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
-  const [senderName, setSenderName] = useState("Mekan & Tesis Yönetimi");
+  // SMTP Configuration State (Auto-synced from Settings)
+  const [smtpConfig, setSmtpConfig] = useState<{
+    host: string;
+    port: string;
+    secure: boolean;
+    user: string;
+    pass: string;
+    senderName: string;
+  }>({
+    host: "smtp.gmail.com",
+    port: "587",
+    secure: false,
+    user: "",
+    pass: "",
+    senderName: "Mekan & Tesis Yönetimi",
+  });
 
   // Mail Content State
   const [to, setTo] = useState(defaultRecipient);
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(defaultBody);
-  const [activeTab, setActiveTab] = useState<"send" | "settings" | "ics">("send");
+  const [activeTab, setActiveTab] = useState<"send" | "ics">("send");
   const [sending, setSending] = useState(false);
   const [copiedIcs, setCopiedIcs] = useState(false);
   const [previewMode, setPreviewMode] = useState<"visual" | "code">("visual");
 
-  useEffect(() => {
+  const loadSmtpSettings = () => {
     try {
       const saved = localStorage.getItem(SMTP_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        setHost(parsed.host || "smtp.gmail.com");
-        setPort(parsed.port || "587");
-        setSecure(parsed.secure ?? false);
-        setUser(parsed.user || "");
-        setPass(parsed.pass || "");
-        setSenderName(parsed.senderName || "Mekan & Tesis Yönetimi");
+        setSmtpConfig({
+          host: parsed.host || "smtp.gmail.com",
+          port: parsed.port || "587",
+          secure: parsed.secure ?? false,
+          user: parsed.user || "",
+          pass: parsed.pass || "",
+          senderName: parsed.senderName || "Mekan & Tesis Yönetimi",
+        });
       }
     } catch {}
-  }, []);
+  };
+
+  useEffect(() => {
+    if (open) {
+      loadSmtpSettings();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (defaultRecipient) setTo(defaultRecipient);
     if (defaultSubject) setSubject(defaultSubject);
     if (defaultBody) setBody(defaultBody);
   }, [defaultRecipient, defaultSubject, defaultBody]);
-
-  const saveSettings = () => {
-    const config = { host, port, secure, user, pass, senderName };
-    localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
-    toast.success("SMTP mail ayarları yerel olarak kaydedildi.");
-  };
 
   const handleDownloadICS = () => {
     try {
@@ -148,31 +159,29 @@ export function MailDialog({
       toast.error("Lütfen bir alıcı e-posta adresi girin.");
       return;
     }
-    if (!user.trim() || !pass.trim()) {
-      toast.error("E-posta göndermek için SMTP ayarlarından kullanıcı adı ve şifrenizi girin.");
-      setActiveTab("settings");
+    if (!smtpConfig.user.trim() || !smtpConfig.pass.trim()) {
+      toast.error("E-posta göndermek için lütfen önce Ayarlar > E-posta sekmesinden SMTP kullanıcı adı ve şifrenizi tanımlayın.");
       return;
     }
 
-    saveSettings();
     setSending(true);
 
     try {
       if (window.electronAPI?.sendEmail) {
         const res = await window.electronAPI.sendEmail({
           smtpConfig: {
-            host,
-            port: Number(port) || 587,
-            secure,
-            user,
-            pass,
-            senderName,
+            host: smtpConfig.host,
+            port: Number(smtpConfig.port) || 587,
+            secure: smtpConfig.secure,
+            user: smtpConfig.user,
+            pass: smtpConfig.pass,
+            senderName: smtpConfig.senderName,
           },
           mailData: {
             to,
             subject,
             text: body,
-            html: body.replace(/\n/g, "<br>"),
+            html: body.includes("<html") ? body : body.replace(/\n/g, "<br>"),
           },
         });
 
@@ -193,6 +202,7 @@ export function MailDialog({
   };
 
   const currentIcsPreview = generateSingleReservationICS(reservationData);
+  const isSmtpConfigured = Boolean(smtpConfig.user && smtpConfig.pass);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -204,11 +214,22 @@ export function MailDialog({
         }
       >
         <DialogHeader>
-          <DialogTitle className={`flex items-center gap-2 text-xl font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
-            <Mail className="h-5 w-5 text-indigo-500" /> E-posta Gönder & SMTP & .ics Ayarları
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className={`flex items-center gap-2 text-xl font-bold ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+              <Mail className="h-5 w-5 text-indigo-500" /> E-posta & Takvim İletimi
+            </DialogTitle>
+            {isSmtpConfigured ? (
+              <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 text-[10px] font-bold">
+                ✓ SMTP: {smtpConfig.user}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-amber-500/10 border-amber-500/30 text-amber-400 text-[10px] font-bold">
+                ⚠️ SMTP Ayarı Yapılmadı
+              </Badge>
+            )}
+          </div>
           <DialogDescription className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-            Rezervasyon dökümünü iletin, SMTP ayarlarını yapılandırın ve .ics takvim dosyasını test edin.
+            Rezervasyon dökümünü e-posta olarak gönderin veya .ics takvim dosyasını indirin.
           </DialogDescription>
         </DialogHeader>
 
@@ -216,41 +237,35 @@ export function MailDialog({
         <div className={`flex border-b mb-4 gap-1 ${theme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
           <button
             onClick={() => setActiveTab("send")}
-            className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
+            className={`px-3.5 py-2 text-xs font-bold border-b-2 transition-colors ${
               activeTab === "send"
-                ? "border-indigo-500 text-indigo-500 font-bold"
+                ? "border-indigo-500 text-indigo-500"
                 : theme === "dark"
                 ? "border-transparent text-slate-400 hover:text-slate-200"
                 : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
-            E-posta Gönder
-          </button>
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${
-              activeTab === "settings"
-                ? "border-indigo-500 text-indigo-500 font-bold"
-                : theme === "dark"
-                ? "border-transparent text-slate-400 hover:text-slate-200"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            SMTP Sunucu Ayarları
+            ✉️ E-posta Gönder
           </button>
           <button
             onClick={() => setActiveTab("ics")}
-            className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`px-3.5 py-2 text-xs font-bold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === "ics"
-                ? "border-emerald-500 text-emerald-500 font-bold"
+                ? "border-emerald-500 text-emerald-500"
                 : theme === "dark"
                 ? "border-transparent text-slate-400 hover:text-slate-200"
                 : "border-transparent text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Calendar className="h-3.5 w-3.5" /> .ics Takvim Testi
+            <Calendar className="h-3.5 w-3.5" /> 📅 .ics Takvim Daveti
           </button>
         </div>
+
+        {!isSmtpConfigured && activeTab === "send" && (
+          <div className="p-3 mb-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs flex items-center justify-between">
+            <span>⚠️ E-posta göndermek için henüz SMTP sunucu ayarları tanımlanmamış.</span>
+          </div>
+        )}
 
         {activeTab === "send" ? (
           <div className="space-y-3.5 py-1">
@@ -308,19 +323,9 @@ export function MailDialog({
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>E-posta Mesaj İçeriği</Label>
-                <button
-                  type="button"
-                  onClick={handleDownloadICS}
-                  className="text-[11px] text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
-                >
-                  <Download className="h-3 w-3" /> .ics Dosyasını İndir
-                </button>
-              </div>
-
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>E-posta Mesaj İçeriği</Label>
               {previewMode === "visual" && body.includes("<html") ? (
-                <div className="w-full h-56 rounded-xl border border-slate-800 bg-white overflow-hidden shadow-inner">
+                <div className="w-full h-56 mt-1 rounded-xl border border-slate-800 bg-white overflow-hidden shadow-inner">
                   <iframe
                     title="E-posta Canlı Önizleme"
                     srcDoc={body}
@@ -333,7 +338,7 @@ export function MailDialog({
                   placeholder="Mesajınızı buraya yazın..."
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className={`text-xs ${
+                  className={`mt-1 text-xs ${
                     theme === "dark"
                       ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                       : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
@@ -342,81 +347,8 @@ export function MailDialog({
               )}
             </div>
           </div>
-        ) : activeTab === "settings" ? (
-          <div className="space-y-3.5 py-1">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>SMTP Sunucu (Host)</Label>
-                <Input
-                  placeholder="smtp.gmail.com"
-                  value={host}
-                  onChange={(e) => setHost(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                  }`}
-                />
-              </div>
-              <div>
-                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Port</Label>
-                <Input
-                  placeholder="587"
-                  value={port}
-                  onChange={(e) => setPort(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                  }`}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>E-posta (User)</Label>
-                <Input
-                  placeholder="belediye@gmail.com"
-                  value={user}
-                  onChange={(e) => setUser(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                  }`}
-                />
-              </div>
-              <div>
-                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Şifre / Uygulama Şifresi</Label>
-                <Input
-                  type="password"
-                  placeholder="••••••••••••"
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                  }`}
-                />
-              </div>
-            </div>
-            <div>
-              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Gönderen Adı</Label>
-              <Input
-                placeholder="Mekan & Tesis Yönetimi"
-                value={senderName}
-                onChange={(e) => setSenderName(e.target.value)}
-                className={`mt-1 text-xs ${
-                  theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                }`}
-              />
-            </div>
-          </div>
         ) : (
-          /* TAB 3: .ics TAKVİM TESTİ (GÖRSEL ETKİNLİK KARTI & KOD ÖNİZLEME) */
+          /* TAB 2: .ics TAKVİM TESTİ */
           <div className="space-y-3.5 py-1">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
@@ -449,7 +381,6 @@ export function MailDialog({
             </div>
 
             {previewMode === "visual" ? (
-              /* GOOGLE CALENDAR / iCAL STYLE VISUAL CARD */
               <div className="p-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 text-slate-100 shadow-lg space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -498,7 +429,6 @@ export function MailDialog({
               </div>
             ) : (
               <div>
-                <Label className="text-xs font-semibold text-slate-300">RFC 5545 iCal Ham Kod İçeriği</Label>
                 <textarea
                   readOnly
                   rows={7}
@@ -510,15 +440,9 @@ export function MailDialog({
 
             <div className="flex items-center gap-2 pt-1">
               <Button
-                onClick={handleDownloadICS}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex-1 h-9"
-              >
-                <Download className="h-4 w-4 mr-1.5" /> .ics Dosyasını İndir
-              </Button>
-              <Button
                 variant="outline"
                 onClick={handleCopyICSContent}
-                className="text-xs h-9 border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold"
+                className="text-xs h-9 flex-1 border-slate-700 text-slate-300 hover:bg-slate-800 font-semibold"
               >
                 {copiedIcs ? <Check className="h-4 w-4 mr-1 text-emerald-400" /> : <Copy className="h-4 w-4 mr-1" />}
                 {copiedIcs ? "Kopyalandı" : "Kodu Kopyala"}
@@ -545,22 +469,12 @@ export function MailDialog({
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               {sending ? "Gönderiliyor..." : "E-posta Gönder"}
             </Button>
-          ) : activeTab === "settings" ? (
-            <Button
-              onClick={() => {
-                saveSettings();
-                setActiveTab("send");
-              }}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
-            >
-              SMTP Ayarlarını Kaydet
-            </Button>
           ) : (
             <Button
               onClick={handleDownloadICS}
               className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium gap-1.5"
             >
-              <Download className="h-4 w-4" /> .ics İndir & Test Et
+              <Download className="h-4 w-4" /> .ics Dosyasını İndir
             </Button>
           )}
         </DialogFooter>
