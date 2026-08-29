@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Calendar,
   Check,
@@ -11,11 +11,16 @@ import {
   Share2,
   User,
   ShieldCheck,
+  FileJson,
+  Upload,
+  Code,
+  Copy,
 } from "lucide-react";
 import type { Reservation, Store, Venue } from "@/lib/rental-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -23,6 +28,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -129,6 +142,89 @@ export function SettingsScreen({
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpSenderName, setSmtpSenderName] = useState("Mekan & Tesis Yönetimi");
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
+  const [jsonPasteText, setJsonPasteText] = useState("");
+  const [isDragOverSmtp, setIsDragOverSmtp] = useState(false);
+
+  const applyParsedSmtpData = (data: any) => {
+    try {
+      const host = data.smtp_host || data.host || data.smtpHost || data.server || "";
+      const port = data.smtp_port || data.port || data.smtpPort || "587";
+      const user = data.smtp_user || data.user || data.smtpUser || data.email || data.username || "";
+      const pass = data.smtp_pass || data.pass || data.smtpPass || data.password || "";
+      const secure =
+        data.smtp_secure === "true" ||
+        data.smtp_secure === true ||
+        data.secure === true ||
+        data.secure === "true" ||
+        String(port) === "465";
+      const senderName = data.sender_name || data.senderName || data.name || smtpSenderName || "Mekan & Tesis Yönetimi";
+
+      if (host) setSmtpHost(host);
+      if (port) setSmtpPort(String(port));
+      if (user) setSmtpUser(user);
+      if (pass) setSmtpPass(pass);
+      setSmtpSecure(secure);
+      if (senderName) setSmtpSenderName(senderName);
+
+      const config = {
+        host: host || smtpHost,
+        port: String(port) || smtpPort,
+        secure,
+        user: user || smtpUser,
+        pass: pass || smtpPass,
+        senderName: senderName || smtpSenderName,
+      };
+      localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
+
+      toast.success("JSON SMTP şablonu başarıyla içe aktarıldı ve uygulandı!");
+      return true;
+    } catch (err: any) {
+      toast.error(`JSON Ayrıştırma Hatası: ${err.message || err}`);
+      return false;
+    }
+  };
+
+  const handleFileUploadSmtpJson = (file: File) => {
+    if (!file.name.endsWith(".json")) {
+      toast.error("Lütfen geçerli bir .json uzantılı ayar dosyası yükleyin.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const parsed = JSON.parse(text);
+        applyParsedSmtpData(parsed);
+      } catch (err: any) {
+        toast.error(`Geçersiz JSON Dosyası: ${err.message || err}`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleExportSmtpJson = () => {
+    const config = {
+      smtp_host: smtpHost,
+      smtp_port: smtpPort,
+      smtp_user: smtpUser,
+      smtp_pass: smtpPass,
+      smtp_secure: String(smtpSecure),
+      sender_name: smtpSenderName,
+    };
+    const jsonStr = JSON.stringify(config, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "asut_smtp_sablonu.json");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("SMTP ayarları asut_smtp_sablonu.json olarak indirildi!");
+  };
 
   const [gcalCalendarId, setGcalCalendarId] = useState("");
   const [gcalOAuthToken, setGcalOAuthToken] = useState("");
@@ -436,19 +532,91 @@ export function SettingsScreen({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* SMTP Mail Integration Card */}
             <Card
-              className={
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOverSmtp(true);
+              }}
+              onDragLeave={() => setIsDragOverSmtp(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOverSmtp(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  handleFileUploadSmtpJson(e.dataTransfer.files[0]);
+                }
+              }}
+              className={`relative transition-all ${
+                isDragOverSmtp ? "ring-2 ring-indigo-500 border-indigo-500 scale-[1.01]" : ""
+              } ${
                 theme === "dark"
                   ? "bg-slate-900/80 border-slate-800"
                   : "bg-white border-slate-200 shadow-sm"
-              }
+              }`}
             >
-              <CardHeader className="pb-3">
-                <CardTitle className={`text-base font-bold flex items-center gap-2 ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
-                  <Mail className="h-5 w-5 text-indigo-500" /> E-posta & SMTP Entegrasyonu
-                </CardTitle>
-                <CardDescription className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-                  Müşterilere rezervasyon dökümü, evrak ve bildirim e-postası göndermek için SMTP sunucu ayarlarını tanımlayın.
-                </CardDescription>
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept=".json"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    handleFileUploadSmtpJson(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {isDragOverSmtp && (
+                <div className="absolute inset-0 bg-indigo-600/90 backdrop-blur-xs rounded-2xl z-20 flex flex-col items-center justify-center text-white p-6 text-center animate-in fade-in duration-150">
+                  <Upload className="h-10 w-10 mb-2 animate-bounce" />
+                  <h3 className="font-extrabold text-base">JSON SMTP Dosyasını Bırakın</h3>
+                  <p className="text-xs text-indigo-100 mt-1">asut_smtp_sablonu.json veya benzeri ayar dosyasını otomatik içe aktarır.</p>
+                </div>
+              )}
+
+              <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
+                <div>
+                  <CardTitle className={`text-base font-bold flex items-center gap-2 ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                    <Mail className="h-5 w-5 text-indigo-500" /> E-posta & SMTP Entegrasyonu
+                  </CardTitle>
+                  <CardDescription className={`text-xs mt-1 ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                    Müşterilere bildirim e-postası göndermek için SMTP sunucu ayarlarını tanımlayın veya JSON dosyası sürükleyip yükleyin.
+                  </CardDescription>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-[11px] h-7 px-2.5 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 font-bold"
+                    title=".json ayar dosyası sürükle bırak veya yükle"
+                  >
+                    <FileJson className="h-3.5 w-3.5 mr-1" /> JSON Yükle
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setJsonPasteText("");
+                      setIsJsonModalOpen(true);
+                    }}
+                    className="text-[11px] h-7 px-2.5 border-slate-700 text-slate-300 hover:bg-slate-800 font-bold"
+                    title="JSON metni yapıştırarak ayarları aktar"
+                  >
+                    <Code className="h-3.5 w-3.5 mr-1" /> Yapıştır
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleExportSmtpJson}
+                    className="text-[11px] h-7 px-2 text-slate-400 hover:text-slate-200"
+                    title="Mevcut SMTP ayarlarını asut_smtp_sablonu.json olarak indir"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3.5">
                 <div className="grid grid-cols-3 gap-2.5">
@@ -789,6 +957,52 @@ export function SettingsScreen({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* JSON PASTE & IMPORT MODAL */}
+      <Dialog open={isJsonModalOpen} onOpenChange={setIsJsonModalOpen}>
+        <DialogContent className={theme === "dark" ? "bg-slate-900 border-slate-800 text-slate-100" : "bg-white border-slate-200 text-slate-900"}>
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <FileJson className="h-5 w-5 text-indigo-500" /> JSON SMTP Şablonu Yapıştır & İçe Aktar
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-400">
+              asut_smtp_sablonu.json veya benzeri SMTP ayar JSON kodunu yapıştırıp uygulayın.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-2">
+            <Label className="text-xs font-semibold">Ham JSON Kodu</Label>
+            <Textarea
+              rows={8}
+              placeholder={`{\n  "smtp_host": "smtp.gmail.com",\n  "smtp_port": "587",\n  "smtp_user": "bozdemir.ib70@gmail.com",\n  "smtp_pass": "myvo gwwl kmsg jpzn",\n  "smtp_secure": "true"\n}`}
+              value={jsonPasteText}
+              onChange={(e) => setJsonPasteText(e.target.value)}
+              className="font-mono text-xs bg-slate-950 text-emerald-400 border-slate-800 leading-relaxed resize-none"
+            />
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setIsJsonModalOpen(false)} className="text-xs h-9">
+              İptal
+            </Button>
+            <Button
+              onClick={() => {
+                try {
+                  const parsed = JSON.parse(jsonPasteText);
+                  if (applyParsedSmtpData(parsed)) {
+                    setIsJsonModalOpen(false);
+                  }
+                } catch (err: any) {
+                  toast.error(`Geçersiz JSON Kodu: ${err.message || err}`);
+                }
+              }}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold h-9"
+            >
+              <Check className="h-4 w-4 mr-1" /> Ayrıştır & Uygula
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
