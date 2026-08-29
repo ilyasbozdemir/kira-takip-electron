@@ -11,6 +11,7 @@ import { OfficialPrintModal } from "@/components/official-print-modal";
 import { ReservationDrawer } from "@/components/modals/reservation-drawer";
 import { LauncherModal } from "@/components/launcher-modal";
 import { CustomerHistoryModal } from "@/components/modals/customer-history-modal";
+import { TrashModal } from "@/components/modals/trash-modal";
 import { timeSlots } from "@/lib/rental-store";
 
 interface AppModalsProps {
@@ -187,6 +188,11 @@ interface AppModalsProps {
   openFile: (path?: string) => void;
   createFile: () => void;
   fetchRecentFiles: () => void;
+
+  // Trash Modal Props
+  trashModalOpen?: boolean;
+  setTrashModalOpen?: (open: boolean) => void;
+  onReservationRestored?: () => void;
 }
 
 export function AppModals({
@@ -323,6 +329,9 @@ export function AppModals({
   openFile,
   createFile,
   fetchRecentFiles,
+  trashModalOpen = false,
+  setTrashModalOpen,
+  onReservationRestored,
 }: AppModalsProps): React.JSX.Element {
   return (
     <>
@@ -576,6 +585,16 @@ export function AppModals({
           setPrintModalOpen(true);
         }}
       />
+
+      {setTrashModalOpen && (
+        <TrashModal
+          open={trashModalOpen}
+          onOpenChange={setTrashModalOpen}
+          theme={theme}
+          venues={store.venues}
+          onReservationRestored={onReservationRestored}
+        />
+      )}
     </>
   );
 }

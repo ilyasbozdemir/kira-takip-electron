@@ -49,6 +49,36 @@ export const sqliteStore = {
     }
     await this.loadFromDb();
   },
+  async getDeletedReservations(): Promise<any[]> {
+    if (window.electronAPI?.db?.getDeletedReservations) {
+      return await window.electronAPI.db.getDeletedReservations();
+    }
+    return [];
+  },
+  async restoreReservation(id: string) {
+    if (window.electronAPI?.db?.restoreReservation) {
+      await window.electronAPI.db.restoreReservation(id);
+    }
+    await this.loadFromDb();
+  },
+  async permanentDeleteReservation(id: string) {
+    if (window.electronAPI?.db?.permanentDeleteReservation) {
+      await window.electronAPI.db.permanentDeleteReservation(id);
+    }
+    await this.loadFromDb();
+  },
+  async emptyRecycleBin() {
+    if (window.electronAPI?.db?.emptyRecycleBin) {
+      await window.electronAPI.db.emptyRecycleBin();
+    }
+    await this.loadFromDb();
+  },
+  async cleanupOldTrash(days?: number) {
+    if (window.electronAPI?.db?.cleanupOldTrash) {
+      await window.electronAPI.db.cleanupOldTrash(days);
+    }
+    await this.loadFromDb();
+  },
   async updateReservationStatus(id: string, status: string) {
     if (window.electronAPI?.db?.updateReservationStatus) {
       await window.electronAPI.db.updateReservationStatus(id, status);

@@ -16,6 +16,11 @@ import {
   deleteHall,
   addReservation,
   deleteReservation,
+  getDeletedReservations,
+  restoreReservation,
+  permanentDeleteReservation,
+  emptyRecycleBin,
+  cleanupOldDeletedReservations,
   updatePaid,
   getCurrentDbPath,
   getSetting,
@@ -176,7 +181,7 @@ function extractFilePathFromArgs(args: string[]): string | null {
 
 function createWindow() {
   win = new BrowserWindow({
-    title: "KİRA KONTROL UYGULAMASI Pro - Mekan, Salon ve Etkinlik Yönetim Sistemi",
+    title: "KİRA KONTROL UYGULAMASI- Mekan, Salon ve Etkinlik Yönetim Sistemi",
     icon: path.join(process.env.VITE_PUBLIC || "", "app-logo.png"),
     width: 1350,
     height: 900,
@@ -462,6 +467,26 @@ safeHandle("db:delete-reservation", (_event, id: string) => {
   return true;
 });
 
+safeHandle("db:get-deleted-reservations", () => {
+  return getDeletedReservations();
+});
+
+safeHandle("db:restore-reservation", (_event, id: string) => {
+  return restoreReservation(id);
+});
+
+safeHandle("db:permanent-delete-reservation", (_event, id: string) => {
+  return permanentDeleteReservation(id);
+});
+
+safeHandle("db:empty-recycle-bin", () => {
+  return emptyRecycleBin();
+});
+
+safeHandle("db:cleanup-old-trash", (_event, days?: number) => {
+  return cleanupOldDeletedReservations(days || 30);
+});
+
 safeHandle("db:update-paid", (_event, { id, paid }) => {
   updatePaid(id, paid);
   return true;
@@ -495,7 +520,7 @@ safeHandle("db:switch-path", (_event, filePath: string) => {
     initDatabase(filePath);
     openedFilePath = filePath;
     if (win) {
-      win.setTitle(`KİRA KONTROL UYGULAMASI Pro - ${path.basename(filePath)}`);
+      win.setTitle(`KİRA KONTROL UYGULAMASI- ${path.basename(filePath)}`);
       win.webContents.send("file-opened", filePath);
       win.webContents.send("db-updated");
     }
@@ -526,14 +551,15 @@ safeHandle("open-file-dialog", async () => {
   const filePath = result.filePaths[0];
   initDatabase(filePath);
   openedFilePath = filePath;
-  win.setTitle(`KİRA KONTROL UYGULAMASI Pro - ${path.basename(filePath)}`);
+  win.setTitle(`KİRA KONTROL UYGULAMASI- ${path.basename(filePath)}`);
   win.webContents.send("file-opened", filePath);
   win.webContents.send("db-updated");
   return { filePath, content: JSON.stringify(getStoreData()) };
 });
 
-safeHandle("save-file-dialog", async (_event, { defaultName }) => {
+safeHandle("save-file-dialog", async (_event, data?: { defaultName?: string }) => {
   if (!win) return null;
+  const defaultName = data?.defaultName;
   const result = await dialog.showSaveDialog(win, {
     title: "Yeni VenueKeeper Veritabanı Kaydet",
     defaultPath: defaultName || "venuekeeper-proje.vke",
@@ -546,10 +572,10 @@ safeHandle("save-file-dialog", async (_event, { defaultName }) => {
 
   initDatabase(result.filePath);
   openedFilePath = result.filePath;
-  win.setTitle(`KİRA KONTROL UYGULAMASI Pro - ${path.basename(result.filePath)}`);
+  win.setTitle(`KİRA KONTROL UYGULAMASI - ${path.basename(result.filePath)}`);
   win.webContents.send("file-opened", result.filePath);
   win.webContents.send("db-updated");
-  return result.filePath;
+  return { filePath: result.filePath, fileName: path.basename(result.filePath) };
 });
 
 safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
@@ -586,6 +612,30 @@ safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
   }
 });
 
+safeHandle("save-as-database", async (_event, data?: { defaultName?: string }) => {
+  if (!win) return null;
+  const currentPath = getCurrentDbPath();
+  const result = await dialog.showSaveDialog(win, {
+    title: "Veritabanını Farklı Kaydet (.vke)",
+    defaultPath: data?.defaultName || (currentPath ? `Yedek_${path.basename(currentPath)}` : "isletme-takip.vke"),
+    filters: [{ name: "VenueKeeper Veritabanı (*.vke)", extensions: ["vke"] }],
+  });
+
+  if (result.canceled || !result.filePath) {
+    return null;
+  }
+
+  if (currentPath && fs.existsSync(currentPath)) {
+    fs.copyFileSync(currentPath, result.filePath);
+  }
+  initDatabase(result.filePath);
+  openedFilePath = result.filePath;
+  win.setTitle(`KİRA KONTROL UYGULAMASI - ${path.basename(result.filePath)}`);
+  win.webContents.send("file-opened", result.filePath);
+  win.webContents.send("db-updated");
+  return { success: true, filePath: result.filePath, fileName: path.basename(result.filePath) };
+});
+
 safeHandle("backup-database", () => {
   const currentPath = getCurrentDbPath();
   const destPath = makeLocalBackup(currentPath || "");
@@ -596,31 +646,39 @@ safeHandle("backup-database", () => {
 /**
  * quit-with-backup: Renderer bu IPC'yi çağırır → yerel yedek alınır
  * → SMTP ayarlıysa e-posta gönderilir → sonuç renderer'a döner.
- * Renderer aldıktan sonra closeWindow'u çağırır.
  */
-safeHandle("quit-with-backup", async (_event, smtpSettings: any) => {
+safeHandle("quit-with-backup", async (_event, options: any) => {
   const currentPath = getCurrentDbPath();
   if (!currentPath || !fs.existsSync(currentPath)) {
     return { localBackup: false, emailSent: false, error: "Veritabanı dosyası bulunamadı." };
   }
 
+  const shouldBackupLocal = options?.backupLocal !== false;
+  const shouldSendEmail = options?.sendEmail !== false;
+  const smtpSettings = options?.smtpSettings || options;
+  const targetEmail = options?.backupEmail || smtpSettings?.backupEmail;
+
   // 1. Yerel yedek al
-  const backupPath = makeLocalBackup(currentPath);
+  let backupPath: string | null = null;
+  if (shouldBackupLocal || shouldSendEmail) {
+    backupPath = makeLocalBackup(currentPath);
+  }
 
   // 2. SMTP ayarlıysa e-posta gönder
   let emailSent = false;
   let emailError: string | undefined;
   if (
+    shouldSendEmail &&
     smtpSettings &&
     smtpSettings.host &&
     smtpSettings.user &&
     smtpSettings.pass &&
-    smtpSettings.backupEmail &&
+    targetEmail &&
     backupPath
   ) {
     const result = await sendBackupEmail(
       smtpSettings,
-      smtpSettings.backupEmail,
+      targetEmail,
       backupPath,
       path.basename(currentPath),
     );

@@ -1,7 +1,25 @@
-import React, { useState, useMemo } from "react";
-import { FileSpreadsheet, Printer, FileText, CheckCircle2, Building2, Scale, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import {
+  Building2,
+  CheckCircle2,
+  FileSpreadsheet,
+  FileText,
+  Printer,
+  Receipt,
+  Search,
+  Filter,
+  CreditCard,
+  Banknote,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { money, type Store } from "@/lib/rental-store";
@@ -21,7 +39,10 @@ export function ReportsScreen({
   monthStats,
   store,
 }: ReportsScreenProps): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<"summary" | "double_entry">("summary");
+  const isDark = theme === "dark";
+  const [activeTab, setActiveTab] = useState<"summary" | "payments">("summary");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<"all" | "paid" | "partial" | "unpaid">("all");
 
   // Venue Financial Breakdown
   const venueStats = useMemo(() => {
@@ -29,11 +50,13 @@ export function ReportsScreen({
 
     return store.venues.map((v) => {
       const vRes = store.reservations.filter((r) => r.venueId === v.id);
-      const totalRev = vRes.reduce((sum, r) => sum + (r.price || 0), 0);
-      const totalPaid = vRes.reduce((sum, r) => sum + (r.paid || 0), 0);
+      const totalRev = vRes.reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+      const totalPaid = vRes.reduce((sum, r) => sum + (Number(r.paid) || 0), 0);
       const remaining = totalRev - totalPaid;
       const count = vRes.length;
-      const collectionRate = totalRev > 0 ? Math.round((totalPaid / totalRev) * 100) : 0;
+      const collectionRate = totalRev > 0
+        ? Math.round((totalPaid / totalRev) * 100)
+        : 0;
 
       return {
         id: v.id,
@@ -48,126 +71,147 @@ export function ReportsScreen({
     });
   }, [store]);
 
-  // Double-Entry Accounting Journal Entries (Çift Taraflı Muhasebe Yevmiye Fişleri)
-  const doubleEntryJournals = useMemo(() => {
-    if (!store?.reservations) return { entries: [], totalDebit: 0, totalCredit: 0 };
+  // Filtered Detailed Payment List
+  const paymentList = useMemo(() => {
+    if (!store?.reservations) return [];
 
-    const entries: Array<{
-      voucherNo: string;
-      date: string;
-      accountCode: string;
-      accountName: string;
-      debit: number;
-      credit: number;
-      description: string;
-    }> = [];
+    return store.reservations.filter((r) => {
+      const q = searchTerm.toLowerCase();
+      const v = store.venues.find((x) => x.id === r.venueId);
+      const h = v?.halls?.find((x) => x.id === r.hallId);
+      const price = Number(r.price) || 0;
+      const paid = Number(r.paid) || 0;
+      const remaining = price - paid;
 
-    let totalDebit = 0;
-    let totalCredit = 0;
+      const matchesSearch =
+        (r.customer && r.customer.toLowerCase().includes(q)) ||
+        (r.phone && r.phone.includes(q)) ||
+        (r.receiptNo && r.receiptNo.toLowerCase().includes(q)) ||
+        (v?.name && v.name.toLowerCase().includes(q)) ||
+        (h?.name && h.name.toLowerCase().includes(q)) ||
+        (r.eventType && r.eventType.toLowerCase().includes(q));
 
-    store.reservations.forEach((r, idx) => {
-      const vNo = `YEV-2026-${String(idx + 1).padStart(4, "0")}`;
-      const venue = store.venues.find((v) => v.id === r.venueId);
-      const venueName = venue?.name || "Tesis";
-
-      // 1. Accrual Entry (Tahakkuk Kaydı)
-      // Debit: 120 ALICILAR HESABI
-      entries.push({
-        voucherNo: vNo,
-        date: r.date,
-        accountCode: "120.01",
-        accountName: `120.01 ALICILAR - ${r.customer.toUpperCase()}`,
-        debit: r.price || 0,
-        credit: 0,
-        description: `Salon Tahakkuku: ${venueName} (${r.eventType || "Kiralama"})`,
-      });
-      totalDebit += r.price || 0;
-
-      // Credit: 600 HİZMET GELİRLERİ HESABI
-      entries.push({
-        voucherNo: vNo,
-        date: r.date,
-        accountCode: "600.01",
-        accountName: `600.01 TESİS HİZMET GELİRLERİ`,
-        debit: 0,
-        credit: r.price || 0,
-        description: `Salon Tahakkuk Geliri: ${r.customer}`,
-      });
-      totalCredit += r.price || 0;
-
-      // 2. Collection Entry (Tahsilat Kaydı) if paid > 0
-      if (r.paid && r.paid > 0) {
-        const cashAccCode = r.paymentMethod === "Kredi Kartı / POS" ? "102.01" : "100.01";
-        const cashAccName = r.paymentMethod === "Kredi Kartı / POS" ? "102.01 BANKALAR HESABI (POS)" : "100.01 KASA HESABI (Nakit)";
-
-        // Debit: Kasa / Banka
-        entries.push({
-          voucherNo: vNo,
-          date: r.date,
-          accountCode: cashAccCode,
-          accountName: cashAccName,
-          debit: r.paid,
-          credit: 0,
-          description: `Tahsilat (${r.paymentMethod || "Nakit"}): ${r.customer}`,
-        });
-        totalDebit += r.paid;
-
-        // Credit: 120 Alıcılar
-        entries.push({
-          voucherNo: vNo,
-          date: r.date,
-          accountCode: "120.01",
-          accountName: `120.01 ALICILAR - ${r.customer.toUpperCase()}`,
-          debit: 0,
-          credit: r.paid,
-          description: `Tahsilat Mahsubu: ${r.customer}`,
-        });
-        totalCredit += r.paid;
+      let matchesStatus = true;
+      if (paymentStatusFilter === "paid") {
+        matchesStatus = price > 0 && remaining <= 0;
+      } else if (paymentStatusFilter === "partial") {
+        matchesStatus = paid > 0 && remaining > 0;
+      } else if (paymentStatusFilter === "unpaid") {
+        matchesStatus = paid === 0 && price > 0;
       }
+
+      return matchesSearch && matchesStatus;
     });
+  }, [store, searchTerm, paymentStatusFilter]);
 
-    return { entries, totalDebit, totalCredit };
-  }, [store]);
-
-  const handlePrintLedger = () => {
+  const handlePrint = () => {
     window.print();
   };
 
   const handleExportExcel = () => {
-    toast.success("Excel çift taraflı yevmiye döküm raporu indirildi!");
+    if (!store?.reservations || store.reservations.length === 0) {
+      toast.error("Dışa aktarılacak kayıt bulunamadı.");
+      return;
+    }
+
+    const headers = [
+      "Tarih",
+      "Saat",
+      "Müşteri",
+      "Telefon",
+      "Mekan",
+      "Salon",
+      "Etkinlik Türü",
+      "Makbuz No",
+      "Ödeme Yöntemi",
+      "Toplam Tutar",
+      "Alınan / Tahsilat",
+      "Kalan Tutar",
+      "Durum",
+    ];
+
+    const rows = paymentList.map((r) => {
+      const v = store.venues.find((x) => x.id === r.venueId);
+      const h = v?.halls?.find((x) => x.id === r.hallId);
+      const price = Number(r.price) || 0;
+      const paid = Number(r.paid) || 0;
+      const remaining = price - paid;
+      const statusText =
+        price === 0 ? "Ücretsiz" : remaining <= 0 ? "Tam Ödendi" : paid > 0 ? "Kısmi Ödendi" : "Ödenmedi";
+
+      return [
+        r.date,
+        `${r.start} - ${r.end}`,
+        `"${r.customer}"`,
+        `"${r.phone || ""}"`,
+        `"${v?.name || ""}"`,
+        `"${h?.name || ""}"`,
+        `"${r.eventType || "Genel"}"`,
+        `"${r.receiptNo || ""}"`,
+        `"${r.paymentMethod || "Nakit"}"`,
+        price,
+        paid,
+        remaining,
+        statusText,
+      ].join(";");
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `mali_tahsilat_raporu_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Mali tahsilat tablosu Excel/CSV formatında indirildi!");
   };
 
   return (
-    <Card className={theme === "dark" ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
-      <CardHeader className={`flex flex-wrap items-center justify-between gap-4 pb-4 border-b ${theme === "dark" ? "border-slate-800" : "border-slate-200"}`}>
+    <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+      <CardHeader className={`flex flex-wrap items-center justify-between gap-4 pb-4 border-b ${isDark ? "border-slate-800" : "border-slate-200"}`}>
         <div>
-          <CardTitle className={`text-base font-bold flex items-center gap-2 ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
-            <Scale className="h-5 w-5 text-indigo-500" /> Mali Raporlar & Çift Taraflı Muhasebe Fişleri
+          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            <Receipt className="h-5 w-5 text-indigo-500" /> Mali Gelir & Tahsilat Raporları
           </CardTitle>
-          <CardDescription className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-            Tüm mekanların gelir-tahsilat analizi ve arka plan çift taraflı mahsup/yevmiye dökümü.
+          <CardDescription className={`text-xs ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+            Tesis bazlı gelir analizi ve etkinlik kiralama tahsilat / bakiye takibi.
           </CardDescription>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex bg-slate-950 p-0.5 rounded-lg border border-slate-800">
+          <div
+            className={`flex p-0.5 rounded-lg border ${
+              isDark ? "bg-slate-950 border-slate-800" : "bg-slate-100 border-slate-300"
+            }`}
+          >
             <button
               type="button"
               onClick={() => setActiveTab("summary")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-                activeTab === "summary" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-400 hover:text-slate-200"
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                activeTab === "summary"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               📊 Tesis Gelir Analizi
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("double_entry")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-                activeTab === "double_entry" ? "bg-indigo-600 text-white shadow-xs" : "text-slate-400 hover:text-slate-200"
+              onClick={() => setActiveTab("payments")}
+              className={`px-3 py-1 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                activeTab === "payments"
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              📑 Yevmiye & Çift Taraflı Fişler
+              🧾 Tahsilat & Ödeme Dökümü
             </button>
           </div>
 
@@ -175,7 +219,11 @@ export function ReportsScreen({
             size="sm"
             variant="outline"
             onClick={handleExportExcel}
-            className={`text-xs h-8 text-emerald-500 ${theme === "dark" ? "border-slate-800" : "border-slate-300"}`}
+            className={`text-xs h-8 font-bold ${
+              isDark
+                ? "border-slate-800 text-emerald-400 hover:bg-slate-800"
+                : "border-slate-300 text-emerald-700 hover:bg-emerald-50 shadow-2xs"
+            }`}
           >
             <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" /> Excel Dökümü
           </Button>
@@ -183,40 +231,56 @@ export function ReportsScreen({
           <Button
             size="sm"
             variant="outline"
-            onClick={handlePrintLedger}
-            className={`text-xs h-8 text-indigo-400 ${theme === "dark" ? "border-slate-800" : "border-slate-300"}`}
+            onClick={handlePrint}
+            className={`text-xs h-8 font-bold ${
+              isDark
+                ? "border-slate-800 text-indigo-400 hover:bg-slate-800"
+                : "border-slate-300 text-indigo-700 hover:bg-indigo-50 shadow-2xs"
+            }`}
           >
-            <Printer className="h-3.5 w-3.5 mr-1.5" /> Fiş Yazdır
+            <Printer className="h-3.5 w-3.5 mr-1.5" /> Yazdır
           </Button>
         </div>
       </CardHeader>
 
       <CardContent className="p-4 space-y-6">
         {/* Top Summary Cards */}
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className={`p-4 rounded-2xl border ${theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-            <p className={`text-xs font-semibold ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-              Toplam Tahakkuk (600 Gelir)
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+          <div
+            className={`p-4 rounded-2xl border ${
+              isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200 shadow-2xs"
+            }`}
+          >
+            <p className={`text-xs font-bold ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+              Toplam Tahakkuk (Kiralama Geliri)
             </p>
-            <p className={`text-xl font-extrabold mt-1 ${theme === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+            <p className={`text-2xl font-black font-mono mt-1 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
               {money(monthStats.totalRev)}
             </p>
           </div>
 
-          <div className={`p-4 rounded-2xl border ${theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-            <p className={`text-xs font-semibold ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-              Toplam Tahsilat (100/102 Kasa)
+          <div
+            className={`p-4 rounded-2xl border ${
+              isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200 shadow-2xs"
+            }`}
+          >
+            <p className={`text-xs font-bold ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+              Toplam Alınan (Kasa / Banka)
             </p>
-            <p className="text-xl font-extrabold text-emerald-500 mt-1">
+            <p className="text-2xl font-black font-mono text-emerald-600 dark:text-emerald-400 mt-1">
               {money(monthStats.totalPaid)}
             </p>
           </div>
 
-          <div className={`p-4 rounded-2xl border ${theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
-            <p className={`text-xs font-semibold ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
-              Kalan Alacak (120 Alıcılar)
+          <div
+            className={`p-4 rounded-2xl border ${
+              isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-200 shadow-2xs"
+            }`}
+          >
+            <p className={`text-xs font-bold ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+              Kalan Alacak (Bekleyen Ödeme)
             </p>
-            <p className="text-xl font-extrabold text-amber-500 mt-1">
+            <p className="text-2xl font-black font-mono text-amber-600 dark:text-amber-400 mt-1">
               {money(monthStats.remaining)}
             </p>
           </div>
@@ -225,23 +289,33 @@ export function ReportsScreen({
         {activeTab === "summary" ? (
           /* TAB 1: VENUE BREAKDOWN SUMMARY */
           <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <Building2 className="h-4 w-4 text-indigo-400" /> Tesis ve Mekan Bazlı Mali Dağılım
+            <h3
+              className={`text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
+                isDark ? "text-slate-400" : "text-slate-700"
+              }`}
+            >
+              <Building2 className="h-4 w-4 text-indigo-500" /> Tesis ve Mekan Bazlı Mali Dağılım
             </h3>
 
-            <div className="overflow-x-auto rounded-2xl border border-slate-800">
-              <table className={`w-full text-left text-xs ${theme === "dark" ? "text-slate-300" : "text-slate-800"}`}>
-                <thead className={`uppercase font-mono text-[11px] border-b ${theme === "dark" ? "bg-slate-950 text-slate-400 border-slate-800" : "bg-slate-100 text-slate-700 border-slate-200"}`}>
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <table className={`w-full text-left text-xs ${isDark ? "text-slate-300" : "text-slate-800"}`}>
+                <thead
+                  className={`uppercase font-sans font-black text-[11px] border-b ${
+                    isDark
+                      ? "bg-slate-950 text-slate-300 border-slate-800"
+                      : "bg-slate-100 text-slate-900 border-slate-300"
+                  }`}
+                >
                   <tr>
                     <th className="p-3">Mekan / Tesis Adı</th>
                     <th className="p-3 text-center">Etkinlik Sayısı</th>
-                    <th className="p-3 text-right">Tahakkuk</th>
-                    <th className="p-3 text-right">Tahsilat</th>
-                    <th className="p-3 text-right">Kalan Alacak</th>
+                    <th className="p-3 text-right">Toplam Tahakkuk</th>
+                    <th className="p-3 text-right">Alınan (Tahsilat)</th>
+                    <th className="p-3 text-right">Kalan Bakiye</th>
                     <th className="p-3 text-center">Tahsilat Oranı</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${theme === "dark" ? "divide-slate-800/60" : "divide-slate-200"}`}>
+                <tbody className={`divide-y ${isDark ? "divide-slate-800/60" : "divide-slate-200"}`}>
                   {venueStats.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-6 text-center text-slate-500 italic">
@@ -250,25 +324,40 @@ export function ReportsScreen({
                     </tr>
                   ) : (
                     venueStats.map((v) => (
-                      <tr key={v.id} className={theme === "dark" ? "hover:bg-slate-800/30" : "hover:bg-slate-50"}>
-                        <td className="p-3 font-bold text-slate-200">
+                      <tr
+                        key={v.id}
+                        className={isDark ? "hover:bg-slate-800/30" : "hover:bg-indigo-50/50"}
+                      >
+                        <td className={`p-3 font-black ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                           🏛️ {v.name}
-                          <span className="block text-[10px] font-normal text-slate-400">{v.category}</span>
+                          <span
+                            className={`block text-[10px] font-semibold ${
+                              isDark ? "text-slate-400" : "text-slate-500"
+                            }`}
+                          >
+                            {v.category}
+                          </span>
                         </td>
                         <td className="p-3 text-center font-mono font-bold">
                           {v.count} Adet
                         </td>
-                        <td className="p-3 text-right font-bold text-slate-200">
+                        <td className={`p-3 text-right font-black font-mono ${isDark ? "text-slate-100" : "text-slate-900"}`}>
                           {money(v.totalRev)}
                         </td>
-                        <td className="p-3 text-right font-bold text-emerald-400">
+                        <td className="p-3 text-right font-black font-mono text-emerald-600 dark:text-emerald-400">
                           {money(v.totalPaid)}
                         </td>
-                        <td className="p-3 text-right font-bold text-amber-400">
+                        <td className="p-3 text-right font-black font-mono text-amber-600 dark:text-amber-400">
                           {money(v.remaining)}
                         </td>
                         <td className="p-3 text-center">
-                          <Badge className={`text-[10px] font-bold ${v.collectionRate >= 80 ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"}`}>
+                          <Badge
+                            className={`text-[10px] font-bold ${
+                              v.collectionRate >= 80
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30"
+                                : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30"
+                            }`}
+                          >
                             %{v.collectionRate} Tahsil Edildi
                           </Badge>
                         </td>
@@ -280,70 +369,211 @@ export function ReportsScreen({
             </div>
           </div>
         ) : (
-          /* TAB 2: DOUBLE-ENTRY JOURNAL LEDGER (ÇİFT TARAFLI YEVMİYE FİŞLERİ) */
+          /* TAB 2: DETAILED PAYMENT & COLLECTION LOG (TAHSİLAT & ÖDEME DÖKÜMÜ) */
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <FileText className="h-4 w-4 text-emerald-400" /> Çift Taraflı Yevmiye & Mahsup Fişi Dökümü
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3
+                className={`text-xs font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                  isDark ? "text-slate-400" : "text-slate-800"
+                }`}
+              >
+                <FileText className="h-4 w-4 text-indigo-500" />
+                Etkinlik Bazlı Tahsilat & Ödeme Dökümü ({paymentList.length} Kayıt)
               </h3>
 
-              <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/40 text-[10px] font-bold flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" /> ✓ Çift Taraflı Denk Kayıt (Borç = Alacak)
-              </Badge>
+              {/* Filter controls */}
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                  <Input
+                    placeholder="Müşteri, makbuz, salon ara..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className={`pl-8 text-xs h-8 rounded-lg w-48 ${
+                      isDark
+                        ? "bg-slate-950 border-slate-800 text-slate-100"
+                        : "bg-slate-50 border-slate-200 text-slate-900"
+                    }`}
+                  />
+                </div>
+
+                <select
+                  value={paymentStatusFilter}
+                  onChange={(e: any) => setPaymentStatusFilter(e.target.value)}
+                  className={`text-xs h-8 px-2 rounded-lg border font-bold ${
+                    isDark
+                      ? "bg-slate-950 border-slate-800 text-slate-200"
+                      : "bg-slate-50 border-slate-300 text-slate-800"
+                  }`}
+                >
+                  <option value="all">Tüm Durumlar</option>
+                  <option value="paid">✓ Tam Ödenenler</option>
+                  <option value="partial">⏳ Kısmi Ödenenler</option>
+                  <option value="unpaid">❌ Ödenmeyenler</option>
+                </select>
+              </div>
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border border-slate-800">
-              <table className={`w-full text-left text-xs ${theme === "dark" ? "text-slate-300" : "text-slate-800"}`}>
-                <thead className={`uppercase font-mono text-[11px] border-b ${theme === "dark" ? "bg-slate-950 text-slate-400 border-slate-800" : "bg-slate-100 text-slate-700 border-slate-200"}`}>
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+              <table className={`w-full text-left text-xs ${isDark ? "text-slate-300" : "text-slate-800"}`}>
+                <thead
+                  className={`uppercase font-sans font-black text-[11px] border-b ${
+                    isDark
+                      ? "bg-slate-950 text-slate-300 border-slate-800"
+                      : "bg-slate-100 text-slate-900 border-slate-300"
+                  }`}
+                >
                   <tr>
-                    <th className="p-3">Fiş No / Tarih</th>
-                    <th className="p-3">Hesap Kodu & Adı</th>
-                    <th className="p-3">Açıklama</th>
-                    <th className="p-3 text-right">Borç (TL)</th>
-                    <th className="p-3 text-right">Alacak (TL)</th>
+                    <th className="p-3">Tarih & Saat</th>
+                    <th className="p-3">Müşteri / Kurum</th>
+                    <th className="p-3">Mekan & Salon</th>
+                    <th className="p-3">Makbuz / Yöntem</th>
+                    <th className="p-3 text-right">Toplam Tutar</th>
+                    <th className="p-3 text-right">Alınan (Tahsil)</th>
+                    <th className="p-3 text-right">Kalan</th>
+                    <th className="p-3 text-center">Durum</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${theme === "dark" ? "divide-slate-800/60" : "divide-slate-200"}`}>
-                  {doubleEntryJournals.entries.length === 0 ? (
+                <tbody className={`divide-y ${isDark ? "divide-slate-800/60" : "divide-slate-200"}`}>
+                  {paymentList.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-6 text-center text-slate-500 italic">
-                        Henüz muhasebe işlem kaydı bulunmuyor.
+                      <td colSpan={8} className="p-6 text-center text-slate-500 italic">
+                        Filtreye uygun tahsilat kaydı bulunamadı.
                       </td>
                     </tr>
                   ) : (
-                    doubleEntryJournals.entries.map((entry, idx) => (
-                      <tr key={idx} className={theme === "dark" ? "hover:bg-slate-800/30 font-mono text-[11px]" : "hover:bg-slate-50 font-mono text-[11px]"}>
-                        <td className="p-2.5 font-bold text-indigo-400">
-                          {entry.voucherNo}
-                          <span className="block text-[10px] font-normal text-slate-400">{entry.date}</span>
-                        </td>
-                        <td className="p-2.5 font-bold text-slate-200">
-                          {entry.accountName}
-                        </td>
-                        <td className="p-2.5 text-slate-400 font-sans text-xs">
-                          {entry.description}
-                        </td>
-                        <td className="p-2.5 text-right font-bold text-slate-100">
-                          {entry.debit > 0 ? money(entry.debit) : "-"}
-                        </td>
-                        <td className="p-2.5 text-right font-bold text-slate-100">
-                          {entry.credit > 0 ? money(entry.credit) : "-"}
-                        </td>
-                      </tr>
-                    ))
+                    paymentList.map((r) => {
+                      const v = store?.venues.find((x) => x.id === r.venueId);
+                      const h = v?.halls?.find((x) => x.id === r.hallId);
+                      const price = Number(r.price) || 0;
+                      const paid = Number(r.paid) || 0;
+                      const remaining = price - paid;
+                      const isFullyPaid = price > 0 && remaining <= 0;
+                      const isPartial = paid > 0 && remaining > 0;
+                      const isFree = price === 0;
+
+                      return (
+                        <tr
+                          key={r.id}
+                          className={`transition-colors ${
+                            isDark ? "hover:bg-slate-800/40" : "hover:bg-indigo-50/50 bg-white"
+                          }`}
+                        >
+                          {/* Date & Time */}
+                          <td className="p-3 whitespace-nowrap font-mono">
+                            <div className={`font-black text-xs ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                              📅 {r.date}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-semibold">
+                              ⏰ {r.start} - {r.end}
+                            </div>
+                          </td>
+
+                          {/* Customer */}
+                          <td className="p-3">
+                            <div className={`font-black text-xs ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                              {r.customer}
+                            </div>
+                            {r.phone && (
+                              <div className="text-[11px] text-slate-500 font-mono">
+                                📞 {r.phone}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Venue & Hall */}
+                          <td className="p-3">
+                            <div className={`font-bold text-xs ${isDark ? "text-slate-200" : "text-slate-900"}`}>
+                              {v?.name || "Tesis"}
+                            </div>
+                            <div className="text-[11px] text-indigo-500 font-semibold">
+                              📍 {h?.name || "Salon"}
+                            </div>
+                          </td>
+
+                          {/* Receipt & Payment Method */}
+                          <td className="p-3">
+                            <div className="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                              {r.receiptNo ? `🧾 ${r.receiptNo}` : "—"}
+                            </div>
+                            <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+                              {r.paymentMethod === "Kredi Kartı / POS" ? (
+                                <CreditCard className="h-3 w-3 text-sky-500" />
+                              ) : (
+                                <Banknote className="h-3 w-3 text-emerald-500" />
+                              )}
+                              <span>{r.paymentMethod || "Nakit"}</span>
+                            </div>
+                          </td>
+
+                          {/* Total Price */}
+                          <td className={`p-3 text-right font-black font-mono text-xs ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                            {money(price)}
+                          </td>
+
+                          {/* Paid Amount */}
+                          <td className="p-3 text-right font-black font-mono text-xs text-emerald-600 dark:text-emerald-400">
+                            {money(paid)}
+                          </td>
+
+                          {/* Remaining Balance */}
+                          <td className="p-3 text-right font-black font-mono text-xs text-amber-600 dark:text-amber-400">
+                            {money(remaining)}
+                          </td>
+
+                          {/* Status Badge */}
+                          <td className="p-3 text-center whitespace-nowrap">
+                            {isFree ? (
+                              <Badge className="bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30 text-[10px] font-bold">
+                                Ücretsiz
+                              </Badge>
+                            ) : isFullyPaid ? (
+                              <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                                ✓ Ödendi
+                              </Badge>
+                            ) : isPartial ? (
+                              <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold">
+                                ⏳ Kısmi Ödeme
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 text-[10px] font-bold">
+                                ✕ Ödenmedi
+                              </Badge>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
-                <tfoot className={`font-mono text-xs border-t font-bold ${theme === "dark" ? "bg-slate-950 text-slate-100 border-slate-800" : "bg-slate-100 text-slate-900 border-slate-300"}`}>
+                <tfoot
+                  className={`font-mono text-xs border-t font-black ${
+                    isDark ? "bg-slate-950 text-slate-100 border-slate-800" : "bg-slate-100 text-slate-900 border-slate-300"
+                  }`}
+                >
                   <tr>
-                    <td colSpan={3} className="p-3 text-right">
-                      TOPLAM DENGELİ YEVMİYE TUTARI:
+                    <td colSpan={4} className="p-3 text-right">
+                      TOPLAM GENEL TUTARLAR:
                     </td>
-                    <td className="p-3 text-right text-emerald-400 font-extrabold">
-                      {money(doubleEntryJournals.totalDebit)}
+                    <td className="p-3 text-right text-slate-900 dark:text-slate-100 font-black text-sm">
+                      {money(
+                        paymentList.reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+                      )}
                     </td>
-                    <td className="p-3 text-right text-emerald-400 font-extrabold">
-                      {money(doubleEntryJournals.totalCredit)}
+                    <td className="p-3 text-right text-emerald-600 dark:text-emerald-400 font-black text-sm">
+                      {money(
+                        paymentList.reduce((sum, r) => sum + (Number(r.paid) || 0), 0)
+                      )}
                     </td>
+                    <td className="p-3 text-right text-amber-600 dark:text-amber-400 font-black text-sm">
+                      {money(
+                        paymentList.reduce(
+                          (sum, r) => sum + (Number(r.price) || 0) - (Number(r.paid) || 0),
+                          0
+                        )
+                      )}
+                    </td>
+                    <td></td>
                   </tr>
                 </tfoot>
               </table>

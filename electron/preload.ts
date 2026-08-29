@@ -33,6 +33,11 @@ export const electronAPI = {
       decisionInfo?: string;
     }) => ipcRenderer.invoke("db:add-reservation", res),
     deleteReservation: (id: string) => ipcRenderer.invoke("db:delete-reservation", id),
+    getDeletedReservations: () => ipcRenderer.invoke("db:get-deleted-reservations"),
+    restoreReservation: (id: string) => ipcRenderer.invoke("db:restore-reservation", id),
+    permanentDeleteReservation: (id: string) => ipcRenderer.invoke("db:permanent-delete-reservation", id),
+    emptyRecycleBin: () => ipcRenderer.invoke("db:empty-recycle-bin"),
+    cleanupOldTrash: (days?: number) => ipcRenderer.invoke("db:cleanup-old-trash", days),
     updatePaid: (id: string, paid: number) => ipcRenderer.invoke("db:update-paid", { id, paid }),
     updateReservationStatus: (id: string, status: string) => ipcRenderer.invoke("db:update-reservation-status", { id, status }),
     updateReservationDetails: (id: string, details: any) => ipcRenderer.invoke("db:update-reservation-details", { id, details }),
@@ -53,6 +58,7 @@ export const electronAPI = {
   getOpenedFilePath: () => ipcRenderer.invoke("get-opened-file-path"),
   openFileDialog: () => ipcRenderer.invoke("open-file-dialog"),
   saveFileDialog: (data: { defaultName?: string }) => ipcRenderer.invoke("save-file-dialog", data),
+  saveAsDatabase: (data?: { defaultName?: string }) => ipcRenderer.invoke("save-as-database", data || {}),
   switchPath: (filePath?: string) => ipcRenderer.invoke("db:switch-path", filePath),
 
   onFileOpened: (callback: (filePath: string) => void) => {

@@ -36,6 +36,7 @@ import { SettingsScreen } from "@/screens/settings.screen";
 import { CustomersScreen } from "@/screens/customers.screen";
 import { HelpScreen } from "@/screens/help.screen";
 import { generateEmailHTMLTemplate } from "@/lib/email-template";
+import { ExitBackupModal } from "@/components/modals/exit-backup-modal";
 
 export function App(): React.JSX.Element {
   // Theme State
@@ -88,6 +89,7 @@ export function App(): React.JSX.Element {
     recentFiles,
     openFile,
     createFile,
+    saveFileAs,
     fetchRecentFiles,
   } = useWorkspaceStore();
 
@@ -137,28 +139,48 @@ export function App(): React.JSX.Element {
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [customerHistoryOpen, setCustomerHistoryOpen] = useState(false);
   const [customerHistoryName, setCustomerHistoryName] = useState("");
+  const [trashModalOpen, setTrashModalOpen] = useState(false);
+  const [exitModalOpen, setExitModalOpen] = useState(false);
 
   // Kapanırken yedek alınıyor durumu
   const [isClosing, setIsClosing] = useState(false);
 
   /**
-   * Pencere kapatılmadan önce:
-   * 1. Yerel .vke yedeği alınır (son 7 yedek rotasyonu)
-   * 2. SMTP ayarlıysa ve backupEmail doluysa e-posta eki olarak gönderilir
-   * 3. Bittiğinde pencere kapatılır
+   * Kullanıcı çıkış butonuna bastığında onay modalı açılır.
    */
-  const handleAppClose = async () => {
+  const handleAppClose = () => {
+    setExitModalOpen(true);
+  };
+
+  const handleExecuteExit = async (options: {
+    backupLocal: boolean;
+    sendEmail: boolean;
+    backupEmail: string;
+  }) => {
     setIsClosing(true);
     try {
       const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
-      const smtpSettings = smtpRaw ? JSON.parse(smtpRaw) : null;
-      await (window.electronAPI as any)?.quitWithBackup?.(smtpSettings);
+      const smtpSettings = smtpRaw ? JSON.parse(smtpRaw) : {};
+      if (options.backupEmail) {
+        smtpSettings.backupEmail = options.backupEmail;
+      }
+      await (window.electronAPI as any)?.quitWithBackup?.({
+        backupLocal: options.backupLocal,
+        sendEmail: options.sendEmail,
+        backupEmail: options.backupEmail,
+        smtpSettings,
+      });
     } catch {
       // yedek başarısız olsa bile kapat
     } finally {
       setIsClosing(false);
       (window.electronAPI as any)?.closeWindow?.();
     }
+  };
+
+  const handleDirectExit = () => {
+    setExitModalOpen(false);
+    (window.electronAPI as any)?.closeWindow?.();
   };
 
   const handleOpenCustomerHistory = (custName: string) => {
@@ -286,7 +308,9 @@ export function App(): React.JSX.Element {
       subject: `[VARDİYA GÖREV BİLDİRİMİ] ${r.date} - ${v?.name} (${h?.name})`,
       body: `Sayın ${
         staffName || "Tesis Sorumlusu / Görevlisi"
-      },\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Mekan Adresi: ${v?.address || "Belirtilmedi"}\n- Etkinlik Türü: ${
+      },\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Mekan Adresi: ${
+        v?.address || "Belirtilmedi"
+      }\n- Etkinlik Türü: ${
         r.eventType || "Genel"
       }\n- Müşteri Adı: ${r.customer}\n- İletişim Tel: ${r.phone}\n\nLütfen salon iklimlendirme, temizlik ve ses/ışık teknik ekipman kontrollerini zamanında gerçekleştiriniz.\n\nİyi çalışmalar dileriz.`,
       reservationData: {
@@ -717,11 +741,28 @@ export function App(): React.JSX.Element {
       {/* Kapatılıyor overlay'i */}
       {isClosing && (
         <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-sm gap-3">
-          <svg className="animate-spin h-10 w-10 text-blue-400" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+          <svg
+            className="animate-spin h-10 w-10 text-blue-400"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v8H4z"
+            />
           </svg>
-          <p className="text-slate-300 text-sm font-medium">Yedek alınıyor, lütfen bekleyin…</p>
+          <p className="text-slate-300 text-sm font-medium">
+            Yedek alınıyor, lütfen bekleyin…
+          </p>
         </div>
       )}
 
@@ -737,7 +778,15 @@ export function App(): React.JSX.Element {
         institutionName={institutionName}
         institutionSubHeader={institutionSubHeader}
         institutionLogo={institutionLogo}
+        fileName={fileName}
+        currentFilePath={currentFilePath}
+        onOpenFile={() => openFile()}
+        onCreateFile={() => createFile()}
+        onSaveAsFile={saveFileAs}
+        onOpenBackupFolder={() => (window.electronAPI as any)?.openBackupFolder?.()}
+        onShowLauncher={() => setShowLauncherModal(true)}
         onClose={handleAppClose}
+        onOpenTrashModal={() => setTrashModalOpen(true)}
         onOpenNewReservation={() => {
           if (store.venues.length === 0) {
             toast.error("Lütfen önce bir mekan ekleyin.");
@@ -1096,6 +1145,19 @@ export function App(): React.JSX.Element {
         openFile={openFile}
         createFile={createFile}
         fetchRecentFiles={fetchRecentFiles}
+        trashModalOpen={trashModalOpen}
+        setTrashModalOpen={setTrashModalOpen}
+        onReservationRestored={() => sqliteStore.loadFromDb()}
+      />
+
+      <ExitBackupModal
+        open={exitModalOpen}
+        onOpenChange={setExitModalOpen}
+        theme={theme}
+        fileName={fileName}
+        currentFilePath={currentFilePath}
+        onConfirmExit={handleExecuteExit}
+        onDirectExit={handleDirectExit}
       />
     </div>
   );

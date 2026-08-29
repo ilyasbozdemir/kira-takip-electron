@@ -104,6 +104,7 @@ export function initDatabase(dbFilePath?: string): string | null {
       initSchemaDatabase(db);
       runMigrations(db);
       ensureDynamicColumns(db);
+      try { cleanupOldDeletedReservations(30); } catch {}
     }
   } catch {
     db = new Database(targetPath);
@@ -112,6 +113,7 @@ export function initDatabase(dbFilePath?: string): string | null {
     initSchemaDatabase(db);
     runMigrations(db);
     ensureDynamicColumns(db);
+    try { cleanupOldDeletedReservations(30); } catch {}
   }
 
   return targetPath;
@@ -136,6 +138,7 @@ function ensureDynamicColumns(d: Database.Database) {
     { name: "paymentMethod", def: "TEXT DEFAULT 'Nakit'" },
     { name: "note", def: "TEXT DEFAULT ''" },
     { name: "isDeleted", def: "INTEGER DEFAULT 0" },
+    { name: "deletedAt", def: "TEXT DEFAULT ''" },
   ]);
 
   ensureCols("TANIM_Mekan", [
@@ -698,9 +701,101 @@ export function updateReservationDetails(id: string, details: { receiptNo?: stri
 
 export function deleteReservation(id: string): { success: boolean } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare("UPDATE DATA_Rezervasyon SET isDeleted = 1, deletedAt = datetime('now', 'localtime') WHERE id = ?").run(id);
+  saveWorkspaceIfActive();
+  return { success: true };
+}
+
+export function getDeletedReservations(): (Reservation & { deletedAt?: string })[] {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return [];
+  try {
+    const raw = db.prepare(`
+      SELECT 
+        id, 
+        venueId AS venue_id, 
+        hallId AS hall_id, 
+        date, 
+        startTime AS start_time, 
+        endTime AS end_time, 
+        customer, 
+        phone, 
+        eventType AS event_type, 
+        price, 
+        paid, 
+        note, 
+        decisionInfo AS decision_info, 
+        status, 
+        receiptNo AS receipt_no, 
+        paymentMethod AS payment_method,
+        deletedAt AS deleted_at
+      FROM DATA_Rezervasyon 
+      WHERE isDeleted = 1
+      ORDER BY deletedAt DESC, date DESC
+    `).all() as any[];
+
+    return raw.map((r) => ({
+      id: r.id,
+      venueId: r.venue_id,
+      hallId: r.hall_id,
+      date: r.date,
+      start: r.start_time,
+      end: r.end_time,
+      customer: r.customer,
+      phone: r.phone,
+      eventType: r.event_type || "Genel Etkinlik",
+      price: r.price,
+      paid: r.paid,
+      note: r.note || "",
+      decisionInfo: r.decision_info || "",
+      status: r.status || "confirmed",
+      receiptNo: r.receipt_no || "",
+      paymentMethod: r.payment_method || "Nakit",
+      deletedAt: r.deleted_at || "",
+    }));
+  } catch (err) {
+    console.error("Failed to get deleted reservations:", err);
+    return [];
+  }
+}
+
+export function restoreReservation(id: string): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare("UPDATE DATA_Rezervasyon SET isDeleted = 0, deletedAt = '' WHERE id = ?").run(id);
+  saveWorkspaceIfActive();
+  return { success: true };
+}
+
+export function permanentDeleteReservation(id: string): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
   db!.prepare("DELETE FROM DATA_Rezervasyon WHERE id = ?").run(id);
   saveWorkspaceIfActive();
   return { success: true };
+}
+
+export function emptyRecycleBin(): { success: boolean; count: number } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return { success: false, count: 0 };
+  const info = db.prepare("DELETE FROM DATA_Rezervasyon WHERE isDeleted = 1").run();
+  saveWorkspaceIfActive();
+  return { success: true, count: info.changes };
+}
+
+export function cleanupOldDeletedReservations(retentionDays = 30): { purgedCount: number } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return { purgedCount: 0 };
+  try {
+    const info = db.prepare(
+      `DELETE FROM DATA_Rezervasyon WHERE isDeleted = 1 AND deletedAt != '' AND deletedAt < datetime('now', '-' || ? || ' days', 'localtime')`
+    ).run(retentionDays);
+    if (info.changes > 0) {
+      saveWorkspaceIfActive();
+    }
+    return { purgedCount: info.changes };
+  } catch (err) {
+    console.error("Auto-cleanup deleted reservations error:", err);
+    return { purgedCount: 0 };
+  }
 }
 
 export function updatePaid(id: string, paid: number) {

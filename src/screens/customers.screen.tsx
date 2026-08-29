@@ -364,14 +364,14 @@ export function CustomersScreen({
                     </div>
                     <div>
                       <h4
-                        className={`text-sm font-bold truncate max-w-[180px] ${
+                        className={`text-sm font-bold truncate max-w-45 ${
                           theme === "dark" ? "text-slate-100" : "text-slate-900"
                         }`}
                       >
                         {c.name}
                       </h4>
                       {c.company && (
-                        <p className="text-[11px] text-sky-400 font-medium truncate max-w-[180px]">
+                        <p className="text-[11px] text-sky-400 font-medium truncate max-w-45">
                           🏢 {c.company}
                         </p>
                       )}
@@ -386,25 +386,31 @@ export function CustomersScreen({
                 </CardHeader>
 
                 <CardContent className="px-4 pb-4 space-y-2.5 text-xs">
-                  <div className="space-y-1 text-slate-400 pt-1">
+                  <div className="space-y-1.5 pt-1">
                     <div className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                      <span className="font-mono text-slate-200 font-medium">
+                      <Phone className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                      <span className={`font-mono font-bold ${
+                        theme === "dark" ? "text-slate-200" : "text-slate-900"
+                      }`}>
                         {c.phone || "Telefon Belirtilmedi"}
                       </span>
                     </div>
 
                     {c.email && (
                       <div className="flex items-center gap-2">
-                        <Mail className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                        <span className="truncate text-slate-300">{c.email}</span>
+                        <Mail className="h-3.5 w-3.5 text-sky-500 shrink-0" />
+                        <span className={`truncate font-medium ${
+                          theme === "dark" ? "text-slate-300" : "text-slate-700"
+                        }`}>{c.email}</span>
                       </div>
                     )}
 
                     {c.taxNo && (
                       <div className="flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                        <span className="font-mono text-[11px] text-slate-400">
+                        <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className={`font-mono text-[11px] font-semibold ${
+                          theme === "dark" ? "text-slate-400" : "text-slate-600"
+                        }`}>
                           VN/TC: {c.taxNo}
                         </span>
                       </div>
@@ -413,24 +419,26 @@ export function CustomersScreen({
 
                   {c.notes && (
                     <p
-                      className={`text-[11px] p-2 rounded-lg border leading-snug line-clamp-2 ${
+                      className={`text-[11px] p-2 rounded-lg border leading-snug line-clamp-2 font-medium ${
                         theme === "dark"
-                          ? "bg-slate-950/60 border-slate-800 text-slate-400"
-                          : "bg-slate-50 border-slate-200 text-slate-600"
+                          ? "bg-slate-950/60 border-slate-800 text-slate-300"
+                          : "bg-slate-100 border-slate-300 text-slate-800"
                       }`}
                     >
                       💬 {c.notes}
                     </p>
                   )}
 
-                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5">
-                    <div className="flex items-center gap-1">
+                  <div className={`pt-2 border-t flex items-center justify-between gap-1.5 ${
+                    theme === "dark" ? "border-slate-800/80" : "border-slate-200"
+                  }`}>
+                    <div className="flex items-center gap-1.5">
                       {c.phone && (
                         <a
                           href={`https://wa.me/${c.phone.replace(/\D/g, "")}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold hover:bg-emerald-500/20 transition-colors"
+                          className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white dark:bg-emerald-500/10 dark:border dark:border-emerald-500/30 dark:text-emerald-400 text-[10px] font-bold transition-colors shadow-2xs"
                         >
                           WhatsApp
                         </a>
@@ -439,7 +447,7 @@ export function CustomersScreen({
                         <button
                           type="button"
                           onClick={() => onOpenMailModal(c.email)}
-                          className="px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-bold hover:bg-indigo-500/20 transition-colors"
+                          className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white dark:bg-indigo-500/10 dark:border dark:border-indigo-500/30 dark:text-indigo-400 text-[10px] font-bold transition-colors shadow-2xs"
                         >
                           Mail At
                         </button>

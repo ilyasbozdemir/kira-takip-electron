@@ -29,22 +29,74 @@ export function useWorkspaceStore() {
     }
   }, []);
 
+  const addRecentFile = useCallback((fPath: string, fName?: string) => {
+    try {
+      const saved = localStorage.getItem("recent_vke_files");
+      const list: RecentFileItem[] = saved ? JSON.parse(saved) : [];
+      const name = fName || fPath.split(/[\\/]/).pop() || "Veritabanı (.vke)";
+      const now = new Date().toLocaleDateString("tr-TR") + " " + new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+
+      const filtered = list.filter((x) => x.path !== fPath);
+      const updated = [{ id: fPath, name, path: fPath, lastOpened: now }, ...filtered].slice(0, 10);
+      localStorage.setItem("recent_vke_files", JSON.stringify(updated));
+      setRecentFiles(updated);
+    } catch {}
+  }, []);
+
   useEffect(() => {
     fetchRecentFiles();
-  }, [fetchRecentFiles]);
+
+    // Check opened file path on mount
+    if (window.electronAPI?.getOpenedFilePath) {
+      window.electronAPI.getOpenedFilePath().then((p: string | null) => {
+        if (p) {
+          setCurrentFilePath(p);
+          const name = p.split(/[\\/]/).pop() || "Veritabanı (.vke)";
+          setFileName(name);
+          addRecentFile(p, name);
+        }
+      });
+    }
+  }, [fetchRecentFiles, addRecentFile]);
 
   const openFile = async (filePath?: string) => {
     try {
-      if (window.electronAPI?.switchPath) {
-        const res = await window.electronAPI.switchPath(filePath);
-        if (res && res.success) {
-          setCurrentFilePath(res.filePath || filePath || null);
-          setFileName(res.fileName || "Veritabanı (.vke)");
-          setActiveDosyaId(res.filePath || "default");
-          localStorage.setItem("active_dosya_id", res.filePath || "default");
-          await sqliteStore.loadFromDb();
-          toast.success("Veritabanı dosyası başarıyla açıldı.");
+      let targetPath: string | null = null;
+      let targetName: string | undefined = undefined;
+
+      if (filePath) {
+        // Direct switch to specific path (e.g. from recent list)
+        if (window.electronAPI?.switchPath) {
+          const res = await window.electronAPI.switchPath(filePath);
+          if (res && res.success) {
+            targetPath = res.path || filePath;
+            targetName = (targetPath ? targetPath.split(/[\\/]/).pop() : undefined) || "Veritabanı (.vke)";
+          } else {
+            toast.error(res?.error || "Dosya açılamadı.");
+            return;
+          }
         }
+      } else {
+        // Open native file dialog to browse and select
+        if (window.electronAPI?.openFileDialog) {
+          const res = await window.electronAPI.openFileDialog();
+          if (!res || !res.filePath) {
+            return; // User canceled dialog
+          }
+          targetPath = res.filePath;
+          targetName = res.filePath.split(/[\\/]/).pop() || "Veritabanı (.vke)";
+        }
+      }
+
+      if (targetPath) {
+        setCurrentFilePath(targetPath);
+        setFileName(targetName || "Veritabanı (.vke)");
+        setActiveDosyaId(targetPath);
+        localStorage.setItem("active_dosya_id", targetPath);
+        addRecentFile(targetPath, targetName);
+        await sqliteStore.loadFromDb();
+        setIsStartingFile(false);
+        toast.success(`"${targetName}" veritabanı başarıyla açıldı.`);
       }
     } catch (err: any) {
       toast.error(`Dosya açma hatası: ${err.message || err}`);
@@ -53,15 +105,25 @@ export function useWorkspaceStore() {
 
   const createFile = async (newFileName?: string) => {
     try {
-      if (window.electronAPI?.switchPath) {
-        const res = await window.electronAPI.switchPath();
-        if (res && res.success) {
-          setCurrentFilePath(res.filePath || null);
-          setFileName(res.fileName || newFileName || "Yeni Veritabanı (.vke)");
-          setActiveDosyaId(res.filePath || "new");
-          localStorage.setItem("active_dosya_id", res.filePath || "new");
+      if (window.electronAPI?.saveFileDialog) {
+        const res = await window.electronAPI.saveFileDialog({
+          defaultName: newFileName || "yeni-isletme-veritabani.vke",
+        });
+        if (!res) {
+          return; // User canceled save dialog
+        }
+
+        const createdPath = typeof res === "string" ? res : res.filePath;
+        if (createdPath) {
+          const createdName = createdPath.split(/[\\/]/).pop() || "Yeni Veritabanı (.vke)";
+          setCurrentFilePath(createdPath);
+          setFileName(createdName);
+          setActiveDosyaId(createdPath);
+          localStorage.setItem("active_dosya_id", createdPath);
+          addRecentFile(createdPath, createdName);
           await sqliteStore.loadFromDb();
-          toast.success("Yeni veritabanı dosyası oluşturuldu.");
+          setIsStartingFile(false);
+          toast.success(`"${createdName}" başarıyla oluşturuldu ve bağlandı.`);
         }
       }
     } catch (err: any) {
@@ -70,7 +132,30 @@ export function useWorkspaceStore() {
   };
 
   const saveFileAs = async () => {
-    toast.info("Veritabanı otomatik olarak anlık SQLite senkronizasyonundadır.");
+    try {
+      if (window.electronAPI?.saveAsDatabase) {
+        const res = await window.electronAPI.saveAsDatabase({
+          defaultName: currentFilePath ? `Yedek_${fileName}` : "isletme-yedek.vke",
+        });
+        if (!res || !res.filePath) {
+          return; // User canceled
+        }
+
+        const newPath = res.filePath;
+        const newName = res.fileName || newPath.split(/[\\/]/).pop() || "Veritabanı (.vke)";
+        setCurrentFilePath(newPath);
+        setFileName(newName);
+        setActiveDosyaId(newPath);
+        localStorage.setItem("active_dosya_id", newPath);
+        addRecentFile(newPath, newName);
+        await sqliteStore.loadFromDb();
+        toast.success(`Veritabanı farklı kaydedildi: ${newName}`);
+      } else {
+        toast.info("Veritabanı anlık SQLite senkronizasyonundadır.");
+      }
+    } catch (err: any) {
+      toast.error(`Farklı kaydetme hatası: ${err?.message || err}`);
+    }
   };
 
   const closeFile = () => {
