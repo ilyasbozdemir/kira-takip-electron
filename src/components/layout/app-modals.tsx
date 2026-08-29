@@ -10,6 +10,7 @@ import { DeleteConfirmModal } from "@/components/modals/delete-confirm-modal";
 import { OfficialPrintModal } from "@/components/official-print-modal";
 import { ReservationDrawer } from "@/components/modals/reservation-drawer";
 import { LauncherModal } from "@/components/launcher-modal";
+import { CustomerHistoryModal } from "@/components/modals/customer-history-modal";
 import { timeSlots } from "@/lib/rental-store";
 
 interface AppModalsProps {
@@ -115,7 +116,13 @@ interface AppModalsProps {
   // Mail Modal Props
   mailModalOpen: boolean;
   setMailModalOpen: (open: boolean) => void;
-  mailPreset: { recipient: string; subject: string; body: string; reservationData?: any };
+  mailPreset: {
+    recipient: string;
+    recipientType?: "customer" | "staff";
+    subject: string;
+    body: string;
+    reservationData?: any;
+  };
 
   // Copy Settings Modal Props
   copyModalOpen: boolean;
@@ -140,19 +147,37 @@ interface AppModalsProps {
 
   // Reservation Drawer Props
   selectedReservation: Reservation | null;
-  setSelectedReservation: React.Dispatch<React.SetStateAction<Reservation | null>>;
+  setSelectedReservation: React.Dispatch<
+    React.SetStateAction<Reservation | null>
+  >;
   editReceiptNo: string;
   setEditReceiptNo: (v: string) => void;
   editPaymentMethod: string;
   setEditPaymentMethod: (v: string) => void;
   editPaidAmount: number | "";
   setEditPaidAmount: (v: number | "") => void;
-  updateReservationStatus: (id: string, status: "confirmed" | "option") => Promise<void>;
-  updateReservationDetails: (id: string, details: Partial<Reservation>) => Promise<void>;
+  updateReservationStatus: (
+    id: string,
+    status: "confirmed" | "option",
+  ) => Promise<void>;
+  updateReservationDetails: (
+    id: string,
+    details: Partial<Reservation>,
+  ) => Promise<void>;
   handleCopySMS: (r: Reservation) => void;
   handleQuickMail: (r: Reservation) => void;
-  promptDelete: (type: "venue" | "hall" | "reservation", id: string, title: string, venueId?: string) => void;
+  promptDelete: (
+    type: "venue" | "hall" | "reservation",
+    id: string,
+    title: string,
+    venueId?: string,
+  ) => void;
   onNavigateToCustomer?: (customerName: string) => void;
+
+  // Customer History Modal Props
+  customerHistoryOpen: boolean;
+  setCustomerHistoryOpen: (open: boolean) => void;
+  customerHistoryName?: string;
 
   // Launcher Modal Props
   showLauncherModal: boolean;
@@ -288,6 +313,9 @@ export function AppModals({
   handleQuickMail,
   promptDelete,
   onNavigateToCustomer,
+  customerHistoryOpen,
+  setCustomerHistoryOpen,
+  customerHistoryName,
   showLauncherModal,
   setShowLauncherModal,
   currentFilePath,
@@ -414,27 +442,42 @@ export function AppModals({
         defaultSubject={mailPreset.subject}
         defaultBody={mailPreset.body}
         theme={theme}
-        reservationData={
-          mailPreset.reservationData ||
+        reservationData={mailPreset.reservationData ||
           (selectedReservation
             ? {
-                id: selectedReservation.id,
-                customer: selectedReservation.customer,
-                phone: selectedReservation.phone,
-                date: selectedReservation.date,
-                start: selectedReservation.start,
-                end: selectedReservation.end,
-                eventType: selectedReservation.eventType,
-                venueName: store.venues.find((x) => x.id === selectedReservation.venueId)?.name || "Tesis",
-                hallName: store.venues.flatMap((x) => x.halls).find((x) => x.id === selectedReservation.hallId)?.name || "Salon",
-              }
-            : undefined)
-        }
+              id: selectedReservation.id,
+              customer: selectedReservation.customer,
+              phone: selectedReservation.phone,
+              date: selectedReservation.date,
+              start: selectedReservation.start,
+              end: selectedReservation.end,
+              eventType: selectedReservation.eventType,
+              venueName:
+                store.venues.find((x) => x.id === selectedReservation.venueId)
+                  ?.name || "Tesis",
+              hallName:
+                store.venues.flatMap((x) => x.halls).find((x) =>
+                  x.id === selectedReservation.hallId
+                )?.name || "Salon",
+            }
+            : undefined)}
         onMailSentSuccess={(resId, recipient) => {
-          const sentTime = `${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+          const sentTime = `${new Date().toLocaleDateString("tr-TR")} ${
+            new Date().toLocaleTimeString("tr-TR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          }`;
+          const isStaff = mailPreset.recipientType === "staff";
           updateReservationDetails(resId, {
             mailSentAt: sentTime,
             mailSentTo: recipient,
+            ...(isStaff
+              ? { staffMailSentAt: sentTime, staffMailSentTo: recipient }
+              : {
+                customerMailSentAt: sentTime,
+                customerMailSentTo: recipient,
+              }),
           });
         }}
       />
@@ -458,7 +501,7 @@ export function AppModals({
         onOpenChange={setPrintModalOpen}
         reservation={selectedPrintReservation}
         venue={store.venues.find(
-          (v) => v.id === selectedPrintReservation?.venueId
+          (v) => v.id === selectedPrintReservation?.venueId,
         )}
         hall={hallById(selectedPrintReservation?.hallId || "")}
         institutionName={institutionName}
@@ -509,6 +552,21 @@ export function AppModals({
           theme={theme}
         />
       )}
+
+      <CustomerHistoryModal
+        open={customerHistoryOpen}
+        onOpenChange={setCustomerHistoryOpen}
+        customerName={customerHistoryName}
+        theme={theme}
+        store={store}
+        hallById={hallById}
+        onQuickMail={handleQuickMail}
+        onCopySMS={handleCopySMS}
+        onPrintDoc={(r) => {
+          setSelectedPrintReservation(r);
+          setPrintModalOpen(true);
+        }}
+      />
     </>
   );
 }

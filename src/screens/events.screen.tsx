@@ -66,19 +66,34 @@ export function EventsScreen({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
+  // Mail Status Filter State
+  const [mailStatusFilter, setMailStatusFilter] = useState<
+    "all" | "customer_sent" | "customer_unsent" | "staff_sent" | "staff_unsent"
+  >("all");
+
   // Reset to page 1 when filter changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [eventTypeFilter, filteredReservations.length]);
+  }, [eventTypeFilter, mailStatusFilter, filteredReservations.length]);
 
-  const totalItems = filteredReservations.length;
+  const filteredByMailStatus = useMemo(() => {
+    return filteredReservations.filter((r) => {
+      if (mailStatusFilter === "customer_sent") return Boolean(r.customerMailSentAt || r.mailSentAt);
+      if (mailStatusFilter === "customer_unsent") return !(r.customerMailSentAt || r.mailSentAt);
+      if (mailStatusFilter === "staff_sent") return Boolean(r.staffMailSentAt);
+      if (mailStatusFilter === "staff_unsent") return !r.staffMailSentAt;
+      return true;
+    });
+  }, [filteredReservations, mailStatusFilter]);
+
+  const totalItems = filteredByMailStatus.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const safePage = Math.min(currentPage, totalPages);
 
   const paginatedReservations = useMemo(() => {
     const start = (safePage - 1) * pageSize;
-    return filteredReservations.slice(start, start + pageSize);
-  }, [filteredReservations, safePage, pageSize]);
+    return filteredByMailStatus.slice(start, start + pageSize);
+  }, [filteredByMailStatus, safePage, pageSize]);
 
   return (
     <Card
@@ -104,7 +119,7 @@ export function EventsScreen({
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Filtreleme, arama ve sayfalama ile tüm etkinlik kayıtları.
+            Filtreleme, arama, e-posta durumu ve sayfalama ile tüm etkinlik kayıtları.
           </CardDescription>
         </div>
 
@@ -140,6 +155,33 @@ export function EventsScreen({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Mail Status Filter */}
+          <Select
+            value={mailStatusFilter}
+            onValueChange={(val) => setMailStatusFilter(val as any)}
+          >
+            <SelectTrigger
+              className={`w-[185px] text-xs h-8 ${
+                theme === "dark"
+                  ? "bg-slate-950 border-slate-800 text-slate-200"
+                  : "bg-slate-50 border-slate-300 text-slate-900"
+              }`}
+            >
+              <SelectValue placeholder="Mail Gönderim Durumu" />
+            </SelectTrigger>
+            <SelectContent
+              className={theme === "dark"
+                ? "bg-slate-900 border-slate-800 text-slate-200"
+                : "bg-white border-slate-200 text-slate-900"}
+            >
+              <SelectItem value="all">✉️ Tüm Mail Durumları</SelectItem>
+              <SelectItem value="customer_sent">👤 Müşteriye Mail Gönderilenler</SelectItem>
+              <SelectItem value="customer_unsent">👤 Müşteriye Mail Bekleyenler</SelectItem>
+              <SelectItem value="staff_sent">👷 Görevliye Mail Gönderilenler</SelectItem>
+              <SelectItem value="staff_unsent">👷 Görevliye Mail Bekleyenler</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Event Type Filter */}
           <Select
@@ -234,13 +276,21 @@ export function EventsScreen({
                           </Badge>
                         )}
                       </div>
-                      {r.mailSentAt && (
+                      {r.mailSentAt ? (
                         <Badge
                           variant="outline"
                           className="bg-sky-500/10 border-sky-500/40 text-sky-400 text-[9px] font-semibold flex items-center gap-1 w-fit"
                           title={`Alıcı: ${r.mailSentTo || "Alıcı"} | Zaman: ${r.mailSentAt}`}
                         >
                           ✉️ Mail Gönderildi
+                        </Badge>
+                      ) : (
+                        <Badge
+                          variant="outline"
+                          className="bg-amber-500/10 border-amber-500/30 text-amber-400 text-[9px] flex items-center gap-1 w-fit"
+                          title="Bu kiralama kaydı için henüz e-posta bildirimi gönderilmedi."
+                        >
+                          ⚠️ Mail Bekliyor
                         </Badge>
                       )}
                     </td>
@@ -283,6 +333,11 @@ export function EventsScreen({
                       <span className="text-indigo-500 block font-semibold text-[11px]">
                         🏛️ {h?.name || "Salon"}
                       </span>
+                      {v?.managerName && (
+                        <span className="text-[10px] text-slate-400 block mt-0.5" title={`İletişim: ${v.managerPhone || "-"}`}>
+                          👷 Görevli: {v.managerName}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3.5">
                       <Badge

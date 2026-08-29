@@ -133,6 +133,13 @@ export function App(): React.JSX.Element {
   const [mailModalOpen, setMailModalOpen] = useState(false);
   const [copyModalOpen, setCopyModalOpen] = useState(false);
   const [printModalOpen, setPrintModalOpen] = useState(false);
+  const [customerHistoryOpen, setCustomerHistoryOpen] = useState(false);
+  const [customerHistoryName, setCustomerHistoryName] = useState("");
+
+  const handleOpenCustomerHistory = (custName: string) => {
+    setCustomerHistoryName(custName);
+    setCustomerHistoryOpen(true);
+  };
 
   // Selected Reservation & Delete Targets
   const [selectedReservation, setSelectedReservation] = useState<
@@ -167,16 +174,25 @@ export function App(): React.JSX.Element {
   // Mail Preset State
   const [mailPreset, setMailPreset] = useState<{
     recipient: string;
+    recipientType?: "customer" | "staff";
     subject: string;
     body: string;
     reservationData?: any;
   }>({
     recipient: "",
+    recipientType: "customer",
     subject: "",
     body: "",
   });
 
   const handleQuickMail = (r: Reservation) => {
+    if (r.customerMailSentAt || r.mailSentAt) {
+      const prevTime = r.customerMailSentAt || r.mailSentAt;
+      const proceed = window.confirm(
+        `⚠️ DİKKAT: Bu müşteriye/vatandaşa daha önce (${prevTime}) e-posta gönderilmiştir.\n\nYeniden e-posta göndermek istediğinizden emin misiniz?`,
+      );
+      if (!proceed) return;
+    }
     const v = store.venues.find((x) => x.id === r.venueId);
     const h = store.venues.flatMap((x) => x.halls).find((x) =>
       x.id === r.hallId
@@ -200,6 +216,7 @@ export function App(): React.JSX.Element {
 
     setMailPreset({
       recipient: "",
+      recipientType: "customer",
       subject,
       body: htmlBody,
       reservationData: {
@@ -217,13 +234,30 @@ export function App(): React.JSX.Element {
     setMailModalOpen(true);
   };
 
-  const handleQuickStaffMail = (r: Reservation, staffEmail?: string, staffName?: string) => {
+  const handleQuickStaffMail = (
+    r: Reservation,
+    staffEmail?: string,
+    staffName?: string,
+  ) => {
+    if (r.staffMailSentAt) {
+      const proceed = window.confirm(
+        `⚠️ DİKKAT: Bu mekan görevlisine daha önce (${r.staffMailSentAt}) görev bildirimi gönderilmiştir.\n\nYeniden e-posta göndermek istediğinizden emin misiniz?`,
+      );
+      if (!proceed) return;
+    }
     const v = store.venues.find((x) => x.id === r.venueId);
-    const h = store.venues.flatMap((x) => x.halls).find((x) => x.id === r.hallId);
+    const h = store.venues.flatMap((x) => x.halls).find((x) =>
+      x.id === r.hallId
+    );
     setMailPreset({
       recipient: staffEmail || "gorevli@tesis.bel.tr",
+      recipientType: "staff",
       subject: `[VARDİYA GÖREV BİLDİRİMİ] ${r.date} - ${v?.name} (${h?.name})`,
-      body: `Sayın ${staffName || "Tesis Sorumlusu / Görevlisi"},\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Etkinlik Türü: ${r.eventType || "Genel"}\n- Müşteri Adı: ${r.customer}\n- İletişim Tel: ${r.phone}\n\nLütfen salon iklimlendirme, temizlik ve ses/ışık teknik ekipman kontrollerini zamanında gerçekleştiriniz.\n\nİyi çalışmalar dileriz.`,
+      body: `Sayın ${
+        staffName || "Tesis Sorumlusu / Görevlisi"
+      },\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Etkinlik Türü: ${
+        r.eventType || "Genel"
+      }\n- Müşteri Adı: ${r.customer}\n- İletişim Tel: ${r.phone}\n\nLütfen salon iklimlendirme, temizlik ve ses/ışık teknik ekipman kontrollerini zamanında gerçekleştiriniz.\n\nİyi çalışmalar dileriz.`,
       reservationData: {
         id: r.id,
         customer: r.customer,
@@ -320,7 +354,9 @@ export function App(): React.JSX.Element {
     setInstitutionWebsite(draftInstitutionWebsite);
     setInstitutionKepAddress(draftInstitutionKepAddress);
     setInstitutionAddress(draftInstitutionAddress);
-    toast.success("Kurumsal kimlik, logo, iletişim ve KEP bilgileri kaydedildi.");
+    toast.success(
+      "Kurumsal kimlik, logo, iletişim ve KEP bilgileri kaydedildi.",
+    );
   };
 
   const handleCancelInstitutionSettings = () => {
@@ -765,6 +801,16 @@ export function App(): React.JSX.Element {
                 hallById={hallById}
                 onPromptDelete={(type, id, title) =>
                   promptDelete(type, id, title)}
+                onPrintOfficialDoc={(r) => {
+                  setSelectedPrintReservation(r);
+                  setPrintModalOpen(true);
+                }}
+                onQuickMail={handleQuickMail}
+                onQuickStaffMail={handleQuickStaffMail}
+                onNavigateToCustomer={(custName) => {
+                  setSearchTerm(custName);
+                  setActiveSection("customers");
+                }}
               />
             )}
 
@@ -808,7 +854,11 @@ export function App(): React.JSX.Element {
             )}
 
             {activeSection === "reports" && (
-              <ReportsScreen theme={theme} monthStats={monthStats} store={store} />
+              <ReportsScreen
+                theme={theme}
+                monthStats={monthStats}
+                store={store}
+              />
             )}
 
             {activeSection === "settings" && (
@@ -979,6 +1029,10 @@ export function App(): React.JSX.Element {
         handleCopySMS={handleCopySMS}
         handleQuickMail={handleQuickMail}
         promptDelete={promptDelete}
+        onNavigateToCustomer={handleOpenCustomerHistory}
+        customerHistoryOpen={customerHistoryOpen}
+        setCustomerHistoryOpen={setCustomerHistoryOpen}
+        customerHistoryName={customerHistoryName}
         showLauncherModal={showLauncherModal}
         setShowLauncherModal={setShowLauncherModal}
         currentFilePath={currentFilePath || ""}

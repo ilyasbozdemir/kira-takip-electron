@@ -2,6 +2,7 @@ appId: com.isletmetakip.app
 productName: İşletmeTakipAppPro
 directories:
   output: release/${version}
+npmRebuild: false
 files:
   - dist/**/*
   - dist-electron/**/*

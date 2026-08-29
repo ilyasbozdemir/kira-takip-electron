@@ -53,6 +53,10 @@ export type Reservation = {
   paymentMethod?: string;
   mailSentAt?: string;
   mailSentTo?: string;
+  customerMailSentAt?: string;
+  customerMailSentTo?: string;
+  staffMailSentAt?: string;
+  staffMailSentTo?: string;
 };
 
 export type Customer = {
