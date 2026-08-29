@@ -115,7 +115,7 @@ interface AppModalsProps {
   // Mail Modal Props
   mailModalOpen: boolean;
   setMailModalOpen: (open: boolean) => void;
-  mailPreset: { recipient: string; subject: string; body: string };
+  mailPreset: { recipient: string; subject: string; body: string; reservationData?: any };
 
   // Copy Settings Modal Props
   copyModalOpen: boolean;
@@ -413,7 +413,8 @@ export function AppModals({
         defaultBody={mailPreset.body}
         theme={theme}
         reservationData={
-          selectedReservation
+          mailPreset.reservationData ||
+          (selectedReservation
             ? {
                 id: selectedReservation.id,
                 customer: selectedReservation.customer,
@@ -422,8 +423,10 @@ export function AppModals({
                 start: selectedReservation.start,
                 end: selectedReservation.end,
                 eventType: selectedReservation.eventType,
+                venueName: store.venues.find((x) => x.id === selectedReservation.venueId)?.name || "Tesis",
+                hallName: store.venues.flatMap((x) => x.halls).find((x) => x.id === selectedReservation.hallId)?.name || "Salon",
               }
-            : undefined
+            : undefined)
         }
       />
 

@@ -378,6 +378,28 @@ export function MailDialog({
               )}
             </div>
 
+            {/* Attached .ICS Preview Banner */}
+            {attachIcs && (
+              <div className="p-3 rounded-xl border border-emerald-500/30 bg-gradient-to-r from-emerald-950/50 via-slate-900 to-slate-900 flex items-center justify-between text-xs shadow-sm">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-sm shrink-0">
+                    📅
+                  </div>
+                  <div>
+                    <span className="font-bold text-emerald-400 block text-[11px]">
+                      Otomatik Eklenen Takvim Dosyası: <code className="text-slate-200">etkinlik-takvim-daveti.ics</code>
+                    </span>
+                    <span className="text-[10px] text-slate-300 font-medium">
+                      👤 {reservationData?.customer || DEFAULT_SAMPLE_RESERVATION.customer} • 📅 {reservationData?.date || DEFAULT_SAMPLE_RESERVATION.date} ({reservationData?.start || DEFAULT_SAMPLE_RESERVATION.start}-{reservationData?.end || DEFAULT_SAMPLE_RESERVATION.end})
+                    </span>
+                  </div>
+                </div>
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[9.5px] font-bold shrink-0">
+                  ✓ Eklendi
+                </Badge>
+              </div>
+            )}
+
             {/* .ICS Attachment Option Checkbox */}
             <div className="flex items-start space-x-2.5 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10">
               <Checkbox

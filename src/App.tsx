@@ -151,7 +151,12 @@ export function App(): React.JSX.Element {
   }, [selectedReservation]);
 
   // Mail Preset State
-  const [mailPreset, setMailPreset] = useState({
+  const [mailPreset, setMailPreset] = useState<{
+    recipient: string;
+    subject: string;
+    body: string;
+    reservationData?: any;
+  }>({
     recipient: "",
     subject: "",
     body: "",
@@ -176,7 +181,22 @@ export function App(): React.JSX.Element {
       institutionLogo,
     });
 
-    setMailPreset({ recipient: "", subject, body: htmlBody });
+    setMailPreset({
+      recipient: "",
+      subject,
+      body: htmlBody,
+      reservationData: {
+        id: r.id,
+        customer: r.customer,
+        phone: r.phone,
+        date: r.date,
+        start: r.start,
+        end: r.end,
+        venueName: v?.name || "Tesis",
+        hallName: h?.name || "Salon",
+        eventType: r.eventType || "Genel",
+      },
+    });
     setMailModalOpen(true);
   };
 
