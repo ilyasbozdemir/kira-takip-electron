@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Mail, Send, CheckCircle2, AlertCircle, Loader2, Calendar, Download, Copy, Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -109,6 +110,7 @@ export function MailDialog({
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState(defaultBody);
   const [activeTab, setActiveTab] = useState<"send" | "ics">("send");
+  const [attachIcs, setAttachIcs] = useState(true);
   const [sending, setSending] = useState(false);
   const [copiedIcs, setCopiedIcs] = useState(false);
   const [previewMode, setPreviewMode] = useState<"visual" | "code">("visual");
@@ -180,6 +182,17 @@ export function MailDialog({
     setSending(true);
 
     try {
+      const icsContent = generateSingleReservationICS(reservationData);
+      const attachments = attachIcs
+        ? [
+            {
+              filename: `etkinlik-takvim-daveti-${reservationData?.id || "tahsisi"}.ics`,
+              content: icsContent,
+              contentType: "text/calendar; charset=utf-8; method=REQUEST",
+            },
+          ]
+        : undefined;
+
       if (window.electronAPI?.sendEmail) {
         const res = await window.electronAPI.sendEmail({
           smtpConfig: {
@@ -195,11 +208,16 @@ export function MailDialog({
             subject,
             text: body,
             html: body.includes("<html") ? body : body.replace(/\n/g, "<br>"),
+            attachments,
           },
         });
 
         if (res.success) {
-          toast.success("E-posta başarıyla alıcıya gönderildi!");
+          toast.success(
+            attachIcs
+              ? "E-posta ve .ics takvim daveti başarıyla alıcıya gönderildi!"
+              : "Düz e-posta başarıyla alıcıya gönderildi!"
+          );
           onOpenChange(false);
         } else {
           toast.error(`Mail Hatası: ${res.error}`);
@@ -359,6 +377,27 @@ export function MailDialog({
                 />
               )}
             </div>
+
+            {/* .ICS Attachment Option Checkbox */}
+            <div className="flex items-start space-x-2.5 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10">
+              <Checkbox
+                id="attach-ics-toggle"
+                checked={attachIcs}
+                onCheckedChange={(c) => setAttachIcs(!!c)}
+                className="mt-0.5 border-emerald-500/50 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+              />
+              <div className="grid gap-0.5 leading-none">
+                <Label
+                  htmlFor="attach-ics-toggle"
+                  className="text-xs font-bold text-emerald-400 cursor-pointer flex items-center gap-1.5"
+                >
+                  <Calendar className="h-3.5 w-3.5" /> .ics Takvim Daveti Dosyasını E-postaya Ekle (Attachment)
+                </Label>
+                <p className="text-[11px] text-slate-400 leading-snug">
+                  İşaretlendiğinde alıcının Gmail veya Outlook posta kutusunda tıklanabilir <b>"Takvime Ekle"</b> düğmesi otomatik çıkar.
+                </p>
+              </div>
+            </div>
           </div>
         ) : (
           /* TAB 2: .ics TAKVİM TESTİ */
@@ -477,15 +516,27 @@ export function MailDialog({
             <Button
               onClick={handleSendEmail}
               disabled={sending}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium gap-2"
+              className={`font-bold gap-2 ${
+                attachIcs
+                  ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs"
+              }`}
             >
-              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {sending ? "Gönderiliyor..." : "E-posta Gönder"}
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              {sending
+                ? "Gönderiliyor..."
+                : attachIcs
+                ? "✈️ .ics Takvim Daveti İle Gönder"
+                : "✉️ Düz E-posta Gönder"}
             </Button>
           ) : (
             <Button
               onClick={handleDownloadICS}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium gap-1.5"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold gap-1.5"
             >
               <Download className="h-4 w-4" /> .ics Dosyasını İndir
             </Button>
