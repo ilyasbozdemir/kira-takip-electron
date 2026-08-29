@@ -66,12 +66,6 @@ export function AppHeader({
           <div>
             <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5 max-w-[340px]">
               <span className="truncate">{institutionName || "İşletme & Tesis Takip Sistemi"}</span>
-              <Badge
-                variant="outline"
-                className="text-[9px] px-1.5 py-0 border-indigo-500/40 text-indigo-400 font-mono shrink-0"
-              >
-                v{appVersion}
-              </Badge>
             </h1>
             <p
               className={`text-[10px] truncate max-w-[400px] ${

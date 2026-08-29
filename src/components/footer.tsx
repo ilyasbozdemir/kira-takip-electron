@@ -111,7 +111,9 @@ export function Footer(
 
       {/* Right Controls */}
       <div className="flex items-center space-x-2 relative" ref={aboutRef}>
-        <span className="font-mono text-[11px] opacity-80">v{appVersion}</span>
+        <span className="font-mono text-[10px] px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-bold">
+          v{appVersion}
+        </span>
 
         <button
           type="button"
