@@ -8,6 +8,8 @@ import {
   type Store,
 } from "@/lib/rental-store";
 import { sqliteStore } from "@/lib/db-client";
+import { generateEmailHTMLTemplate } from "@/lib/email-template";
+import { generateSingleICS } from "@/lib/ics-helper";
 
 export function useReservationForm(store: Store, defaultTariffBasis: string, selectedDay: string) {
   const [resVenueId, setResVenueId] = useState("");
@@ -128,6 +130,85 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
         decisionInfo: resDecisionInfo.trim() || undefined,
         note: formattedNote || undefined,
       });
+
+      // AUTO EMAIL & CALENDAR .ICS DISPATCH CHECK
+      try {
+        const autoSettingsRaw = localStorage.getItem("venue-keeper-auto-email-settings");
+        const smtpSettingsRaw = localStorage.getItem("venue-keeper-smtp-settings");
+        const autoSettings = autoSettingsRaw ? JSON.parse(autoSettingsRaw) : { mode: "instant", attachIcs: true, target: "both" };
+        const smtpSettings = smtpSettingsRaw ? JSON.parse(smtpSettingsRaw) : null;
+
+        if (autoSettings.mode === "instant" && smtpSettings && smtpSettings.user && smtpSettings.pass) {
+          const venue = store.venues.find((v) => v.id === resVenueId);
+          const hall = venue?.halls?.find((h) => h.id === resHallId);
+          const venueName = venue?.name || "Tesis";
+          const hallName = hall?.name || "Salon";
+
+          const emailHtml = generateEmailHTMLTemplate({
+            customer: resCustomer,
+            venueName,
+            hallName,
+            date: selectedDay,
+            start: resStart,
+            end: resEnd,
+            eventType: resEventType,
+            price: Number(resPrice) || 0,
+            paid: Number(resPaid) || 0,
+            phone: resPhone,
+          });
+
+          const icsContent = autoSettings.attachIcs !== false
+            ? generateSingleICS({
+                customer: resCustomer,
+                venueName,
+                hallName,
+                date: selectedDay,
+                start: resStart,
+                end: resEnd,
+                eventType: resEventType,
+                phone: resPhone,
+              })
+            : undefined;
+
+          // Determine recipients
+          let recipientEmail = resCustomer.includes("@") ? resCustomer : (smtpSettings.backupEmail || smtpSettings.user);
+          if (autoSettings.target === "backup" && smtpSettings.backupEmail) {
+            recipientEmail = smtpSettings.backupEmail;
+          }
+
+          const attachments = icsContent
+            ? [
+                {
+                  filename: "etkinlik-takvim-daveti.ics",
+                  content: icsContent,
+                  contentType: "text/calendar; charset=utf-8; method=REQUEST",
+                },
+              ]
+            : undefined;
+
+          if (window.electronAPI?.sendEmail) {
+            await window.electronAPI.sendEmail({
+              smtpConfig: {
+                host: smtpSettings.host || "smtp.gmail.com",
+                port: Number(smtpSettings.port) || 587,
+                secure: smtpSettings.secure ?? false,
+                user: smtpSettings.user || "",
+                pass: smtpSettings.pass || "",
+                senderName: smtpSettings.senderName || "Mekan & Tesis Yönetimi",
+              },
+              mailData: {
+                to: recipientEmail,
+                subject: `⚡ Rezervasyon Onayı & Takvim Davetiyesi: ${resCustomer} (${selectedDay})`,
+                html: emailHtml,
+                attachments,
+              },
+            });
+            toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi müşteriye gönderildi!");
+          }
+        }
+      } catch (e) {
+        console.error("Otomatik e-posta gönderim hatası:", e);
+      }
 
       setResCustomer("");
       setResPhone("");
