@@ -106,6 +106,8 @@ interface SettingsScreenProps {
   setGdriveToken: (v: string) => void;
   gdriveFolderId: string;
   setGdriveFolderId: (v: string) => void;
+  draftAppName?: string;
+  setDraftAppName?: (v: string) => void;
   draftInstitutionName: string;
   setDraftInstitutionName: (v: string) => void;
   draftInstitutionSubHeader: string;
@@ -137,6 +139,8 @@ export function SettingsScreen({
   setGdriveToken,
   gdriveFolderId,
   setGdriveFolderId,
+  draftAppName,
+  setDraftAppName,
   draftInstitutionName,
   setDraftInstitutionName,
   draftInstitutionSubHeader,
@@ -488,7 +492,31 @@ export function SettingsScreen({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs flex items-center justify-between">
+                <span>💾 Logo, Uygulama Başlığı, KEP ve İletişim bilgileri doğrudan <strong>.vke</strong> çalışma dosyanızın SQLite veritabanında saklanır.</span>
+                <Badge variant="outline" className="bg-indigo-500/20 border-indigo-500/40 text-indigo-300 text-[10px]">.VKE sqlite senkronize</Badge>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label
+                    className={`text-xs font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Uygulama / Tesis Özel Başlığı
+                  </Label>
+                  <Input
+                    placeholder="örn: VenueKeeper Tesis & Salon İşletim Otomasyonu"
+                    value={draftAppName || ""}
+                    onChange={(e) => setDraftAppName && setDraftAppName(e.target.value)}
+                    className={`text-xs mt-1.5 ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                        : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                    }`}
+                  />
+                </div>
                 <div>
                   <Label
                     className={`text-xs font-medium ${

@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 
 export function useSettingsStore() {
+  const [appName, setAppNameState] = useState<string>(() => {
+    return localStorage.getItem("app_name") || "VenueKeeper Tesis & Salon İşletim Otomasyonu";
+  });
+
   const [institutionName, setInstitutionNameState] = useState<string>(() => {
     return localStorage.getItem("institution_name") || "BELEDİYE & KURUMSAL BAŞKANLIK";
   });
@@ -46,6 +50,10 @@ export function useSettingsStore() {
       if (window.electronAPI?.db?.getAllSettings) {
         const settings = await window.electronAPI.db.getAllSettings();
         if (settings) {
+          if (settings.app_name) {
+            setAppNameState(settings.app_name);
+            localStorage.setItem("app_name", settings.app_name);
+          }
           if (settings.institution_name) {
             setInstitutionNameState(settings.institution_name);
             localStorage.setItem("institution_name", settings.institution_name);
@@ -210,7 +218,20 @@ export function useSettingsStore() {
     }
   };
 
+  const setAppName = async (name: string) => {
+    setAppNameState(name);
+    localStorage.setItem("app_name", name);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("app_name", name);
+      }
+    } catch (err) {
+      console.error("Failed to save app_name to SQLite:", err);
+    }
+  };
+
   return {
+    appName,
     institutionName,
     institutionSubHeader,
     institutionLogo,
@@ -220,6 +241,7 @@ export function useSettingsStore() {
     institutionKepAddress,
     institutionAddress,
     defaultTariffBasis,
+    setAppName,
     setInstitutionName,
     setInstitutionSubHeader,
     setInstitutionLogo,

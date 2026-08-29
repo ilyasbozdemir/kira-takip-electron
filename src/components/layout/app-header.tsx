@@ -21,6 +21,7 @@ interface AppHeaderProps {
   searchTerm: string;
   setSearchTerm: (v: string) => void;
   onOpenNewReservation: () => void;
+  appName?: string;
   institutionName?: string;
   institutionSubHeader?: string;
   institutionLogo?: string;
@@ -32,6 +33,7 @@ export function AppHeader({
   searchTerm,
   setSearchTerm,
   onOpenNewReservation,
+  appName,
   institutionName,
   institutionSubHeader,
   institutionLogo,
@@ -65,14 +67,14 @@ export function AppHeader({
           )}
           <div>
             <h1 className="font-extrabold text-sm tracking-tight flex items-center gap-1.5 max-w-[340px]">
-              <span className="truncate">{institutionName || "İşletme & Tesis Takip Sistemi"}</span>
+              <span className="truncate">{appName || institutionName || "İşletme & Tesis Takip Otomasyonu"}</span>
             </h1>
             <p
               className={`text-[10px] truncate max-w-[400px] ${
                 theme === "dark" ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              {institutionSubHeader || "Kamu & Kurumsal Tesis, Mekan & Etkinlik Yönetim Sistemi"}
+              {institutionName && appName ? `${institutionName} — ${institutionSubHeader || "Tesis & Salon Yönetimi"}` : (institutionSubHeader || "Kamu & Kurumsal Tesis, Mekan & Etkinlik Yönetim Sistemi")}
             </p>
           </div>
         </div>

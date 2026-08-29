@@ -536,6 +536,8 @@ safeHandle("backup-database", () => {
 function initAutoUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
+  autoUpdater.allowPrerelease = true;
+  autoUpdater.allowDowngrade = false;
 
   autoUpdater.on("checking-for-update", () => {
     win?.webContents.send("updater-status", { status: "checking" });

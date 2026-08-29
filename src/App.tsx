@@ -58,6 +58,7 @@ export function App(): React.JSX.Element {
 
   // Store & Settings Hooks
   const {
+    appName,
     institutionName,
     institutionSubHeader,
     institutionLogo,
@@ -67,6 +68,7 @@ export function App(): React.JSX.Element {
     institutionKepAddress,
     institutionAddress,
     defaultTariffBasis,
+    setAppName,
     setInstitutionName,
     setInstitutionSubHeader,
     setInstitutionLogo,
@@ -295,6 +297,9 @@ export function App(): React.JSX.Element {
   const [gdriveFolderId, setGdriveFolderId] = useState(() =>
     localStorage.getItem("gdrive_folder_id") || ""
   );
+  const [draftAppName, setDraftAppName] = useState(
+    appName || "VenueKeeper Tesis & Salon İşletim Otomasyonu",
+  );
   const [draftInstitutionName, setDraftInstitutionName] = useState(
     institutionName,
   );
@@ -322,6 +327,7 @@ export function App(): React.JSX.Element {
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   useEffect(() => {
+    setDraftAppName(appName || "VenueKeeper Tesis & Salon İşletim Otomasyonu");
     setDraftInstitutionName(institutionName);
     setDraftInstitutionSubHeader(institutionSubHeader);
     setDraftInstitutionLogo(institutionLogo);
@@ -331,6 +337,7 @@ export function App(): React.JSX.Element {
     setDraftInstitutionKepAddress(institutionKepAddress);
     setDraftInstitutionAddress(institutionAddress);
   }, [
+    appName,
     institutionName,
     institutionSubHeader,
     institutionLogo,
@@ -346,6 +353,7 @@ export function App(): React.JSX.Element {
   }, [defaultTariffBasis]);
 
   const handleSaveInstitutionSettings = () => {
+    if (setAppName) setAppName(draftAppName);
     setInstitutionName(draftInstitutionName);
     setInstitutionSubHeader(draftInstitutionSubHeader);
     setInstitutionLogo(draftInstitutionLogo);
@@ -355,11 +363,12 @@ export function App(): React.JSX.Element {
     setInstitutionKepAddress(draftInstitutionKepAddress);
     setInstitutionAddress(draftInstitutionAddress);
     toast.success(
-      "Kurumsal kimlik, logo, iletişim ve KEP bilgileri kaydedildi.",
+      "Uygulama adı, kurumsal kimlik, logo, iletişim ve KEP bilgileri .vke dosyasına kaydedildi.",
     );
   };
 
   const handleCancelInstitutionSettings = () => {
+    setDraftAppName(appName || "VenueKeeper Tesis & Salon İşletim Otomasyonu");
     setDraftInstitutionName(institutionName);
     setDraftInstitutionSubHeader(institutionSubHeader);
     setDraftInstitutionLogo(institutionLogo);
@@ -681,6 +690,7 @@ export function App(): React.JSX.Element {
         setSidebarCollapsed={setSidebarCollapsed}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        appName={appName}
         institutionName={institutionName}
         institutionSubHeader={institutionSubHeader}
         institutionLogo={institutionLogo}
@@ -877,6 +887,8 @@ export function App(): React.JSX.Element {
                 setGdriveToken={setGdriveToken}
                 gdriveFolderId={gdriveFolderId}
                 setGdriveFolderId={setGdriveFolderId}
+                draftAppName={draftAppName}
+                setDraftAppName={setDraftAppName}
                 draftInstitutionName={draftInstitutionName}
                 setDraftInstitutionName={setDraftInstitutionName}
                 draftInstitutionSubHeader={draftInstitutionSubHeader}
