@@ -650,6 +650,7 @@ export function App(): React.JSX.Element {
                 store={store}
                 hallById={hallById}
                 onPromptDelete={(type, id, title) => promptDelete(type, id, title)}
+                onQuickMail={handleQuickMail}
               />
             )}
 
