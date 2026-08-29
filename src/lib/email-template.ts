@@ -44,11 +44,11 @@ export function getEmailTemplateSettings(): EmailTemplateConfig {
     introText: "Tesislerimizde gerçekleştireceğiniz {EVENT_TYPE} etkinliği ve salon kiralama tahsis talebiniz idaremizce onaylanarak kayıt altına alınmıştır. Tahsis ve mali ödeme döküm bilgileriniz aşağıda sunulmuştur:",
     footerDisclaimer: "Bu e-posta VenueKeeper Tesis & Salon İşletim Otomasyonu tarafından otomatik üretilmiş resmi evrak niteliğindedir.",
     headerThemeColor: "navy",
-    phone: "0850 000 00 00",
-    email: "info@kurum.bel.tr",
-    website: "www.kurum.bel.tr",
-    kepAddress: "kurumbelediyesi@hs01.kep.tr",
-    address: "Belediye Hizmet Binası, Merkez",
+    phone: "",
+    email: "",
+    website: "",
+    kepAddress: "",
+    address: "",
     showMapButtons: true,
   };
 }
