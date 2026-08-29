@@ -5,8 +5,8 @@ import {
   hoursBetween,
   money,
   type NavSection,
-  toKey,
   type Reservation,
+  toKey,
 } from "@/lib/rental-store";
 import { sqliteStore } from "@/lib/db-client";
 import { useSettingsStore } from "@/store/settingsStore";
@@ -107,7 +107,7 @@ export function App(): React.JSX.Element {
   );
   const [selectedDay, setSelectedDay] = useState(() => toKey(today));
   const [calendarViewMode, setCalendarViewMode] = useState<"grid" | "timeline">(
-    "grid"
+    "grid",
   );
   const [calendarVenueFilter, setCalendarVenueFilter] = useState("all");
 
@@ -125,8 +125,12 @@ export function App(): React.JSX.Element {
   const [printModalOpen, setPrintModalOpen] = useState(false);
 
   // Selected Reservation & Delete Targets
-  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
-  const [selectedPrintReservation, setSelectedPrintReservation] = useState<Reservation | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<
+    Reservation | null
+  >(null);
+  const [selectedPrintReservation, setSelectedPrintReservation] = useState<
+    Reservation | null
+  >(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<
     {
@@ -164,7 +168,9 @@ export function App(): React.JSX.Element {
 
   const handleQuickMail = (r: Reservation) => {
     const v = store.venues.find((x) => x.id === r.venueId);
-    const h = store.venues.flatMap((x) => x.halls).find((x) => x.id === r.hallId);
+    const h = store.venues.flatMap((x) => x.halls).find((x) =>
+      x.id === r.hallId
+    );
     const subject = `Etkinlik Rezervasyon Teyidi - ${r.customer} (${r.date})`;
     const htmlBody = generateEmailHTMLTemplate({
       customer: r.customer,
@@ -177,7 +183,8 @@ export function App(): React.JSX.Element {
       price: r.price,
       paid: r.paid,
       institutionName: institutionName || "GÜNEYYURT BELEDİYESİ",
-      institutionSubHeader: institutionSubHeader || "Emlak & Tahsilat İşleri Tesis Yönetimi",
+      institutionSubHeader: institutionSubHeader ||
+        "Emlak & Tahsilat İşleri Tesis Yönetimi",
       institutionLogo,
     });
 
@@ -202,20 +209,35 @@ export function App(): React.JSX.Element {
 
   const handleCopySMS = (r: Reservation) => {
     const v = store.venues.find((x) => x.id === r.venueId);
-    const h = store.venues.flatMap((x) => x.halls).find((x) => x.id === r.hallId);
-    const text = `Sn. ${r.customer}, ${r.date} tarihindeki ${v?.name} - ${h?.name} ${r.eventType} salon kiralamanız kaydedilmiştir. Saat: ${r.start}-${r.end}. Toplam: ${money(
-      r.price
-    )}. Bilgi için: 0532 000 0000`;
+    const h = store.venues.flatMap((x) => x.halls).find((x) =>
+      x.id === r.hallId
+    );
+    const text =
+      `Sn. ${r.customer}, ${r.date} tarihindeki ${v?.name} - ${h?.name} ${r.eventType} salon kiralamanız kaydedilmiştir. Saat: ${r.start}-${r.end}. Toplam: ${
+        money(
+          r.price,
+        )
+      }. Bilgi için: 0532 000 0000`;
     navigator.clipboard.writeText(text);
     toast.success("Özet mesaj metni panoya kopyalandı!");
   };
 
   // Google Drive & Draft Settings State
-  const [gdriveToken, setGdriveToken] = useState(() => localStorage.getItem("gdrive_token") || "");
-  const [gdriveFolderId, setGdriveFolderId] = useState(() => localStorage.getItem("gdrive_folder_id") || "");
-  const [draftInstitutionName, setDraftInstitutionName] = useState(institutionName);
-  const [draftInstitutionSubHeader, setDraftInstitutionSubHeader] = useState(institutionSubHeader);
-  const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(institutionLogo);
+  const [gdriveToken, setGdriveToken] = useState(() =>
+    localStorage.getItem("gdrive_token") || ""
+  );
+  const [gdriveFolderId, setGdriveFolderId] = useState(() =>
+    localStorage.getItem("gdrive_folder_id") || ""
+  );
+  const [draftInstitutionName, setDraftInstitutionName] = useState(
+    institutionName,
+  );
+  const [draftInstitutionSubHeader, setDraftInstitutionSubHeader] = useState(
+    institutionSubHeader,
+  );
+  const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(
+    institutionLogo,
+  );
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   useEffect(() => {
@@ -262,7 +284,9 @@ export function App(): React.JSX.Element {
     const reader = new FileReader();
     reader.onload = () => {
       setDraftInstitutionLogo(reader.result as string);
-      toast.success("Logo seçildi. Değişiklikleri Kaydet butonuna basarak onaylayın.");
+      toast.success(
+        "Logo seçildi. Değişiklikleri Kaydet butonuna basarak onaylayın.",
+      );
     };
     reader.readAsDataURL(file);
   };
@@ -421,13 +445,14 @@ export function App(): React.JSX.Element {
   // Filtered Reservations
   const filteredReservations = useMemo(() => {
     return store.reservations.filter((r) => {
-      const matchesSearch =
-        !searchTerm ||
+      const matchesSearch = !searchTerm ||
         r.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
         r.phone.includes(searchTerm) ||
         (r.eventType || "").toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = eventTypeFilter === "all" || r.eventType === eventTypeFilter;
-      const matchesVenue = calendarVenueFilter === "all" || r.venueId === calendarVenueFilter;
+      const matchesType = eventTypeFilter === "all" ||
+        r.eventType === eventTypeFilter;
+      const matchesVenue = calendarVenueFilter === "all" ||
+        r.venueId === calendarVenueFilter;
       return matchesSearch && matchesType && matchesVenue;
     });
   }, [store.reservations, searchTerm, eventTypeFilter, calendarVenueFilter]);
@@ -438,11 +463,16 @@ export function App(): React.JSX.Element {
     const curMonth = String(cursor.getMonth() + 1).padStart(2, "0");
     const prefix = `${curYear}-${curMonth}`;
 
-    const monthRes = store.reservations.filter((r) => r.date.startsWith(prefix));
+    const monthRes = store.reservations.filter((r) =>
+      r.date.startsWith(prefix)
+    );
     const totalCount = monthRes.length;
     const totalRev = monthRes.reduce((acc, r) => acc + (r.price || 0), 0);
     const totalPaid = monthRes.reduce((acc, r) => acc + (r.paid || 0), 0);
-    const totalHours = monthRes.reduce((acc, r) => acc + hoursBetween(r.start, r.end), 0);
+    const totalHours = monthRes.reduce(
+      (acc, r) => acc + hoursBetween(r.start, r.end),
+      0,
+    );
     const remaining = totalRev - totalPaid;
 
     return { totalCount, totalRev, totalPaid, totalHours, remaining };
@@ -453,13 +483,13 @@ export function App(): React.JSX.Element {
     type: "venue" | "hall" | "reservation",
     id: string,
     title: string,
-    venueId?: string
+    venueId?: string,
   ) => {
     if (type === "reservation") {
       const res = store.reservations.find((r) => r.id === id);
       if (res && res.date < toKey(new Date())) {
         toast.error(
-          "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!"
+          "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!",
         );
         return;
       }
@@ -481,7 +511,7 @@ export function App(): React.JSX.Element {
         const res = store.reservations.find((r) => r.id === deleteTarget.id);
         if (res && res.date < toKey(new Date())) {
           toast.error(
-            "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!"
+            "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!",
           );
           return;
         }
@@ -496,11 +526,17 @@ export function App(): React.JSX.Element {
     }
   };
 
-  const updateReservationStatus = async (id: string, status: "confirmed" | "option") => {
+  const updateReservationStatus = async (
+    id: string,
+    status: "confirmed" | "option",
+  ) => {
     await sqliteStore.updateReservationStatus(id, status);
   };
 
-  const updateReservationDetails = async (id: string, details: Partial<Reservation>) => {
+  const updateReservationDetails = async (
+    id: string,
+    details: Partial<Reservation>,
+  ) => {
     await sqliteStore.updateReservationDetails(id, details);
   };
 
@@ -523,7 +559,9 @@ export function App(): React.JSX.Element {
   return (
     <div
       className={`h-screen max-h-screen overflow-hidden flex flex-col font-sans transition-colors ${
-        theme === "dark" ? "bg-slate-950 text-slate-100 dark" : "bg-slate-50 text-slate-900 light"
+        theme === "dark"
+          ? "bg-slate-950 text-slate-100 dark"
+          : "bg-slate-50 text-slate-900 light"
       }`}
     >
       <Toaster position="top-right" richColors />
@@ -617,7 +655,8 @@ export function App(): React.JSX.Element {
                   setResModalOpen(true);
                 }}
                 onSelectReservation={(r) => setSelectedReservation(r)}
-                onPromptDeleteReservation={(id, title) => promptDelete("reservation", id, title)}
+                onPromptDeleteReservation={(id, title) =>
+                  promptDelete("reservation", id, title)}
                 onPrintOfficialDoc={(r) => {
                   setSelectedPrintReservation(r);
                   setPrintModalOpen(true);
@@ -649,8 +688,8 @@ export function App(): React.JSX.Element {
                 filteredReservations={filteredReservations}
                 store={store}
                 hallById={hallById}
-                onPromptDelete={(type, id, title) => promptDelete(type, id, title)}
-                onQuickMail={handleQuickMail}
+                onPromptDelete={(type, id, title) =>
+                  promptDelete(type, id, title)}
               />
             )}
 
@@ -693,7 +732,9 @@ export function App(): React.JSX.Element {
               />
             )}
 
-            {activeSection === "reports" && <ReportsScreen theme={theme} monthStats={monthStats} />}
+            {activeSection === "reports" && (
+              <ReportsScreen theme={theme} monthStats={monthStats} store={store} />
+            )}
 
             {activeSection === "settings" && (
               <SettingsScreen
@@ -731,7 +772,11 @@ export function App(): React.JSX.Element {
           </div>
 
           {/* Global Application Footer */}
-          <Footer currentFilePath={currentFilePath} institutionName={institutionName} theme={theme} />
+          <Footer
+            currentFilePath={currentFilePath}
+            institutionName={institutionName}
+            theme={theme}
+          />
         </main>
       </div>
 
