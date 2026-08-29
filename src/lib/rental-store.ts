@@ -53,7 +53,19 @@ export type Reservation = {
   paymentMethod?: string;
 };
 
-export type NavSection = "dashboard" | "calendar" | "venues" | "events" | "personnel" | "reports" | "settings" | "help";
+export type Customer = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  company?: string;
+  taxNo?: string;
+  address?: string;
+  notes?: string;
+  createdAt?: string;
+};
+
+export type NavSection = "dashboard" | "calendar" | "venues" | "events" | "customers" | "personnel" | "reports" | "settings" | "help";
 export type PricingMode = "hourly" | "daily";
 
 export const allEventTypes = [
@@ -73,6 +85,7 @@ export type Store = {
   venues: Venue[];
   reservations: Reservation[];
   personnel?: Personnel[];
+  customers?: Customer[];
 };
 
 const KEY = "belediye-kiralama-v2";

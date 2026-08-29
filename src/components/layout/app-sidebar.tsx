@@ -105,9 +105,14 @@ export function AppSidebar({
             icon: Layers,
           },
           {
+            id: "customers",
+            label: `Müşteri Rehberi (${store.customers?.length || 0})`,
+            icon: Users,
+          },
+          {
             id: "personnel",
             label: `Personel Kadrosu (${store.personnel?.length || 0})`,
-            icon: Users,
+            icon: User,
           },
           { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
           { id: "settings", label: "Ayarlar & İletişim", icon: Settings },

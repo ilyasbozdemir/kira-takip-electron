@@ -66,19 +66,25 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
   // Customer Suggestions
   const customerSuggestions = useMemo(() => {
     const set = new Set<string>();
+    for (const c of store.customers || []) {
+      if (c.name) set.add(c.name);
+    }
     for (const r of store.reservations) {
       if (r.customer) set.add(r.customer);
     }
     return Array.from(set);
-  }, [store.reservations]);
+  }, [store.reservations, store.customers]);
 
   const phoneSuggestions = useMemo(() => {
     const set = new Set<string>();
+    for (const c of store.customers || []) {
+      if (c.phone) set.add(c.phone);
+    }
     for (const r of store.reservations) {
       if (r.phone) set.add(r.phone);
     }
     return Array.from(set);
-  }, [store.reservations]);
+  }, [store.reservations, store.customers]);
 
   const decisionSuggestions = useMemo(() => {
     const set = new Set<string>();

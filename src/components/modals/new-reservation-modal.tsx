@@ -332,13 +332,43 @@ export function NewReservationModal({
             </div>
 
             <div>
-              <Label
-                className={`text-xs font-semibold ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Müşteri / Kurum Adı *
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label
+                  className={`text-xs font-semibold ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
+                  Müşteri / Kurum Adı *
+                </Label>
+                {store.customers && store.customers.length > 0 && (
+                  <Select
+                    onValueChange={(val) => {
+                      const found = store.customers?.find((c) => c.id === val);
+                      if (found) {
+                        setResCustomer(found.name);
+                        if (found.phone && setResPhone) setResPhone(found.phone);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-5 py-0 px-2 text-[10px] bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-semibold w-auto">
+                      <SelectValue placeholder="👥 CRM Rehberinden Seç" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className={
+                        theme === "dark"
+                          ? "bg-slate-900 border-slate-800 text-slate-200"
+                          : "bg-white border-slate-200 text-slate-900"
+                      }
+                    >
+                      {store.customers.map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-xs">
+                          {c.name} {c.company ? `(${c.company})` : ""} - {c.phone}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
               <Input
                 required
                 list="customer-suggestions"

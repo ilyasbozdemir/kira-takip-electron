@@ -3,6 +3,7 @@ export const APP_ROUTES = {
   CALENDAR: "/calendar",
   VENUES: "/venues",
   EVENTS: "/events",
+  CUSTOMERS: "/customers",
   PERSONNEL: "/personnel",
   REPORTS: "/reports",
   SETTINGS: "/settings",

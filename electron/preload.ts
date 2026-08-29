@@ -43,6 +43,10 @@ export const electronAPI = {
     getPersonnel: () => ipcRenderer.invoke("db:get-personnel"),
     addPersonnel: (p: { name: string; title?: string; phone?: string; email?: string; notes?: string }) => ipcRenderer.invoke("db:add-personnel", p),
     deletePersonnel: (id: string) => ipcRenderer.invoke("db:delete-personnel", id),
+    getCustomers: () => ipcRenderer.invoke("db:get-customers"),
+    addCustomer: (c: any) => ipcRenderer.invoke("db:add-customer", c),
+    updateCustomer: (c: any) => ipcRenderer.invoke("db:update-customer", c),
+    deleteCustomer: (id: string) => ipcRenderer.invoke("db:delete-customer", id),
   },
 
   // File & Custom Extension IPCs

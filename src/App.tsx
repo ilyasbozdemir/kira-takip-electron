@@ -33,6 +33,7 @@ import { EventsScreen } from "@/screens/events.screen";
 import { PersonnelScreen } from "@/screens/personnel.screen";
 import { ReportsScreen } from "@/screens/reports.screen";
 import { SettingsScreen } from "@/screens/settings.screen";
+import { CustomersScreen } from "@/screens/customers.screen";
 import { HelpScreen } from "@/screens/help.screen";
 
 export function App(): React.JSX.Element {
@@ -644,6 +645,25 @@ export function App(): React.JSX.Element {
                 handleCreatePersonnel={handleCreatePersonnel}
                 removePersonnel={removePersonnel}
                 onOpenPersonnelModal={() => setPersonnelModalOpen(true)}
+              />
+            )}
+
+            {activeSection === "customers" && (
+              <CustomersScreen
+                theme={theme}
+                store={store}
+                onAddCustomer={async (c) => {
+                  await sqliteStore.addCustomer(c);
+                }}
+                onUpdateCustomer={async (c) => {
+                  await sqliteStore.updateCustomer(c);
+                }}
+                onRemoveCustomer={async (id) => {
+                  await sqliteStore.deleteCustomer(id);
+                }}
+                onOpenMailModal={() => {
+                  setMailModalOpen(true);
+                }}
               />
             )}
 

@@ -26,6 +26,10 @@ import {
   getPersonnelList,
   addPersonnel,
   deletePersonnel,
+  getCustomersList,
+  addCustomer,
+  updateCustomer,
+  deleteCustomer,
 } from "./database";
 import { workspaceManager } from "./database/workspace";
 
@@ -360,6 +364,22 @@ safeHandle("db:add-personnel", (_event, p) => {
 
 safeHandle("db:delete-personnel", (_event, id: string) => {
   return deletePersonnel(id);
+});
+
+safeHandle("db:get-customers", () => {
+  return getCustomersList();
+});
+
+safeHandle("db:add-customer", (_event, c) => {
+  return addCustomer(c);
+});
+
+safeHandle("db:update-customer", (_event, c) => {
+  return updateCustomer(c);
+});
+
+safeHandle("db:delete-customer", (_event, id: string) => {
+  return deleteCustomer(id);
 });
 
 safeHandle("db:add-reservation", (_event, res) => {

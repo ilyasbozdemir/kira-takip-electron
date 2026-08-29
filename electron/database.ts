@@ -56,10 +56,23 @@ export type Reservation = {
   paymentMethod?: string;
 };
 
+export type Customer = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  company?: string;
+  taxNo?: string;
+  address?: string;
+  notes?: string;
+  createdAt?: string;
+};
+
 export type StoreData = {
   venues: Venue[];
   reservations: Reservation[];
   personnel?: Personnel[];
+  customers?: Customer[];
 };
 
 let db: Database.Database | null = null;
@@ -149,6 +162,18 @@ function ensureDynamicColumns(d: Database.Database) {
         phone TEXT DEFAULT '',
         email TEXT DEFAULT '',
         notes TEXT DEFAULT ''
+      );
+
+      CREATE TABLE IF NOT EXISTS TANIM_Musteri (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        phone TEXT DEFAULT '',
+        email TEXT DEFAULT '',
+        company TEXT DEFAULT '',
+        taxNo TEXT DEFAULT '',
+        address TEXT DEFAULT '',
+        notes TEXT DEFAULT '',
+        createdAt TEXT DEFAULT (datetime('now','localtime'))
       );
     `);
   } catch {}
@@ -715,5 +740,41 @@ export function getAllSettings(): Record<string, string> {
   } catch {
     return {};
   }
+}
+
+export function getCustomersList(): Customer[] {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return [];
+  try {
+    return db.prepare("SELECT id, name, phone, email, company, taxNo, address, notes, createdAt FROM TANIM_Musteri ORDER BY name ASC").all() as Customer[];
+  } catch {
+    return [];
+  }
+}
+
+export function addCustomer(c: Omit<Customer, "id">): Customer {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  const newId = uid();
+  db!.prepare(
+    "INSERT INTO TANIM_Musteri (id, name, phone, email, company, taxNo, address, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).run(newId, c.name, c.phone || "", c.email || "", c.company || "", c.taxNo || "", c.address || "", c.notes || "");
+  saveWorkspaceIfActive();
+  return { id: newId, ...c };
+}
+
+export function updateCustomer(c: Customer): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare(
+    "UPDATE TANIM_Musteri SET name = ?, phone = ?, email = ?, company = ?, taxNo = ?, address = ?, notes = ? WHERE id = ?"
+  ).run(c.name, c.phone || "", c.email || "", c.company || "", c.taxNo || "", c.address || "", c.notes || "", c.id);
+  saveWorkspaceIfActive();
+  return { success: true };
+}
+
+export function deleteCustomer(id: string): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare("DELETE FROM TANIM_Musteri WHERE id = ?").run(id);
+  saveWorkspaceIfActive();
+  return { success: true };
 }
 

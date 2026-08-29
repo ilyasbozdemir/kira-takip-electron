@@ -155,10 +155,42 @@ export const sqliteStore = {
     }
     await this.loadFromDb();
   },
+  async addCustomer(c: any) {
+    if (window.electronAPI?.db?.addCustomer) {
+      await window.electronAPI.db.addCustomer(c);
+    } else {
+      if (!currentStoreData.customers) currentStoreData.customers = [];
+      currentStoreData.customers.push({ ...c, id: Math.random().toString(36).slice(2) });
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async updateCustomer(c: any) {
+    if (window.electronAPI?.db?.updateCustomer) {
+      await window.electronAPI.db.updateCustomer(c);
+    } else {
+      if (!currentStoreData.customers) currentStoreData.customers = [];
+      const idx = currentStoreData.customers.findIndex((x) => x.id === c.id);
+      if (idx !== -1) currentStoreData.customers[idx] = c;
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
+  async deleteCustomer(id: string) {
+    if (window.electronAPI?.db?.deleteCustomer) {
+      await window.electronAPI.db.deleteCustomer(id);
+    } else {
+      if (currentStoreData.customers) {
+        currentStoreData.customers = currentStoreData.customers.filter((x) => x.id !== id);
+        localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+      }
+    }
+    await this.loadFromDb();
+  },
 };
 
 export function useSQLiteStore() {
-  const [store, setStore] = useState<Store>({ venues: [], reservations: [], personnel: [] });
+  const [store, setStore] = useState<Store>({ venues: [], reservations: [], personnel: [], customers: [] });
   const [ready, setReady] = useState(false);
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
 
@@ -170,9 +202,9 @@ export function useSQLiteStore() {
         const path = await window.electronAPI.db.getCurrentPath();
         setCurrentFilePath(path);
       }
-    } catch (err) {
-      console.error("Failed to load database store:", err);
-    } finally {
+      setReady(true);
+    } catch (error) {
+      console.error("Failed to load store data:", error);
       setReady(true);
     }
   }, []);
@@ -205,5 +237,8 @@ export function useSQLiteStore() {
     updateReservationDetails: sqliteStore.updateReservationDetails.bind(sqliteStore),
     addPersonnel: sqliteStore.addPersonnel.bind(sqliteStore),
     removePersonnel: sqliteStore.deletePersonnel.bind(sqliteStore),
+    addCustomer: sqliteStore.addCustomer.bind(sqliteStore),
+    updateCustomer: sqliteStore.updateCustomer.bind(sqliteStore),
+    removeCustomer: sqliteStore.deleteCustomer.bind(sqliteStore),
   };
 }
