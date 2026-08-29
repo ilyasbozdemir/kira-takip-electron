@@ -167,6 +167,7 @@ export function AppModals({
   theme,
   store,
   selectedDay,
+  setSelectedDay,
   resModalOpen,
   setResModalOpen,
   resVenueId,
