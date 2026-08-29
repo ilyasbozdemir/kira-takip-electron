@@ -422,23 +422,28 @@ export function CalendarScreen({
                               const colorClass = getEventTypeColor(
                                 r.eventType,
                               );
+                              const isOption = r.status === "option";
                               return (
                                 <div
                                   key={r.id}
-                                  className={`text-[10px] leading-tight p-1 rounded border truncate font-medium flex items-center gap-1 ${colorClass}`}
-                                  title={`${r.customer} (${r.start} - ${h?.name})`}
+                                  className={`text-[10px] leading-tight p-1 rounded border truncate font-medium flex items-center gap-1 ${
+                                    isOption
+                                      ? "bg-amber-500/15 border-amber-500/50 text-amber-600 dark:text-amber-300 font-bold"
+                                      : colorClass
+                                  }`}
+                                  title={`${r.customer} ${isOption ? "[Şerhli / Opsiyonlu]" : "[Kesin]"} (${r.start} - ${h?.name})`}
                                 >
                                   <span
                                     className="h-2 w-2 rounded-full shrink-0 shadow-xs"
                                     style={{
-                                      backgroundColor: customColor,
+                                      backgroundColor: isOption ? "#f59e0b" : customColor,
                                     }}
                                   />
                                   <span className="font-mono font-bold shrink-0">
                                     {r.start}
                                   </span>
                                   <span className="truncate">
-                                    {r.customer}
+                                    {isOption ? `⚠️ ${r.customer}` : r.customer}
                                   </span>
                                 </div>
                               );

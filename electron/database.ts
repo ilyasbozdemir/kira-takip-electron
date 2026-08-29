@@ -607,12 +607,16 @@ export function addReservation(res: {
 }): { success: boolean; id?: string; error?: string } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
 
-  // Check clash
-  const existing = db!.prepare("SELECT start_time, end_time FROM reservations WHERE hall_id = ? AND date = ?").all(res.hallId, res.date) as any[];
-  const clash = existing.some((x) => overlaps(res.start, res.end, x.start_time, x.end_time));
+  // Check clash: Only block if adding a CONFIRMED reservation and there is ALREADY a CONFIRMED reservation on the same hall & time
+  if (res.status === "confirmed" || !res.status) {
+    const existingConfirmed = db!.prepare(
+      "SELECT start_time, end_time FROM reservations WHERE hall_id = ? AND date = ? AND (status = 'confirmed' OR status IS NULL OR status = '')"
+    ).all(res.hallId, res.date) as any[];
 
-  if (clash) {
-    return { success: false, error: "Seçilen tarih ve saat aralığında bu salonda çakışan başka bir etkinlik var!" };
+    const clash = existingConfirmed.some((x) => overlaps(res.start, res.end, x.start_time, x.end_time));
+    if (clash) {
+      return { success: false, error: "Seçilen tarih ve saat aralığında bu salonda KESİNLEŞMİŞ başka bir etkinlik kaydı var!" };
+    }
   }
 
   const newId = uid();

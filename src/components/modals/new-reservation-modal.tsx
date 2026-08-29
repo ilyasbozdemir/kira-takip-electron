@@ -258,8 +258,8 @@ export function NewReservationModal({
             </div>
           </div>
 
-          {/* Event Type & Customer Name */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Event Type, Status (Şerh / Kesin), Customer Name */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <Label
                 className={`text-xs font-semibold ${
@@ -290,6 +290,43 @@ export function NewReservationModal({
                       {t}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label
+                className={`text-xs font-semibold ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                Kayıt / Tahsis Durumu *
+              </Label>
+              <Select value={resStatus} onValueChange={setResStatus}>
+                <SelectTrigger
+                  className={`mt-1 text-xs font-bold ${
+                    resStatus === "option"
+                      ? "bg-amber-500/10 border-amber-500/40 text-amber-500"
+                      : theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-emerald-400"
+                      : "bg-slate-50 border-slate-300 text-emerald-600"
+                  }`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
+                >
+                  <SelectItem value="confirmed" className="text-emerald-500 font-bold">
+                    ✅ Kesinleşmiş (Kesin Tahsis)
+                  </SelectItem>
+                  <SelectItem value="option" className="text-amber-500 font-bold">
+                    ⚠️ Opsiyonlu / Şerhli (Ön Kayıt)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
