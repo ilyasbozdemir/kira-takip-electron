@@ -17,8 +17,8 @@ export function generateSingleICS(props: SingleICSProps): string {
   const uid = props.id || `evt-${Date.now()}`;
   const dtStamp = new Date().toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
   const locationStr = `${props.venueName || "Tesis"} - ${props.hallName || "Salon"}`;
-  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationStr + " Güneyyurt")}`;
-  const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(locationStr + " Güneyyurt")}`;
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locationStr)}`;
+  const appleMapsUrl = `https://maps.apple.com/?q=${encodeURIComponent(locationStr)}`;
 
   return [
     "BEGIN:VCALENDAR",

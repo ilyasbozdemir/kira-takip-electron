@@ -14,6 +14,8 @@ import {
   List,
   LayoutGrid,
   ExternalLink,
+  Table as TableIcon,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +34,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { toast } from "sonner";
 import {
   hoursBetween,
@@ -69,6 +76,7 @@ interface CalendarScreenProps {
   onPrintOfficialDoc: (r: Reservation) => void;
   onCopySMS: (r: Reservation) => void;
   onQuickMail: (r: Reservation) => void;
+  onNavigateToCustomer?: (customerName: string) => void;
 }
 
 export function CalendarScreen({
@@ -94,8 +102,9 @@ export function CalendarScreen({
   onPrintOfficialDoc,
   onCopySMS,
   onQuickMail,
+  onNavigateToCustomer,
 }: CalendarScreenProps): React.JSX.Element {
-  const [rightPanelViewMode, setRightPanelViewMode] = useState<"list" | "timeline" | "cards">("list");
+  const [rightPanelViewMode, setRightPanelViewMode] = useState<"list" | "timeline" | "table" | "cards">("list");
   return (
     <div className="space-y-4">
       {/* Calendar Toolbar */}
@@ -381,11 +390,11 @@ export function CalendarScreen({
                           r.venueId === calendarVenueFilter,
                       );
 
-                      return (
+                      const dayButton = (
                         <button
                           key={k}
                           onClick={() => setSelectedDay(k)}
-                          className={`h-22 md:h-26 p-2 rounded-xl border text-left transition-all relative flex flex-col justify-between overflow-hidden group ${
+                          className={`h-22 md:h-26 p-2 rounded-xl border text-left transition-all relative flex flex-col justify-between overflow-hidden group cursor-pointer ${
                             isSelected
                               ? "border-indigo-500 bg-indigo-950/30 ring-2 ring-indigo-500/50 shadow-md"
                               : isToday
@@ -466,6 +475,99 @@ export function CalendarScreen({
                             )}
                           </div>
                         </button>
+                      );
+
+                      if (dayResList.length === 0) {
+                        return dayButton;
+                      }
+
+                      return (
+                        <HoverCard key={k} openDelay={150} closeDelay={100}>
+                          <HoverCardTrigger asChild>
+                            {dayButton}
+                          </HoverCardTrigger>
+                          <HoverCardContent
+                            side="top"
+                            align="center"
+                            className={`w-80 p-3.5 border shadow-2xl rounded-2xl z-50 space-y-3 ${
+                              theme === "dark"
+                                ? "bg-slate-900/95 border-slate-700 text-slate-100 backdrop-blur-md"
+                                : "bg-white/95 border-slate-200 text-slate-900 backdrop-blur-md"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between border-b pb-2">
+                              <div className="flex items-center gap-1.5 font-bold text-xs">
+                                <CalendarIcon className="h-4 w-4 text-indigo-500" />
+                                <span>{k}</span>
+                              </div>
+                              <Badge className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 font-bold">
+                                {dayResList.length} Etkinlik
+                              </Badge>
+                            </div>
+
+                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                              {dayResList.map((r) => {
+                                const h = hallById(r.hallId);
+                                const v = store.venues.find((x) => x.id === r.venueId);
+                                return (
+                                  <div
+                                    key={r.id}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onSelectReservation(r);
+                                    }}
+                                    className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all space-y-1 ${
+                                      theme === "dark"
+                                        ? "bg-slate-950 border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800/40"
+                                        : "bg-slate-50 border-slate-200 hover:border-indigo-500/60 hover:bg-slate-100 shadow-2xs"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between font-bold text-xs">
+                                      <span className="truncate">{r.customer}</span>
+                                      {r.status === "option" ? (
+                                        <span className="text-[9px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded font-bold border border-amber-500/30">
+                                          ⚠️ Opsiyon
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-bold border border-emerald-500/30">
+                                          ✅ Kesin
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between pt-0.5">
+                                      <span>⏰ {r.start} - {r.end}</span>
+                                      <span className="font-bold text-emerald-400">{money(r.price)}</span>
+                                    </div>
+                                    <div className="text-[10px] text-indigo-400 font-medium truncate pt-0.5">
+                                      🏛️ {v?.name} • {h?.name}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            <div className="pt-2 border-t flex items-center justify-between gap-2 text-[11px]">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedDay(k);
+                                  onOpenNewReservationModal();
+                                }}
+                                className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] h-7 font-semibold shadow-xs"
+                              >
+                                <Plus className="h-3 w-3 mr-1" /> Etkinlik Ekle
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setSelectedDay(k)}
+                                className="flex-1 text-[10px] h-7 font-bold border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
+                              >
+                                Günü Seç ➔
+                              </Button>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
                       );
                     })}
                   </div>
@@ -627,7 +729,7 @@ export function CalendarScreen({
 
             {/* Right Panel View Selector Tabs */}
             <div className="flex items-center justify-between pt-1">
-              <div className={`flex p-0.5 rounded-lg border w-full justify-between ${
+              <div className={`flex p-0.5 rounded-lg border w-full justify-between gap-0.5 ${
                 theme === "dark" ? "bg-slate-950 border-slate-800" : "bg-slate-100 border-slate-200"
               }`}>
                 <button
@@ -638,8 +740,9 @@ export function CalendarScreen({
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
+                  title="Özet Liste Görünümü"
                 >
-                  <List className="h-3 w-3" /> Kibar Liste
+                  <List className="h-3 w-3" /> Özet
                 </button>
                 <button
                   type="button"
@@ -649,8 +752,21 @@ export function CalendarScreen({
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
+                  title="Zaman Çizelgesi"
                 >
-                  <Clock className="h-3 w-3" /> Günlük Zaman Çizelgesi
+                  <Clock className="h-3 w-3" /> Çizelge
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRightPanelViewMode("table")}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    rightPanelViewMode === "table"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                  title="Veri Tablosu Görünümü"
+                >
+                  <TableIcon className="h-3 w-3" /> Tablo
                 </button>
                 <button
                   type="button"
@@ -660,8 +776,9 @@ export function CalendarScreen({
                       ? "bg-indigo-600 text-white shadow-xs"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
+                  title="Detaylı Kart Görünümü"
                 >
-                  <LayoutGrid className="h-3 w-3" /> Detay Kartlar
+                  <LayoutGrid className="h-3 w-3" /> Kartlar
                 </button>
               </div>
             </div>
@@ -687,7 +804,7 @@ export function CalendarScreen({
                 </Button>
               </div>
             ) : rightPanelViewMode === "list" ? (
-              /* VIEW MODE 1: COMPACT KİBAR LİSTE */
+              /* VIEW MODE 1: COMPACT ÖZET LİSTE */
               <div className="space-y-2">
                 {(byDate.get(selectedDay) ?? []).map((r) => {
                   const h = hallById(r.hallId);
@@ -728,6 +845,17 @@ export function CalendarScreen({
                       </div>
 
                       <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {onNavigateToCustomer && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onNavigateToCustomer(r.customer)}
+                            className="h-7 w-7 text-indigo-400 hover:bg-indigo-500/10"
+                            title="Müşteri Profili & Geçmiş Kayıtlara Git"
+                          >
+                            <User className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                         <Button
                           size="icon"
                           variant="ghost"
@@ -751,8 +879,9 @@ export function CalendarScreen({
                           variant="outline"
                           onClick={() => onSelectReservation(r)}
                           className="h-7 px-2 text-[10px] border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 font-bold"
+                          title="Etkinlik Detay Ekranına Git"
                         >
-                          <ExternalLink className="h-3 w-3 mr-0.5" /> Detay
+                          <ExternalLink className="h-3 w-3 mr-0.5" /> Detay Gör
                         </Button>
                       </div>
                     </div>
@@ -814,8 +943,84 @@ export function CalendarScreen({
                   );
                 })}
               </div>
+            ) : rightPanelViewMode === "table" ? (
+              /* VIEW MODE 3: VERİ TABLOSU GÖRÜNÜMÜ */
+              <div className="overflow-x-auto rounded-xl border border-slate-800">
+                <table className="w-full text-left text-xs border-collapse font-sans">
+                  <thead>
+                    <tr className={`border-b text-[10px] uppercase tracking-wider font-bold ${
+                      theme === "dark" ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-slate-100 border-slate-200 text-slate-600"
+                    }`}>
+                      <th className="p-2.5">Durum</th>
+                      <th className="p-2.5">Müşteri</th>
+                      <th className="p-2.5">Mekan / Salon</th>
+                      <th className="p-2.5">Saat</th>
+                      <th className="p-2.5 text-right">Tutar</th>
+                      <th className="p-2.5 text-center">İşlem</th>
+                    </tr>
+                  </thead>
+                  <tbody className={`divide-y ${theme === "dark" ? "divide-slate-800/60" : "divide-slate-200"}`}>
+                    {(byDate.get(selectedDay) ?? []).map((r) => {
+                      const h = hallById(r.hallId);
+                      const v = store.venues.find((x) => x.id === r.venueId);
+                      return (
+                        <tr
+                          key={r.id}
+                          onClick={() => onSelectReservation(r)}
+                          className={`cursor-pointer transition-colors ${
+                            theme === "dark" ? "hover:bg-slate-800/40" : "hover:bg-slate-100"
+                          }`}
+                        >
+                          <td className="p-2.5 font-bold">
+                            {r.status === "option" ? (
+                              <span className="text-[10px] text-amber-500 font-bold">⚠️ Opsiyon</span>
+                            ) : (
+                              <span className="text-[10px] text-emerald-500 font-bold">✅ Kesin</span>
+                            )}
+                          </td>
+                          <td className="p-2.5">
+                            <div className="font-bold text-slate-200">{r.customer}</div>
+                            {onNavigateToCustomer && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onNavigateToCustomer(r.customer);
+                                }}
+                                className="text-[10px] text-indigo-400 hover:underline flex items-center gap-0.5 font-medium mt-0.5"
+                              >
+                                <User className="h-2.5 w-2.5" /> Müşteri Profili
+                              </button>
+                            )}
+                          </td>
+                          <td className="p-2.5 font-medium">
+                            <div className="text-slate-300">{v?.name}</div>
+                            <div className="text-[10px] text-slate-500">{h?.name}</div>
+                          </td>
+                          <td className="p-2.5 font-mono font-semibold text-emerald-400">
+                            {r.start}-{r.end}
+                          </td>
+                          <td className="p-2.5 text-right font-bold text-emerald-400">
+                            {money(r.price)}
+                          </td>
+                          <td className="p-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onSelectReservation(r)}
+                              className="h-6 px-2 text-[10px] border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 font-bold"
+                            >
+                              Detay
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             ) : (
-              /* VIEW MODE 3: DETAILED CARDS */
+              /* VIEW MODE 4: DETAILED CARDS */
               (byDate.get(selectedDay) ?? []).map((r) => {
                 const h = hallById(r.hallId);
                 const v = store.venues.find((x) => x.id === r.venueId);

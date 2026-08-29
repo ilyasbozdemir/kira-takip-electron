@@ -1,5 +1,16 @@
-import React from "react";
-import { Trash2 } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  FileText,
+  Mail,
+  Printer,
+  Trash2,
+  User,
+  UserCheck,
+  Building,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { money, type Reservation, type Venue } from "@/lib/rental-store";
 
 interface EventsScreenProps {
@@ -26,9 +38,14 @@ interface EventsScreenProps {
   filteredReservations: Reservation[];
   store: {
     venues: Venue[];
+    personnel?: Array<{ id: string; name: string; title?: string; phone?: string; email?: string }>;
   };
   hallById: (id: string) => { name: string } | undefined;
   onPromptDelete: (type: "reservation", id: string, title: string) => void;
+  onPrintOfficialDoc?: (r: Reservation) => void;
+  onQuickMail?: (r: Reservation) => void;
+  onQuickStaffMail?: (r: Reservation, staffEmail?: string, staffName?: string) => void;
+  onNavigateToCustomer?: (customerName: string) => void;
 }
 
 export function EventsScreen({
@@ -40,7 +57,29 @@ export function EventsScreen({
   store,
   hallById,
   onPromptDelete,
+  onPrintOfficialDoc,
+  onQuickMail,
+  onQuickStaffMail,
+  onNavigateToCustomer,
 }: EventsScreenProps): React.JSX.Element {
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+
+  // Reset to page 1 when filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [eventTypeFilter, filteredReservations.length]);
+
+  const totalItems = filteredReservations.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
+
+  const paginatedReservations = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredReservations.slice(start, start + pageSize);
+  }, [filteredReservations, safePage, pageSize]);
+
   return (
     <Card
       className={theme === "dark"
@@ -65,17 +104,50 @@ export function EventsScreen({
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Filtreleme ve arama ile tüm etkinlik kayıtları.
+            Filtreleme, arama ve sayfalama ile tüm etkinlik kayıtları.
           </CardDescription>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
+            <span>Sayfa Başına:</span>
+            <Select
+              value={String(pageSize)}
+              onValueChange={(val) => {
+                setPageSize(Number(val));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger
+                className={`w-[75px] text-xs h-8 ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-200"
+                    : "bg-slate-50 border-slate-300 text-slate-900"
+                }`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent
+                className={theme === "dark"
+                  ? "bg-slate-900 border-slate-800 text-slate-200"
+                  : "bg-white border-slate-200 text-slate-900"}
+              >
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Event Type Filter */}
           <Select
             value={eventTypeFilter}
             onValueChange={setEventTypeFilter}
           >
             <SelectTrigger
-              className={`w-[180px] text-xs ${
+              className={`w-[180px] text-xs h-8 ${
                 theme === "dark"
                   ? "bg-slate-950 border-slate-800 text-slate-200"
                   : "bg-slate-50 border-slate-300 text-slate-900"
@@ -115,13 +187,14 @@ export function EventsScreen({
             }`}
           >
             <tr>
-              <th className="p-3.5">Müşteri / Etkinlik</th>
+              <th className="p-3.5">Durum</th>
+              <th className="p-3.5">Müşteri / İletişim</th>
               <th className="p-3.5">Tarih & Saat</th>
               <th className="p-3.5">Mekan / Salon</th>
               <th className="p-3.5">Tür</th>
               <th className="p-3.5 text-right">Toplam</th>
               <th className="p-3.5 text-right">Ödenen</th>
-              <th className="p-3.5 text-center">İşlemler</th>
+              <th className="p-3.5 text-center">İşlemler & Bildirim</th>
             </tr>
           </thead>
           <tbody
@@ -129,89 +202,214 @@ export function EventsScreen({
               theme === "dark" ? "divide-slate-800/60" : "divide-slate-200"
             }`}
           >
-            {filteredReservations.map((r) => {
-              const h = hallById(r.hallId);
-              const v = store.venues.find((x) => x.id === r.venueId);
+            {paginatedReservations.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="p-8 text-center text-slate-500">
+                  Bu kritere uygun kayıtlı etkinlik bulunamadı.
+                </td>
+              </tr>
+            ) : (
+              paginatedReservations.map((r) => {
+                const h = hallById(r.hallId);
+                const v = store.venues.find((x) => x.id === r.venueId);
 
-              return (
-                <tr
-                  key={r.id}
-                  className={`transition-colors ${
-                    theme === "dark"
-                      ? "hover:bg-slate-800/30"
-                      : "hover:bg-slate-50"
-                  }`}
-                >
-                  <td className="p-3.5">
-                    <span
-                      className={`font-bold block ${
+                return (
+                  <tr
+                    key={r.id}
+                    className={`transition-colors ${
+                      theme === "dark"
+                        ? "hover:bg-slate-800/30"
+                        : "hover:bg-slate-50"
+                    }`}
+                  >
+                    <td className="p-3.5 font-bold space-y-1">
+                      <div>
+                        {r.status === "option" ? (
+                          <Badge variant="outline" className="bg-amber-500/10 border-amber-500/40 text-amber-500 text-[9px] font-bold">
+                            ⚠️ Opsiyon
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/40 text-emerald-500 text-[9px] font-bold">
+                            ✅ Kesin
+                          </Badge>
+                        )}
+                      </div>
+                      {r.mailSentAt && (
+                        <Badge
+                          variant="outline"
+                          className="bg-sky-500/10 border-sky-500/40 text-sky-400 text-[9px] font-semibold flex items-center gap-1 w-fit"
+                          title={`Alıcı: ${r.mailSentTo || "Alıcı"} | Zaman: ${r.mailSentAt}`}
+                        >
+                          ✉️ Mail Gönderildi
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="p-3.5">
+                      <span
+                        className={`font-bold block ${
+                          theme === "dark" ? "text-slate-200" : "text-slate-900"
+                        }`}
+                      >
+                        {r.customer}
+                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-[11px] font-mono ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                          📞 {r.phone}
+                        </span>
+                        {onNavigateToCustomer && (
+                          <button
+                            type="button"
+                            onClick={() => onNavigateToCustomer(r.customer)}
+                            className="text-[10px] text-indigo-400 hover:underline flex items-center gap-0.5 font-medium"
+                            title="Müşteri CRM Profiline Git"
+                          >
+                            <User className="h-2.5 w-2.5" /> Profil
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-3.5 font-mono">
+                      <div className="font-bold">📅 {r.date}</div>
+                      <div
+                        className={`text-[11px] ${
+                          theme === "dark" ? "text-slate-400" : "text-slate-600"
+                        }`}
+                      >
+                        ⏰ {r.start} - {r.end}
+                      </div>
+                    </td>
+                    <td className="p-3.5">
+                      <span className="font-medium">{v?.name || "Mekan"}</span>
+                      <span className="text-indigo-500 block font-semibold text-[11px]">
+                        🏛️ {h?.name || "Salon"}
+                      </span>
+                    </td>
+                    <td className="p-3.5">
+                      <Badge
+                        variant="outline"
+                        className="border-indigo-500/30 text-indigo-500 text-[10px]"
+                      >
+                        {r.eventType || "Etkinlik"}
+                      </Badge>
+                    </td>
+                    <td
+                      className={`p-3.5 text-right font-bold ${
                         theme === "dark" ? "text-slate-200" : "text-slate-900"
                       }`}
                     >
-                      {r.customer}
-                    </span>
-                    <span
-                      className={`text-[11px] ${
-                        theme === "dark" ? "text-slate-400" : "text-slate-600"
-                      }`}
-                    >
-                      {r.phone}
-                    </span>
-                  </td>
-                  <td className="p-3.5 font-mono">
-                    <div>{r.date}</div>
-                    <div
-                      className={`text-[11px] ${
-                        theme === "dark" ? "text-slate-400" : "text-slate-600"
-                      }`}
-                    >
-                      {r.start} - {r.end}
-                    </div>
-                  </td>
-                  <td className="p-3.5">
-                    <span>{v?.name}</span>
-                    <span className="text-indigo-500 block font-semibold">
-                      {h?.name}
-                    </span>
-                  </td>
-                  <td className="p-3.5">
-                    <Badge
-                      variant="outline"
-                      className="border-indigo-500/30 text-indigo-500 text-[10px]"
-                    >
-                      {r.eventType || "Etkinlik"}
-                    </Badge>
-                  </td>
-                  <td
-                    className={`p-3.5 text-right font-bold ${
-                      theme === "dark" ? "text-slate-200" : "text-slate-900"
-                    }`}
-                  >
-                    {money(r.price)}
-                  </td>
-                  <td className="p-3.5 text-right font-bold text-emerald-500">
-                    {money(r.paid)}
-                  </td>
-                  <td className="p-3.5 text-center">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() =>
-                        onPromptDelete(
-                          "reservation",
-                          r.id,
-                          `${r.customer} (${r.date})`,
+                      {money(r.price)}
+                    </td>
+                    <td className="p-3.5 text-right font-bold text-emerald-500">
+                      {money(r.paid)}
+                    </td>
+                    <td className="p-3.5">
+                      <div className="flex items-center justify-center gap-1">
+                        {/* Müşteri Mail Button */}
+                        {onQuickMail && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onQuickMail(r)}
+                            className="h-7 w-7 text-sky-400 hover:bg-sky-500/10"
+                            title="Müşteriye E-posta & .ics Takvim Daveti Gönder"
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                          </Button>
                         )}
-                      className="h-7 w-7 text-slate-500 hover:text-rose-500"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
+
+                        {/* Mekan Görevlisine Mail Button */}
+                        {onQuickStaffMail && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const staffEmail = v?.managerPhone || "gorevli@tesis.bel.tr";
+                              onQuickStaffMail(r, staffEmail, v?.managerName || "Mekan Görevlisi");
+                            }}
+                            className="h-7 w-7 text-indigo-400 hover:bg-indigo-500/10"
+                            title="Mekan Görevlisine / Sorumlusuna Görev Maili Gönder"
+                          >
+                            <UserCheck className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+
+                        {/* Resmi Evrak Basım Button */}
+                        {onPrintOfficialDoc && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => onPrintOfficialDoc(r)}
+                            className="h-7 w-7 text-emerald-400 hover:bg-emerald-500/10"
+                            title="Resmi Tahsis Belgesi & Makbuz Bas"
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+
+                        {/* Sil Button */}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() =>
+                            onPromptDelete(
+                              "reservation",
+                              r.id,
+                              `${r.customer} (${r.date})`,
+                            )}
+                          className="h-7 w-7 text-slate-500 hover:text-rose-500"
+                          title="Sil"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
+
+        {/* Pagination Bar */}
+        {totalItems > 0 && (
+          <div
+            className={`p-4 border-t flex flex-wrap items-center justify-between gap-4 text-xs ${
+              theme === "dark"
+                ? "bg-slate-950/60 border-slate-800 text-slate-400"
+                : "bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            <div>
+              Toplam <strong className="text-indigo-400">{totalItems}</strong> kayıttan{" "}
+              <strong>{(safePage - 1) * pageSize + 1}</strong> -{" "}
+              <strong>{Math.min(safePage * pageSize, totalItems)}</strong> arası gösteriliyor.
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="font-semibold">
+                Sayfa {safePage} / {totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={safePage <= 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="h-8 px-2.5"
+              >
+                <ChevronLeft className="h-3.5 w-3.5 mr-1" /> Önceki
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={safePage >= totalPages}
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="h-8 px-2.5"
+              >
+                Sonraki <ChevronRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

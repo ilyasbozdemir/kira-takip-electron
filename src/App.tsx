@@ -61,10 +61,20 @@ export function App(): React.JSX.Element {
     institutionName,
     institutionSubHeader,
     institutionLogo,
+    institutionPhone,
+    institutionEmail,
+    institutionWebsite,
+    institutionKepAddress,
+    institutionAddress,
     defaultTariffBasis,
     setInstitutionName,
     setInstitutionSubHeader,
     setInstitutionLogo,
+    setInstitutionPhone,
+    setInstitutionEmail,
+    setInstitutionWebsite,
+    setInstitutionKepAddress,
+    setInstitutionAddress,
     setDefaultTariffBasis,
   } = useSettingsStore();
 
@@ -182,7 +192,7 @@ export function App(): React.JSX.Element {
       eventType: r.eventType || "Genel",
       price: r.price,
       paid: r.paid,
-      institutionName: institutionName || "GÜNEYYURT BELEDİYESİ",
+      institutionName: institutionName || "T.C. KURUM / BELEDİYE BAŞKANLIĞI",
       institutionSubHeader: institutionSubHeader ||
         "Emlak & Tahsilat İşleri Tesis Yönetimi",
       institutionLogo,
@@ -192,6 +202,28 @@ export function App(): React.JSX.Element {
       recipient: "",
       subject,
       body: htmlBody,
+      reservationData: {
+        id: r.id,
+        customer: r.customer,
+        phone: r.phone,
+        date: r.date,
+        start: r.start,
+        end: r.end,
+        venueName: v?.name || "Tesis",
+        hallName: h?.name || "Salon",
+        eventType: r.eventType || "Genel",
+      },
+    });
+    setMailModalOpen(true);
+  };
+
+  const handleQuickStaffMail = (r: Reservation, staffEmail?: string, staffName?: string) => {
+    const v = store.venues.find((x) => x.id === r.venueId);
+    const h = store.venues.flatMap((x) => x.halls).find((x) => x.id === r.hallId);
+    setMailPreset({
+      recipient: staffEmail || "gorevli@tesis.bel.tr",
+      subject: `[VARDİYA GÖREV BİLDİRİMİ] ${r.date} - ${v?.name} (${h?.name})`,
+      body: `Sayın ${staffName || "Tesis Sorumlusu / Görevlisi"},\n\nSorumlusu olduğunuz tesiste aşağıdaki kiralama/etkinlik görevi tanımlanmıştır:\n\n- Tarih / Saat: ${r.date} | ${r.start} - ${r.end}\n- Mekan / Salon: ${v?.name} - ${h?.name}\n- Etkinlik Türü: ${r.eventType || "Genel"}\n- Müşteri Adı: ${r.customer}\n- İletişim Tel: ${r.phone}\n\nLütfen salon iklimlendirme, temizlik ve ses/ışık teknik ekipman kontrollerini zamanında gerçekleştiriniz.\n\nİyi çalışmalar dileriz.`,
       reservationData: {
         id: r.id,
         customer: r.customer,
@@ -238,13 +270,42 @@ export function App(): React.JSX.Element {
   const [draftInstitutionLogo, setDraftInstitutionLogo] = useState(
     institutionLogo,
   );
+  const [draftInstitutionPhone, setDraftInstitutionPhone] = useState(
+    institutionPhone,
+  );
+  const [draftInstitutionEmail, setDraftInstitutionEmail] = useState(
+    institutionEmail,
+  );
+  const [draftInstitutionWebsite, setDraftInstitutionWebsite] = useState(
+    institutionWebsite,
+  );
+  const [draftInstitutionKepAddress, setDraftInstitutionKepAddress] = useState(
+    institutionKepAddress,
+  );
+  const [draftInstitutionAddress, setDraftInstitutionAddress] = useState(
+    institutionAddress,
+  );
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   useEffect(() => {
     setDraftInstitutionName(institutionName);
     setDraftInstitutionSubHeader(institutionSubHeader);
     setDraftInstitutionLogo(institutionLogo);
-  }, [institutionName, institutionSubHeader, institutionLogo]);
+    setDraftInstitutionPhone(institutionPhone);
+    setDraftInstitutionEmail(institutionEmail);
+    setDraftInstitutionWebsite(institutionWebsite);
+    setDraftInstitutionKepAddress(institutionKepAddress);
+    setDraftInstitutionAddress(institutionAddress);
+  }, [
+    institutionName,
+    institutionSubHeader,
+    institutionLogo,
+    institutionPhone,
+    institutionEmail,
+    institutionWebsite,
+    institutionKepAddress,
+    institutionAddress,
+  ]);
 
   useEffect(() => {
     setDraftTariffBasis(defaultTariffBasis);
@@ -254,13 +315,23 @@ export function App(): React.JSX.Element {
     setInstitutionName(draftInstitutionName);
     setInstitutionSubHeader(draftInstitutionSubHeader);
     setInstitutionLogo(draftInstitutionLogo);
-    toast.success("Kurumsal kimlik, alt antet ve logo başarıyla kaydedildi.");
+    setInstitutionPhone(draftInstitutionPhone);
+    setInstitutionEmail(draftInstitutionEmail);
+    setInstitutionWebsite(draftInstitutionWebsite);
+    setInstitutionKepAddress(draftInstitutionKepAddress);
+    setInstitutionAddress(draftInstitutionAddress);
+    toast.success("Kurumsal kimlik, logo, iletişim ve KEP bilgileri kaydedildi.");
   };
 
   const handleCancelInstitutionSettings = () => {
     setDraftInstitutionName(institutionName);
     setDraftInstitutionSubHeader(institutionSubHeader);
     setDraftInstitutionLogo(institutionLogo);
+    setDraftInstitutionPhone(institutionPhone);
+    setDraftInstitutionEmail(institutionEmail);
+    setDraftInstitutionWebsite(institutionWebsite);
+    setDraftInstitutionKepAddress(institutionKepAddress);
+    setDraftInstitutionAddress(institutionAddress);
     toast.info("Değişiklikler iptal edildi.");
   };
 
@@ -663,6 +734,10 @@ export function App(): React.JSX.Element {
                 }}
                 onCopySMS={handleCopySMS}
                 onQuickMail={handleQuickMail}
+                onNavigateToCustomer={(custName) => {
+                  setSearchTerm(custName);
+                  setActiveSection("customers");
+                }}
               />
             )}
 

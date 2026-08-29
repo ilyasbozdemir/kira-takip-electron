@@ -191,9 +191,9 @@ export function AppSidebar({
           </Button>
         </div>
 
-        {/* User / Operator Personnel Profile Card */}
+        {/* Application Licensed User / Operator Profile Card */}
         <div
-          onClick={() => setActiveSection("personnel")}
+          onClick={() => setActiveSection("settings")}
           className={`flex items-center cursor-pointer p-1.5 rounded-xl border transition-all ${
             sidebarCollapsed ? "justify-center" : "gap-2.5"
           } ${
@@ -201,16 +201,16 @@ export function AppSidebar({
               ? "bg-slate-900/80 border-slate-800 hover:bg-slate-800/80"
               : "bg-white border-slate-200 hover:bg-slate-100/80 shadow-xs"
           }`}
-          title="Aktif Operatör / Personel Kadrosu"
+          title="Uygulama Lisanslı Kullanıcı Hesabı & Ayarlarına Git"
         >
           {/* User Avatar with Green Online Badge */}
           <div className="relative shrink-0">
             <div className="h-8 w-8 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center font-bold text-xs shadow-xs">
-              {activePersonnel ? activePersonnel.name.slice(0, 2).toUpperCase() : "SY"}
+              {institutionName ? institutionName.slice(0, 2).toUpperCase() : "UK"}
             </div>
             <span
               className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900"
-              title="Operatör Çevrimiçi"
+              title="Uygulama Kullanıcısı Oturumu Açık"
             />
           </div>
 
@@ -222,7 +222,7 @@ export function AppSidebar({
                     theme === "dark" ? "text-slate-100" : "text-slate-900"
                   }`}
                 >
-                  {activePersonnel ? activePersonnel.name : "Sistem Yetkilisi"}
+                  {institutionName ? institutionName : "Uygulama Kullanıcısı"}
                 </span>
               </div>
               <span
@@ -230,9 +230,7 @@ export function AppSidebar({
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                {activePersonnel
-                  ? activePersonnel.title || "Tesis İdarecisi"
-                  : "Nöbetçi İşletme Personeli"}
+                Uygulama Operatörü • Ayarlar
               </span>
             </div>
           )}

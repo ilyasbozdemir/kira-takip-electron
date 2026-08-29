@@ -13,6 +13,26 @@ export function useSettingsStore() {
     return localStorage.getItem("institution_logo") || "";
   });
 
+  const [institutionPhone, setInstitutionPhoneState] = useState<string>(() => {
+    return localStorage.getItem("institution_phone") || "0850 000 00 00";
+  });
+
+  const [institutionEmail, setInstitutionEmailState] = useState<string>(() => {
+    return localStorage.getItem("institution_email") || "info@kurum.bel.tr";
+  });
+
+  const [institutionWebsite, setInstitutionWebsiteState] = useState<string>(() => {
+    return localStorage.getItem("institution_website") || "www.kurum.bel.tr";
+  });
+
+  const [institutionKepAddress, setInstitutionKepAddressState] = useState<string>(() => {
+    return localStorage.getItem("institution_kep_address") || "kurumbelediyesi@hs01.kep.tr";
+  });
+
+  const [institutionAddress, setInstitutionAddressState] = useState<string>(() => {
+    return localStorage.getItem("institution_address") || "Belediye Hizmet Binası, Merkez";
+  });
+
   const [defaultTariffBasis, setDefaultTariffBasisState] = useState<string>(() => {
     return (
       localStorage.getItem("default_tariff_basis") ||
@@ -37,6 +57,26 @@ export function useSettingsStore() {
           if (settings.institution_logo) {
             setInstitutionLogoState(settings.institution_logo);
             localStorage.setItem("institution_logo", settings.institution_logo);
+          }
+          if (settings.institution_phone) {
+            setInstitutionPhoneState(settings.institution_phone);
+            localStorage.setItem("institution_phone", settings.institution_phone);
+          }
+          if (settings.institution_email) {
+            setInstitutionEmailState(settings.institution_email);
+            localStorage.setItem("institution_email", settings.institution_email);
+          }
+          if (settings.institution_website) {
+            setInstitutionWebsiteState(settings.institution_website);
+            localStorage.setItem("institution_website", settings.institution_website);
+          }
+          if (settings.institution_kep_address) {
+            setInstitutionKepAddressState(settings.institution_kep_address);
+            localStorage.setItem("institution_kep_address", settings.institution_kep_address);
+          }
+          if (settings.institution_address) {
+            setInstitutionAddressState(settings.institution_address);
+            localStorage.setItem("institution_address", settings.institution_address);
           }
           if (settings.default_tariff_basis) {
             setDefaultTariffBasisState(settings.default_tariff_basis);
@@ -98,6 +138,66 @@ export function useSettingsStore() {
     }
   };
 
+  const setInstitutionPhone = async (phone: string) => {
+    setInstitutionPhoneState(phone);
+    localStorage.setItem("institution_phone", phone);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("institution_phone", phone);
+      }
+    } catch (err) {
+      console.error("Failed to save institution_phone to SQLite:", err);
+    }
+  };
+
+  const setInstitutionEmail = async (email: string) => {
+    setInstitutionEmailState(email);
+    localStorage.setItem("institution_email", email);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("institution_email", email);
+      }
+    } catch (err) {
+      console.error("Failed to save institution_email to SQLite:", err);
+    }
+  };
+
+  const setInstitutionWebsite = async (website: string) => {
+    setInstitutionWebsiteState(website);
+    localStorage.setItem("institution_website", website);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("institution_website", website);
+      }
+    } catch (err) {
+      console.error("Failed to save institution_website to SQLite:", err);
+    }
+  };
+
+  const setInstitutionKepAddress = async (kep: string) => {
+    setInstitutionKepAddressState(kep);
+    localStorage.setItem("institution_kep_address", kep);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("institution_kep_address", kep);
+      }
+    } catch (err) {
+      console.error("Failed to save institution_kep_address to SQLite:", err);
+    }
+  };
+
+  const setInstitutionAddress = async (addr: string) => {
+    setInstitutionAddressState(addr);
+    localStorage.setItem("institution_address", addr);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("institution_address", addr);
+      }
+    } catch (err) {
+      console.error("Failed to save institution_address to SQLite:", err);
+    }
+  };
+
   const setDefaultTariffBasis = async (basis: string) => {
     setDefaultTariffBasisState(basis);
     localStorage.setItem("default_tariff_basis", basis);
@@ -114,10 +214,20 @@ export function useSettingsStore() {
     institutionName,
     institutionSubHeader,
     institutionLogo,
+    institutionPhone,
+    institutionEmail,
+    institutionWebsite,
+    institutionKepAddress,
+    institutionAddress,
     defaultTariffBasis,
     setInstitutionName,
     setInstitutionSubHeader,
     setInstitutionLogo,
+    setInstitutionPhone,
+    setInstitutionEmail,
+    setInstitutionWebsite,
+    setInstitutionKepAddress,
+    setInstitutionAddress,
     setDefaultTariffBasis,
     reloadSettings: loadDbSettings,
   };

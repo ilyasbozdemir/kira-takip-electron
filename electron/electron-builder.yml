@@ -28,4 +28,4 @@ nsis:
 publish:
   provider: github
   owner: ilyasbozdemir
-  repo: kira-takip-electron
+  repo: isletme-kira-takip-electron

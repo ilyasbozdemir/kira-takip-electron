@@ -51,6 +51,8 @@ export type Reservation = {
   status?: ReservationStatus | string;
   receiptNo?: string;
   paymentMethod?: string;
+  mailSentAt?: string;
+  mailSentTo?: string;
 };
 
 export type Customer = {

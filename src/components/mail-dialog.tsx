@@ -34,6 +34,7 @@ interface MailDialogProps {
     hallName?: string;
     eventType?: string;
   };
+  onMailSentSuccess?: (reservationId: string, recipient: string) => void;
 }
 
 const SMTP_STORAGE_KEY = "venue-keeper-smtp-settings";
@@ -87,6 +88,7 @@ export function MailDialog({
   defaultBody = "",
   theme = "dark",
   reservationData,
+  onMailSentSuccess,
 }: MailDialogProps) {
   // SMTP Configuration State (Auto-synced from Settings)
   const [smtpConfig, setSmtpConfig] = useState<{
@@ -218,6 +220,9 @@ export function MailDialog({
               ? "E-posta ve .ics takvim daveti başarıyla alıcıya gönderildi!"
               : "Düz e-posta başarıyla alıcıya gönderildi!"
           );
+          if (reservationData?.id && onMailSentSuccess) {
+            onMailSentSuccess(reservationData.id, to);
+          }
           onOpenChange(false);
         } else {
           toast.error(`Mail Hatası: ${res.error}`);
@@ -563,17 +568,36 @@ export function MailDialog({
                   </div>
                 )}
 
-                {/* Google & Apple Maps Action Pill Buttons */}
+                {/* Google & Apple Calendar Action Pill Buttons */}
                 <div className="flex items-center gap-2 pt-2 border-t border-slate-800/80 flex-wrap">
+                  <a
+                    href={(() => {
+                      const data = reservationData || DEFAULT_SAMPLE_RESERVATION;
+                      const dateStr = (data.date || new Date().toISOString().split("T")[0]).replace(/-/g, "");
+                      const startStr = (data.start || "18:00").replace(":", "") + "00";
+                      const endStr = (data.end || "23:30").replace(":", "") + "00";
+                      const dtStart = `${dateStr}T${startStr}`;
+                      const dtEnd = `${dateStr}T${endStr}`;
+                      const title = encodeURIComponent(`${data.eventType || "Salon Kiralaması"}: ${data.customer || "Müşteri"}`);
+                      const details = encodeURIComponent(`Müşteri: ${data.customer || "-"} | Tel: ${data.phone || "-"}`);
+                      const location = encodeURIComponent(`${data.venueName || "Tesis"} - ${data.hallName || "Salon"}`);
+                      return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dtStart}/${dtEnd}&details=${details}&location=${location}`;
+                    })()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-colors"
+                  >
+                    🌐 Google Takvim'e Ekle
+                  </a>
                   <button
                     type="button"
                     onClick={handleDownloadICS}
                     className="px-3 py-1.5 rounded-full bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
                   >
-                    📅 Takvime ekle
+                    🍏 Apple / iPhone Takvim Daveti (.ics)
                   </button>
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((reservationData?.venueName || "Tesis") + " " + (reservationData?.hallName || "Salon") + " Güneyyurt")}`}
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((reservationData?.venueName || "Tesis") + " " + (reservationData?.hallName || "Salon"))}`}
                     target="_blank"
                     rel="noreferrer"
                     className="px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 hover:bg-indigo-500/30 text-indigo-300 font-bold text-xs flex items-center gap-1 transition-colors"
@@ -581,7 +605,7 @@ export function MailDialog({
                     🗺️ Yol tarifi (Google)
                   </a>
                   <a
-                    href={`https://maps.apple.com/?q=${encodeURIComponent((reservationData?.venueName || "Tesis") + " " + (reservationData?.hallName || "Salon") + " Güneyyurt")}`}
+                    href={`https://maps.apple.com/?q=${encodeURIComponent((reservationData?.venueName || "Tesis") + " " + (reservationData?.hallName || "Salon"))}`}
                     target="_blank"
                     rel="noreferrer"
                     className="px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1 transition-colors"

@@ -1,4 +1,3 @@
-import React from "react";
 import {
   AlertTriangle,
   CalendarDays,
@@ -9,6 +8,7 @@ import {
   Printer,
   QrCode,
   Trash2,
+  User,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ interface ReservationDrawerProps {
   onCopySMS: (r: Reservation) => void;
   onQuickMail: (r: Reservation) => void;
   onPromptDelete: (type: "reservation", id: string, title: string) => void;
+  onNavigateToCustomer?: (customerName: string) => void;
 }
 
 export function ReservationDrawer({
@@ -61,6 +62,7 @@ export function ReservationDrawer({
   onCopySMS,
   onQuickMail,
   onPromptDelete,
+  onNavigateToCustomer,
 }: ReservationDrawerProps): React.JSX.Element | null {
   if (!reservation) return null;
 
@@ -226,6 +228,19 @@ export function ReservationDrawer({
                   {reservation.eventType}
                 </span>
               </div>
+              {onNavigateToCustomer && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    onClose();
+                    onNavigateToCustomer(reservation.customer);
+                  }}
+                  className="w-full mt-2 text-xs h-8 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <User className="h-3.5 w-3.5 text-indigo-500" /> Müşteri Profiline & Geçmiş Kayıtlara Git
+                </Button>
+              )}
             </div>
           </div>
 

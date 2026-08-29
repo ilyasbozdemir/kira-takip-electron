@@ -152,6 +152,7 @@ interface AppModalsProps {
   handleCopySMS: (r: Reservation) => void;
   handleQuickMail: (r: Reservation) => void;
   promptDelete: (type: "venue" | "hall" | "reservation", id: string, title: string, venueId?: string) => void;
+  onNavigateToCustomer?: (customerName: string) => void;
 
   // Launcher Modal Props
   showLauncherModal: boolean;
@@ -286,6 +287,7 @@ export function AppModals({
   handleCopySMS,
   handleQuickMail,
   promptDelete,
+  onNavigateToCustomer,
   showLauncherModal,
   setShowLauncherModal,
   currentFilePath,
@@ -428,6 +430,13 @@ export function AppModals({
               }
             : undefined)
         }
+        onMailSentSuccess={(resId, recipient) => {
+          const sentTime = `${new Date().toLocaleDateString("tr-TR")} ${new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}`;
+          updateReservationDetails(resId, {
+            mailSentAt: sentTime,
+            mailSentTo: recipient,
+          });
+        }}
       />
 
       <CopySettingsModal
@@ -481,6 +490,7 @@ export function AppModals({
         onCopySMS={handleCopySMS}
         onQuickMail={handleQuickMail}
         onPromptDelete={(type, id, title) => promptDelete(type, id, title)}
+        onNavigateToCustomer={onNavigateToCustomer}
       />
 
       {showLauncherModal && (
