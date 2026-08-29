@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Send, CheckCircle2, AlertCircle, Loader2, Calendar, Download, Copy, Check } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface MailDialogProps {
@@ -88,6 +89,7 @@ export function MailDialog({
   const [activeTab, setActiveTab] = useState<"send" | "settings" | "ics">("send");
   const [sending, setSending] = useState(false);
   const [copiedIcs, setCopiedIcs] = useState(false);
+  const [previewMode, setPreviewMode] = useState<"visual" | "code">("visual");
 
   useEffect(() => {
     try {
@@ -251,20 +253,46 @@ export function MailDialog({
         </div>
 
         {activeTab === "send" ? (
-          <div className="space-y-4 py-1">
-            <div>
+          <div className="space-y-3.5 py-1">
+            <div className="flex items-center justify-between">
               <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Alıcı E-posta *</Label>
-              <Input
-                placeholder="ornek@musteri.com"
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className={`mt-1 text-xs ${
-                  theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                }`}
-              />
+              <div className="flex items-center gap-1.5 bg-slate-950/60 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode("visual")}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors ${
+                    previewMode === "visual"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  👁️ Canlı Önizleme
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode("code")}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors ${
+                    previewMode === "code"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  ✏️ Metin / Kodu Düzenle
+                </button>
+              </div>
             </div>
+
+            <Input
+              placeholder="ornek@musteri.com"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className={`text-xs ${
+                theme === "dark"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+              }`}
+            />
+
             <div>
               <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Konu</Label>
               <Input
@@ -278,9 +306,10 @@ export function MailDialog({
                 }`}
               />
             </div>
+
             <div>
-              <div className="flex items-center justify-between">
-                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>Mesaj İçeriği</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>E-posta Mesaj İçeriği</Label>
                 <button
                   type="button"
                   onClick={handleDownloadICS}
@@ -289,17 +318,28 @@ export function MailDialog({
                   <Download className="h-3 w-3" /> .ics Dosyasını İndir
                 </button>
               </div>
-              <Textarea
-                rows={5}
-                placeholder="Mesajınızı buraya yazın..."
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className={`mt-1 text-xs ${
-                  theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
-                    : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
-                }`}
-              />
+
+              {previewMode === "visual" && body.includes("<html") ? (
+                <div className="w-full h-56 rounded-xl border border-slate-800 bg-white overflow-hidden shadow-inner">
+                  <iframe
+                    title="E-posta Canlı Önizleme"
+                    srcDoc={body}
+                    className="w-full h-full border-0"
+                  />
+                </div>
+              ) : (
+                <Textarea
+                  rows={6}
+                  placeholder="Mesajınızı buraya yazın..."
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  className={`text-xs ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                      : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
+                  }`}
+                />
+              )}
             </div>
           </div>
         ) : activeTab === "settings" ? (
@@ -376,26 +416,97 @@ export function MailDialog({
             </div>
           </div>
         ) : (
-          /* TAB 3: .ics TAKVİM TESTİ */
+          /* TAB 3: .ics TAKVİM TESTİ (GÖRSEL ETKİNLİK KARTI & KOD ÖNİZLEME) */
           <div className="space-y-3.5 py-1">
-            <div className="p-3 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-400 text-xs">
-              <div className="flex items-center gap-2 font-bold mb-1">
-                <Calendar className="h-4 w-4" /> iCal (.ics) Takvim Dosyası Önizleme & Testi
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                <Calendar className="h-4 w-4" /> Görsel Takvim Daveti & Kart Önizleme
               </div>
-              <p className="text-[11px] text-slate-300 leading-snug">
-                Bu rezervasyon kaydı için üretilen RFC 5545 takvim daveti kodu aşağıdadır. Google Calendar veya Outlook uygulamasında test edebilirsiniz.
-              </p>
+              <div className="flex items-center gap-1.5 bg-slate-950/60 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode("visual")}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors ${
+                    previewMode === "visual"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  🎨 Görsel Kart
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMode("code")}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors ${
+                    previewMode === "code"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  💻 RFC 5545 Kodu
+                </button>
+              </div>
             </div>
 
-            <div>
-              <Label className="text-xs font-semibold text-slate-300">Üretilen .ics Kod İçeriği</Label>
-              <textarea
-                readOnly
-                rows={7}
-                value={currentIcsPreview}
-                className="w-full mt-1 p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-emerald-400 font-mono text-[11px] leading-relaxed resize-none focus:outline-none"
-              />
-            </div>
+            {previewMode === "visual" ? (
+              /* GOOGLE CALENDAR / iCAL STYLE VISUAL CARD */
+              <div className="p-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 text-slate-100 shadow-lg space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-extrabold text-base shrink-0 shadow-md">
+                      📅
+                    </div>
+                    <div>
+                      <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px] font-bold mb-1">
+                        CONFIRMED • KESİNLEŞMİŞ TAKVİM KAYDI
+                      </Badge>
+                      <h3 className="text-sm font-extrabold text-slate-100 leading-snug">
+                        {reservationData?.eventType || "Salon Tahsis Etkinliği"}: {reservationData?.customer || "Müşteri Tahsis Kaydı"}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs border-t border-slate-800">
+                  <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Tarih & Zaman</span>
+                    <span className="font-bold text-slate-200">
+                      📅 {reservationData?.date || "2026-08-29"}
+                    </span>
+                    <div className="text-[11px] font-mono text-emerald-400 font-medium mt-0.5">
+                      ⏰ {reservationData?.start || "09:00"} - {reservationData?.end || "17:00"}
+                    </div>
+                  </div>
+
+                  <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                    <span className="text-[10px] text-slate-400 block font-semibold">Mekan & Konum</span>
+                    <span className="font-bold text-slate-200 truncate block">
+                      🏛️ {reservationData?.venueName || "Tesis"}
+                    </span>
+                    <div className="text-[11px] text-indigo-400 font-medium truncate mt-0.5">
+                      📍 {reservationData?.hallName || "Salon"}
+                    </div>
+                  </div>
+                </div>
+
+                {reservationData?.phone && (
+                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5 pt-0.5">
+                    <span>👤 Müşteri İletişim:</span>
+                    <span className="font-mono text-slate-200 font-bold">{reservationData.phone}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <Label className="text-xs font-semibold text-slate-300">RFC 5545 iCal Ham Kod İçeriği</Label>
+                <textarea
+                  readOnly
+                  rows={7}
+                  value={currentIcsPreview}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-slate-800 bg-slate-950 text-emerald-400 font-mono text-[11px] leading-relaxed resize-none focus:outline-none"
+                />
+              </div>
+            )}
 
             <div className="flex items-center gap-2 pt-1">
               <Button
