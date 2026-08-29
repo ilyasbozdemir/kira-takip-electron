@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { Customer, Store } from "@/lib/rental-store";
 import {
   Building,
@@ -64,9 +64,43 @@ export function CustomersScreen({
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
 
-  const customersList = store.customers || [];
+  // Combine registered CRM customers + unique reservation customers automatically
+  const combinedCustomersList = useMemo(() => {
+    const list: Customer[] = [...(store.customers || [])];
+    const registeredNames = new Set(
+      list.map((c) => c.name.toLowerCase().trim())
+    );
 
-  const filteredCustomers = customersList.filter((c) => {
+    // Find reservations with customer names not yet explicitly in CRM
+    const mapByCustomer = new Map<string, { name: string; phone: string; count: number }>();
+    for (const r of store.reservations) {
+      if (!r.customer) continue;
+      const key = r.customer.toLowerCase().trim();
+      if (registeredNames.has(key)) continue;
+
+      if (!mapByCustomer.has(key)) {
+        mapByCustomer.set(key, { name: r.customer, phone: r.phone || "", count: 1 });
+      } else {
+        const item = mapByCustomer.get(key)!;
+        item.count += 1;
+        if (!item.phone && r.phone) item.phone = r.phone;
+      }
+    }
+
+    // Convert map to virtual Customer items
+    mapByCustomer.forEach((val, key) => {
+      list.push({
+        id: `auto_${key}`,
+        name: val.name,
+        phone: val.phone,
+        notes: "Etkinlik kiralama kayıtlarından otomatik derlendi",
+      });
+    });
+
+    return list;
+  }, [store.customers, store.reservations]);
+
+  const filteredCustomers = combinedCustomersList.filter((c) => {
     const query = searchTerm.toLowerCase();
     return (
       c.name.toLowerCase().includes(query) ||
@@ -128,20 +162,34 @@ export function CustomersScreen({
     if (!editingCustomer || !name.trim()) return;
 
     try {
-      await onUpdateCustomer({
-        ...editingCustomer,
-        name: name.trim(),
-        phone: phone.trim(),
-        email: email.trim() || undefined,
-        company: company.trim() || undefined,
-        taxNo: taxNo.trim() || undefined,
-        address: address.trim() || undefined,
-        notes: notes.trim() || undefined,
-      });
+      if (editingCustomer.id.startsWith("auto_")) {
+        // Promote auto-derived customer to permanent CRM entry
+        await onAddCustomer({
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim() || undefined,
+          company: company.trim() || undefined,
+          taxNo: taxNo.trim() || undefined,
+          address: address.trim() || undefined,
+          notes: notes.trim() || undefined,
+        });
+        toast.success("Müşteri kalıcı CRM rehberine eklendi!");
+      } else {
+        await onUpdateCustomer({
+          ...editingCustomer,
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim() || undefined,
+          company: company.trim() || undefined,
+          taxNo: taxNo.trim() || undefined,
+          address: address.trim() || undefined,
+          notes: notes.trim() || undefined,
+        });
+        toast.success("Müşteri bilgileri güncellendi!");
+      }
       setEditingCustomer(null);
-      toast.success("Müşteri bilgileri güncellendi!");
     } catch (err: any) {
-      toast.error(`Güncelleme hatası: ${err.message || err}`);
+      toast.error(`Kayıt hatası: ${err.message || err}`);
     }
   };
 
@@ -198,7 +246,7 @@ export function CustomersScreen({
           </CardHeader>
           <CardContent className="px-4 pb-3.5">
             <div className="text-2xl font-extrabold text-indigo-400">
-              {customersList.length}
+              {combinedCustomersList.length}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">
               Rehberde kayıtlı müşteri & kurum
@@ -221,7 +269,7 @@ export function CustomersScreen({
           </CardHeader>
           <CardContent className="px-4 pb-3.5">
             <div className="text-2xl font-extrabold text-sky-400">
-              {customersList.filter((c) => c.company || c.taxNo).length}
+              {combinedCustomersList.filter((c) => c.company || c.taxNo).length}
             </div>
             <p className="text-[10px] text-slate-500 mt-0.5">
               Fatura / Vergi No tanımlı kurumsal üye
