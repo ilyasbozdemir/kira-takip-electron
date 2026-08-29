@@ -37,10 +37,23 @@ interface MailDialogProps {
 
 const SMTP_STORAGE_KEY = "venue-keeper-smtp-settings";
 
-function generateSingleReservationICS(resData: any) {
-  const dateStr = (resData?.date || new Date().toISOString().split("T")[0]).replace(/-/g, "");
-  const startStr = (resData?.start || "09:00").replace(":", "") + "00";
-  const endStr = (resData?.end || "17:00").replace(":", "") + "00";
+const DEFAULT_SAMPLE_RESERVATION = {
+  id: "VK-2026-TEST",
+  customer: "Ahmet Yılmaz (Örnek Müşteri Tahsisi)",
+  phone: "0555 123 45 67",
+  date: new Date().toISOString().split("T")[0],
+  start: "18:00",
+  end: "23:30",
+  venueName: "KÜLTÜR MERKEZİ & SOSYAL TESİS",
+  hallName: "ZEMİN KAT BÜYÜK BALO SALONU",
+  eventType: "Düğün & Davet Kiralama Kaydı",
+};
+
+function generateSingleReservationICS(resData?: any) {
+  const data = resData && resData.customer ? resData : DEFAULT_SAMPLE_RESERVATION;
+  const dateStr = (data.date || new Date().toISOString().split("T")[0]).replace(/-/g, "");
+  const startStr = (data.start || "18:00").replace(":", "") + "00";
+  const endStr = (data.end || "23:30").replace(":", "") + "00";
   const dtStart = `${dateStr}T${startStr}`;
   const dtEnd = `${dateStr}T${endStr}`;
 
@@ -52,13 +65,13 @@ function generateSingleReservationICS(resData: any) {
     "METHOD:PUBLISH",
     "X-WR-CALNAME:VenueKeeper Salon Tahsisi",
     "BEGIN:VEVENT",
-    `UID:${resData?.id || Math.random().toString(36).slice(2)}@venuekeeper.pro`,
+    `UID:${data.id || "sample-event-123"}@venuekeeper.pro`,
     `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").split(".")[0]}Z`,
     `DTSTART:${dtStart}`,
     `DTEND:${dtEnd}`,
-    `SUMMARY:${resData?.eventType || "Salon Tahsisi"}: ${resData?.customer || "Müşteri Tahsis Kaydı"}`,
-    `LOCATION:${resData?.venueName || "Tesis"} - ${resData?.hallName || "Salon"}`,
-    `DESCRIPTION:Müşteri: ${resData?.customer || "-"} | Tel: ${resData?.phone || "-"}`,
+    `SUMMARY:${data.eventType || "Salon Kiralama Kaydı"}: ${data.customer || "Müşteri Tahsis Kaydı"}`,
+    `LOCATION:${data.venueName || "Tesis"} - ${data.hallName || "Salon"}`,
+    `DESCRIPTION:Müşteri: ${data.customer || "-"} | Tel: ${data.phone || "-"}`,
     "STATUS:CONFIRMED",
     "END:VEVENT",
     "END:VCALENDAR",
