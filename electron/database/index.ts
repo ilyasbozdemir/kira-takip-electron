@@ -216,7 +216,7 @@ export function initializeDatabase(db: Database.Database): void {
 
     // Insert Default Metadata & meta.json Specification
     const stmt = db.prepare("INSERT OR REPLACE INTO TANIM_Ayar (key, value) VALUES (?, ?)")
-    stmt.run("app_name", "VenueKeeper App Pro")
+    stmt.run("app_name", "KİRA KONTROL UYGULAMASI Pro")
     stmt.run("file_format", ".vke")
     stmt.run("file_format_version", "2.0")
     stmt.run("schema_version", "5")

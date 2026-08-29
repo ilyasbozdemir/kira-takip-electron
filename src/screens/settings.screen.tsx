@@ -22,10 +22,10 @@ import {
 } from "lucide-react";
 import type { Reservation, Store, Venue } from "@/lib/rental-store";
 import {
+  type EmailTemplateConfig,
+  generateEmailHTMLTemplate,
   getEmailTemplateSettings,
   saveEmailTemplateSettings,
-  generateEmailHTMLTemplate,
-  type EmailTemplateConfig,
 } from "@/lib/email-template";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,7 +58,7 @@ function generateICSContent(reservations: Reservation[], venues: Venue[]) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//VenueKeeper App Pro//TR",
+    "PRODID:-//KİRAKONTROLUYGULAMASI//TR",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "X-WR-CALNAME:VenueKeeper Salon Kiralamaları",
@@ -304,28 +304,46 @@ export function SettingsScreen({
       if (tplConfig) {
         if (tplConfig.greetingText) setTplGreetingText(tplConfig.greetingText);
         if (tplConfig.introText) setTplIntroText(tplConfig.introText);
-        if (tplConfig.footerDisclaimer) setTplFooterDisclaimer(tplConfig.footerDisclaimer);
-        if (tplConfig.headerThemeColor) setTplHeaderThemeColor(tplConfig.headerThemeColor);
+        if (tplConfig.footerDisclaimer) {
+          setTplFooterDisclaimer(tplConfig.footerDisclaimer);
+        }
+        if (tplConfig.headerThemeColor) {
+          setTplHeaderThemeColor(tplConfig.headerThemeColor);
+        }
         if (tplConfig.phone) setTplPhone(tplConfig.phone);
         if (tplConfig.email) setTplEmail(tplConfig.email);
         if (tplConfig.website) setTplWebsite(tplConfig.website);
         if (tplConfig.kepAddress) setTplKepAddress(tplConfig.kepAddress);
         if (tplConfig.address) setTplAddress(tplConfig.address);
-        if (tplConfig.showMapButtons !== undefined) setTplShowMapButtons(tplConfig.showMapButtons);
+        if (tplConfig.showMapButtons !== undefined) {
+          setTplShowMapButtons(tplConfig.showMapButtons);
+        }
       }
     } catch {}
   }, []);
 
   // Dynamic Email Template State
-  const [tplGreetingText, setTplGreetingText] = useState("Sayın {CUSTOMER_NAME},");
-  const [tplIntroText, setTplIntroText] = useState("Tesislerimizde gerçekleştireceğiniz {EVENT_TYPE} etkinliği ve salon kiralama tahsis talebiniz idaremizce onaylanarak kayıt altına alınmıştır. Tahsis ve mali ödeme döküm bilgileriniz aşağıda sunulmuştur:");
-  const [tplFooterDisclaimer, setTplFooterDisclaimer] = useState("Bu e-posta VenueKeeper Tesis & Salon İşletim Otomasyonu tarafından otomatik üretilmiş resmi evrak niteliğindedir.");
-  const [tplHeaderThemeColor, setTplHeaderThemeColor] = useState<"navy" | "indigo" | "emerald" | "burgundy" | "slate">("navy");
+  const [tplGreetingText, setTplGreetingText] = useState(
+    "Sayın {CUSTOMER_NAME},",
+  );
+  const [tplIntroText, setTplIntroText] = useState(
+    "Tesislerimizde gerçekleştireceğiniz {EVENT_TYPE} etkinliği ve salon kiralama tahsis talebiniz idaremizce onaylanarak kayıt altına alınmıştır. Tahsis ve mali ödeme döküm bilgileriniz aşağıda sunulmuştur:",
+  );
+  const [tplFooterDisclaimer, setTplFooterDisclaimer] = useState(
+    "Bu e-posta VenueKeeper Tesis & Salon İşletim Otomasyonu tarafından otomatik üretilmiş resmi evrak niteliğindedir.",
+  );
+  const [tplHeaderThemeColor, setTplHeaderThemeColor] = useState<
+    "navy" | "indigo" | "emerald" | "burgundy" | "slate"
+  >("navy");
   const [tplPhone, setTplPhone] = useState("0850 000 00 00");
   const [tplEmail, setTplEmail] = useState("info@kurum.bel.tr");
   const [tplWebsite, setTplWebsite] = useState("www.kurum.bel.tr");
-  const [tplKepAddress, setTplKepAddress] = useState("kurumbelediyesi@hs01.kep.tr");
-  const [tplAddress, setTplAddress] = useState("Belediye Hizmet Binası, Merkez");
+  const [tplKepAddress, setTplKepAddress] = useState(
+    "kurumbelediyesi@hs01.kep.tr",
+  );
+  const [tplAddress, setTplAddress] = useState(
+    "Belediye Hizmet Binası, Merkez",
+  );
   const [tplShowMapButtons, setTplShowMapButtons] = useState(true);
 
   const handleSaveEmailTemplateCustomization = () => {
@@ -344,7 +362,9 @@ export function SettingsScreen({
       address: tplAddress,
       showMapButtons: tplShowMapButtons,
     });
-    toast.success("Resmi e-posta & evrak şablonu özelleştirme ayarları kaydedildi!");
+    toast.success(
+      "Resmi e-posta & evrak şablonu özelleştirme ayarları kaydedildi!",
+    );
   };
 
   const handleSaveSmtpSettings = () => {
@@ -497,8 +517,18 @@ export function SettingsScreen({
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="p-2.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs flex items-center justify-between">
-                <span>💾 Logo, Uygulama Başlığı, KEP ve İletişim bilgileri doğrudan <strong>.vke</strong> çalışma dosyanızın SQLite veritabanında saklanır.</span>
-                <Badge variant="outline" className="bg-indigo-500/20 border-indigo-500/40 text-indigo-300 text-[10px]">.VKE sqlite senkronize</Badge>
+                <span>
+                  💾 Logo, Uygulama Başlığı, KEP ve İletişim bilgileri doğrudan
+                  {" "}
+                  <strong>.vke</strong>{" "}
+                  çalışma dosyanızın SQLite veritabanında saklanır.
+                </span>
+                <Badge
+                  variant="outline"
+                  className="bg-indigo-500/20 border-indigo-500/40 text-indigo-300 text-[10px]"
+                >
+                  .VKE sqlite senkronize
+                </Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -513,7 +543,8 @@ export function SettingsScreen({
                   <Input
                     placeholder="örn: VenueKeeper Tesis & Salon İşletim Otomasyonu"
                     value={draftAppName || ""}
-                    onChange={(e) => setDraftAppName && setDraftAppName(e.target.value)}
+                    onChange={(e) =>
+                      setDraftAppName && setDraftAppName(e.target.value)}
                     className={`text-xs mt-1.5 ${
                       theme === "dark"
                         ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
@@ -569,7 +600,9 @@ export function SettingsScreen({
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-[11px] font-medium text-slate-400">Kurum Telefon Numarası</Label>
+                    <Label className="text-[11px] font-medium text-slate-400">
+                      Kurum Telefon Numarası
+                    </Label>
                     <Input
                       value={tplPhone}
                       onChange={(e) => setTplPhone(e.target.value)}
@@ -578,7 +611,9 @@ export function SettingsScreen({
                     />
                   </div>
                   <div>
-                    <Label className="text-[11px] font-medium text-slate-400">Kurumsal E-posta</Label>
+                    <Label className="text-[11px] font-medium text-slate-400">
+                      Kurumsal E-posta
+                    </Label>
                     <Input
                       value={tplEmail}
                       onChange={(e) => setTplEmail(e.target.value)}
@@ -587,7 +622,9 @@ export function SettingsScreen({
                     />
                   </div>
                   <div>
-                    <Label className="text-[11px] font-medium text-slate-400">Web Adresi</Label>
+                    <Label className="text-[11px] font-medium text-slate-400">
+                      Web Adresi
+                    </Label>
                     <Input
                       value={tplWebsite}
                       onChange={(e) => setTplWebsite(e.target.value)}
@@ -599,7 +636,9 @@ export function SettingsScreen({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
-                    <Label className="text-[11px] font-medium text-slate-400">KEP Kayıtlı E-posta Adresi</Label>
+                    <Label className="text-[11px] font-medium text-slate-400">
+                      KEP Kayıtlı E-posta Adresi
+                    </Label>
                     <Input
                       value={tplKepAddress}
                       onChange={(e) => setTplKepAddress(e.target.value)}
@@ -608,7 +647,9 @@ export function SettingsScreen({
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <Label className="text-[11px] font-medium text-slate-400">Fiziksel Kurum Adresi</Label>
+                    <Label className="text-[11px] font-medium text-slate-400">
+                      Fiziksel Kurum Adresi
+                    </Label>
                     <Input
                       value={tplAddress}
                       onChange={(e) => setTplAddress(e.target.value)}
@@ -733,22 +774,48 @@ export function SettingsScreen({
                   theme === "dark" ? "text-slate-400" : "text-slate-600"
                 }`}
               >
-                Müşterilere ve tesis çalışanlarına otomatik veya manuel gönderilen HTML e-postalarının renk, başlık, selamlama ve iletişim içeriklerini özelleştirin.
+                Müşterilere ve tesis çalışanlarına otomatik veya manuel
+                gönderilen HTML e-postalarının renk, başlık, selamlama ve
+                iletişim içeriklerini özelleştirin.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               {/* Header Color Picker */}
               <div>
-                <Label className={`text-xs font-semibold block mb-2 ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                <Label
+                  className={`text-xs font-semibold block mb-2 ${
+                    theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  }`}
+                >
                   E-posta Üst Başlık Tema Rengi
                 </Label>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                   {[
-                    { id: "navy", name: "Lacivert Mühür", bg: "bg-slate-900 border-indigo-500" },
-                    { id: "indigo", name: "Kraliyet Mavisidir", bg: "bg-indigo-900 border-indigo-400" },
-                    { id: "emerald", name: "Zümrüt Yeşil", bg: "bg-emerald-900 border-emerald-400" },
-                    { id: "burgundy", name: "Resmi Bordo", bg: "bg-rose-950 border-rose-400" },
-                    { id: "slate", name: "Kurumsal Gri", bg: "bg-slate-800 border-slate-400" },
+                    {
+                      id: "navy",
+                      name: "Lacivert Mühür",
+                      bg: "bg-slate-900 border-indigo-500",
+                    },
+                    {
+                      id: "indigo",
+                      name: "Kraliyet Mavisidir",
+                      bg: "bg-indigo-900 border-indigo-400",
+                    },
+                    {
+                      id: "emerald",
+                      name: "Zümrüt Yeşil",
+                      bg: "bg-emerald-900 border-emerald-400",
+                    },
+                    {
+                      id: "burgundy",
+                      name: "Resmi Bordo",
+                      bg: "bg-rose-950 border-rose-400",
+                    },
+                    {
+                      id: "slate",
+                      name: "Kurumsal Gri",
+                      bg: "bg-slate-800 border-slate-400",
+                    },
                   ].map((color) => (
                     <button
                       key={color.id}
@@ -762,8 +829,12 @@ export function SettingsScreen({
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
-                      <span className="text-[11px] font-bold">{color.name}</span>
-                      {tplHeaderThemeColor === color.id && <Check className="h-3.5 w-3.5" />}
+                      <span className="text-[11px] font-bold">
+                        {color.name}
+                      </span>
+                      {tplHeaderThemeColor === color.id && (
+                        <Check className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   ))}
                 </div>
@@ -772,7 +843,11 @@ export function SettingsScreen({
               {/* Dynamic Greeting & Intro Texts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                  <Label
+                    className={`text-xs font-semibold ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Selamlama Başlık Metni
                   </Label>
                   <Input
@@ -782,12 +857,19 @@ export function SettingsScreen({
                     className="text-xs mt-1 font-mono"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
-                    Değişken: <code className="text-indigo-400 font-bold">{`{CUSTOMER_NAME}`}</code>
+                    Değişken:{" "}
+                    <code className="text-indigo-400 font-bold">
+                      {`{CUSTOMER_NAME}`}
+                    </code>
                   </span>
                 </div>
 
                 <div>
-                  <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                  <Label
+                    className={`text-xs font-semibold ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Yasal Dipnot / Alt Açıklama
                   </Label>
                   <Input
@@ -801,15 +883,28 @@ export function SettingsScreen({
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                  <Label
+                    className={`text-xs font-semibold ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Giriş & Bilgilendirme Metni (Dinamik Değişkenli)
                   </Label>
                   <div className="flex gap-1 flex-wrap">
-                    {["{CUSTOMER_NAME}", "{EVENT_TYPE}", "{VENUE_NAME}", "{HALL_NAME}", "{DATE}", "{HOURS}", "{PRICE}"].map((tag) => (
+                    {[
+                      "{CUSTOMER_NAME}",
+                      "{EVENT_TYPE}",
+                      "{VENUE_NAME}",
+                      "{HALL_NAME}",
+                      "{DATE}",
+                      "{HOURS}",
+                      "{PRICE}",
+                    ].map((tag) => (
                       <Badge
                         key={tag}
                         variant="outline"
-                        onClick={() => setTplIntroText((prev) => prev + " " + tag)}
+                        onClick={() =>
+                          setTplIntroText((prev) => prev + " " + tag)}
                         className="text-[9px] cursor-pointer hover:bg-indigo-500/20 font-mono text-indigo-400"
                       >
                         +{tag}
@@ -828,7 +923,9 @@ export function SettingsScreen({
               {/* Official Contact Info */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-800/60">
                 <div>
-                  <Label className="text-[11px] font-medium text-slate-400">Kurumsal Tel No</Label>
+                  <Label className="text-[11px] font-medium text-slate-400">
+                    Kurumsal Tel No
+                  </Label>
                   <Input
                     value={tplPhone}
                     onChange={(e) => setTplPhone(e.target.value)}
@@ -836,7 +933,9 @@ export function SettingsScreen({
                   />
                 </div>
                 <div>
-                  <Label className="text-[11px] font-medium text-slate-400">Resmi E-posta</Label>
+                  <Label className="text-[11px] font-medium text-slate-400">
+                    Resmi E-posta
+                  </Label>
                   <Input
                     value={tplEmail}
                     onChange={(e) => setTplEmail(e.target.value)}
@@ -844,7 +943,9 @@ export function SettingsScreen({
                   />
                 </div>
                 <div>
-                  <Label className="text-[11px] font-medium text-slate-400">Web Adresi</Label>
+                  <Label className="text-[11px] font-medium text-slate-400">
+                    Web Adresi
+                  </Label>
                   <Input
                     value={tplWebsite}
                     onChange={(e) => setTplWebsite(e.target.value)}
@@ -852,7 +953,9 @@ export function SettingsScreen({
                   />
                 </div>
                 <div>
-                  <Label className="text-[11px] font-medium text-slate-400">KEP Kayıtlı E-posta</Label>
+                  <Label className="text-[11px] font-medium text-slate-400">
+                    KEP Kayıtlı E-posta
+                  </Label>
                   <Input
                     value={tplKepAddress}
                     onChange={(e) => setTplKepAddress(e.target.value)}
@@ -860,7 +963,9 @@ export function SettingsScreen({
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <Label className="text-[11px] font-medium text-slate-400">Fiziksel Kurum Adresi</Label>
+                  <Label className="text-[11px] font-medium text-slate-400">
+                    Fiziksel Kurum Adresi
+                  </Label>
                   <Input
                     value={tplAddress}
                     onChange={(e) => setTplAddress(e.target.value)}
@@ -877,8 +982,12 @@ export function SettingsScreen({
                     checked={tplShowMapButtons}
                     onCheckedChange={(c) => setTplShowMapButtons(Boolean(c))}
                   />
-                  <Label htmlFor="show-map-buttons" className="text-xs cursor-pointer">
-                    Google Maps & Apple Maps (iPhone) Yol Tarifi Butonlarını Göster
+                  <Label
+                    htmlFor="show-map-buttons"
+                    className="text-xs cursor-pointer"
+                  >
+                    Google Maps & Apple Maps (iPhone) Yol Tarifi Butonlarını
+                    Göster
                   </Label>
                 </div>
 
@@ -886,7 +995,8 @@ export function SettingsScreen({
                   onClick={handleSaveEmailTemplateCustomization}
                   className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-bold px-4 shadow-xs"
                 >
-                  <Check className="h-3.5 w-3.5 mr-1" /> E-posta Şablonunu Kaydet
+                  <Check className="h-3.5 w-3.5 mr-1" />{" "}
+                  E-posta Şablonunu Kaydet
                 </Button>
               </div>
             </CardContent>
@@ -1371,9 +1481,16 @@ export function SettingsScreen({
                         >
                           🔒 Otomatik Yedek E-posta Adresi
                         </Label>
-                        <p className={`text-[11px] mb-1 ${theme === "dark" ? "text-slate-500" : "text-slate-400"}`}>
-                          Uygulama kapatılırken .vke veritabanı dosyası bu adrese otomatik ek olarak gönderilir.
-                          Boş bırakılırsa yalnızca yerel yedek alınır.
+                        <p
+                          className={`text-[11px] mb-1 ${
+                            theme === "dark"
+                              ? "text-slate-500"
+                              : "text-slate-400"
+                          }`}
+                        >
+                          Uygulama kapatılırken .vke veritabanı dosyası bu
+                          adrese otomatik ek olarak gönderilir. Boş bırakılırsa
+                          yalnızca yerel yedek alınır.
                         </p>
                         <Input
                           type="email"

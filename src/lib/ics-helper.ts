@@ -23,7 +23,7 @@ export function generateSingleICS(props: SingleICSProps): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//VenueKeeper App Pro//TR",
+    "PRODID:-//KİRAKONTROLUYGULAMASI Pro//TR",
     "CALSCALE:GREGORIAN",
     "METHOD:REQUEST",
     "X-WR-CALNAME:VenueKeeper Etkinlik Davetiyesi",

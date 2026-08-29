@@ -176,7 +176,7 @@ function extractFilePathFromArgs(args: string[]): string | null {
 
 function createWindow() {
   win = new BrowserWindow({
-    title: "VenueKeeper App Pro - Mekan, Salon ve Etkinlik Yönetim Sistemi",
+    title: "KİRA KONTROL UYGULAMASI Pro - Mekan, Salon ve Etkinlik Yönetim Sistemi",
     icon: path.join(process.env.VITE_PUBLIC || "", "app-logo.png"),
     width: 1350,
     height: 900,
@@ -495,7 +495,7 @@ safeHandle("db:switch-path", (_event, filePath: string) => {
     initDatabase(filePath);
     openedFilePath = filePath;
     if (win) {
-      win.setTitle(`VenueKeeper App Pro - ${path.basename(filePath)}`);
+      win.setTitle(`KİRA KONTROL UYGULAMASI Pro - ${path.basename(filePath)}`);
       win.webContents.send("file-opened", filePath);
       win.webContents.send("db-updated");
     }
@@ -526,7 +526,7 @@ safeHandle("open-file-dialog", async () => {
   const filePath = result.filePaths[0];
   initDatabase(filePath);
   openedFilePath = filePath;
-  win.setTitle(`VenueKeeper App Pro - ${path.basename(filePath)}`);
+  win.setTitle(`KİRA KONTROL UYGULAMASI Pro - ${path.basename(filePath)}`);
   win.webContents.send("file-opened", filePath);
   win.webContents.send("db-updated");
   return { filePath, content: JSON.stringify(getStoreData()) };
@@ -546,7 +546,7 @@ safeHandle("save-file-dialog", async (_event, { defaultName }) => {
 
   initDatabase(result.filePath);
   openedFilePath = result.filePath;
-  win.setTitle(`VenueKeeper App Pro - ${path.basename(result.filePath)}`);
+  win.setTitle(`KİRA KONTROL UYGULAMASI Pro - ${path.basename(result.filePath)}`);
   win.webContents.send("file-opened", result.filePath);
   win.webContents.send("db-updated");
   return result.filePath;
