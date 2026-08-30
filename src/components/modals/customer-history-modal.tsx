@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,8 @@ import {
   Clock,
 } from "lucide-react";
 import { money, type Customer, type Reservation, type Store } from "@/lib/rental-store";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { formatTRPhone } from "@/lib/phone-utils";
 
 interface CustomerHistoryModalProps {
   open: boolean;
@@ -46,6 +48,13 @@ export function CustomerHistoryModal({
   onCopySMS,
   onPrintDoc,
 }: CustomerHistoryModalProps): React.JSX.Element | null {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [customerName]);
+
   if (!open || !customerName) return null;
 
   const normalize = (str?: string) => (str || "").toLowerCase().trim();
@@ -78,8 +87,8 @@ export function CustomerHistoryModal({
       <DialogContent
         className={
           theme === "dark"
-            ? "sm:max-w-[700px] bg-slate-900 border-slate-800 text-slate-100 shadow-2xl max-h-[90vh] overflow-y-auto"
-            : "sm:max-w-[700px] bg-white border-slate-200 text-slate-900 shadow-2xl max-h-[90vh] overflow-y-auto"
+            ? "sm:max-w-175 bg-slate-900 border-slate-800 text-slate-100 shadow-2xl max-h-[90vh] overflow-y-auto"
+            : "sm:max-w-175 bg-white border-slate-200 text-slate-900 shadow-2xl max-h-[90vh] overflow-y-auto"
         }
       >
         <DialogHeader className="border-b pb-3 border-slate-800/60">
@@ -109,7 +118,7 @@ export function CustomerHistoryModal({
                 </DialogTitle>
                 <div className="flex items-center gap-3 text-xs text-slate-400 mt-1 flex-wrap">
                   <span className="flex items-center gap-1 font-mono">
-                    <Phone className="h-3 w-3 text-indigo-400" /> {phoneDisplay}
+                    <Phone className="h-3 w-3 text-indigo-400" /> {formatTRPhone(phoneDisplay) || phoneDisplay}
                   </span>
                   {emailDisplay !== "Belirtilmedi" && (
                     <span className="flex items-center gap-1">
@@ -183,109 +192,129 @@ export function CustomerHistoryModal({
               Bu müşteriye ait kayıtlı kiralama veya etkinlik geçmişi bulunamadı.
             </div>
           ) : (
-            <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
-              {customerReservations.map((r) => {
-                const v = store.venues.find((x) => x.id === r.venueId);
-                const h = hallById(r.hallId);
-                const isMailSent = Boolean(r.customerMailSentAt || r.mailSentAt);
+            <div className="space-y-2">
+              <div className="space-y-2 max-h-75 overflow-y-auto pr-1">
+                {customerReservations
+                  .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                  .map((r) => {
+                  const v = store.venues.find((x) => x.id === r.venueId);
+                  const h = hallById(r.hallId);
+                  const isMailSent = Boolean(r.customerMailSentAt || r.mailSentAt);
 
-                return (
-                  <div
-                    key={r.id}
-                    className={`p-3 rounded-xl border transition-all ${
-                      theme === "dark"
-                        ? "bg-slate-950/70 border-slate-800 hover:border-indigo-500/40"
-                        : "bg-slate-50 border-slate-200 hover:border-indigo-300"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-indigo-400">
-                            🏛️ {v?.name || "Mekan"} - {h?.name || "Salon"}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="text-[9px] border-indigo-500/30 text-indigo-300"
-                          >
-                            {r.eventType || "Genel"}
-                          </Badge>
-                          {r.status === "option" ? (
-                            <Badge variant="outline" className="bg-amber-500/10 border-amber-500/40 text-amber-400 text-[9px]">
-                              ⚠️ Opsiyon
+                  return (
+                    <div
+                      key={r.id}
+                      className={`p-3 rounded-xl border transition-all ${
+                        theme === "dark"
+                          ? "bg-slate-950/70 border-slate-800 hover:border-indigo-500/40"
+                          : "bg-slate-50 border-slate-200 hover:border-indigo-300"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs text-indigo-400">
+                              🏛️ {v?.name || "Mekan"} - {h?.name || "Salon"}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] border-indigo-500/30 text-indigo-300"
+                            >
+                              {r.eventType || "Genel"}
                             </Badge>
-                          ) : (
-                            <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/40 text-emerald-400 text-[9px]">
-                              ✅ Kesin
-                            </Badge>
+                            {r.status === "option" ? (
+                              <Badge variant="outline" className="bg-amber-500/10 border-amber-500/40 text-amber-400 text-[9px]">
+                                ⚠️ Opsiyon
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/40 text-emerald-400 text-[9px]">
+                                ✅ Kesin
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 font-mono">
+                            <span>📅 {r.date}</span>
+                            <span>⏰ {r.start} - {r.end}</span>
+                            <span className="font-bold text-slate-200">
+                              Ücret: {money(r.price)} (Ödenen: {money(r.paid)})
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {onQuickMail && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => onQuickMail(r)}
+                              className="h-7 w-7 text-sky-400 hover:bg-sky-500/10"
+                              title="Müşteriye E-posta & .ics Takvim Daveti Gönder"
+                            >
+                              <Mail className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {onCopySMS && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => onCopySMS(r)}
+                              className="h-7 w-7 text-indigo-400 hover:bg-indigo-500/10"
+                              title="SMS İletisi Kopyala"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {onPrintDoc && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => onPrintDoc(r)}
+                              className="h-7 w-7 text-emerald-400 hover:bg-emerald-500/10"
+                              title="Resmi Evrak & Makbuz Bas"
+                            >
+                              <FileText className="h-3.5 w-3.5" />
+                            </Button>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1 font-mono">
-                          <span>📅 {r.date}</span>
-                          <span>⏰ {r.start} - {r.end}</span>
-                          <span className="font-bold text-slate-200">
-                            Ücret: {money(r.price)} (Ödenen: {money(r.paid)})
+                      </div>
+
+                      {/* Mail Status Banner */}
+                      <div className="mt-2 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
+                        {isMailSent ? (
+                          <span className="text-sky-400 font-medium flex items-center gap-1">
+                            ✉️ E-posta İletildi ({r.customerMailSentAt || r.mailSentAt})
                           </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {onQuickMail && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => onQuickMail(r)}
-                            className="h-7 w-7 text-sky-400 hover:bg-sky-500/10"
-                            title="Müşteriye E-posta & .ics Takvim Daveti Gönder"
-                          >
-                            <Mail className="h-3.5 w-3.5" />
-                          </Button>
+                        ) : (
+                          <span className="text-amber-400/80 font-medium flex items-center gap-1">
+                            ⚠️ E-posta Henüz Gönderilmedi
+                          </span>
                         )}
-                        {onCopySMS && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => onCopySMS(r)}
-                            className="h-7 w-7 text-indigo-400 hover:bg-indigo-500/10"
-                            title="SMS İletisi Kopyala"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {onPrintDoc && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => onPrintDoc(r)}
-                            className="h-7 w-7 text-emerald-400 hover:bg-emerald-500/10"
-                            title="Resmi Evrak & Makbuz Bas"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                          </Button>
+                        {r.receiptNo && (
+                          <span className="text-slate-400 font-mono">
+                            Makbuz No: #{r.receiptNo}
+                          </span>
                         )}
                       </div>
                     </div>
+                  );
+                })}
+              </div>
 
-                    {/* Mail Status Banner */}
-                    <div className="mt-2 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
-                      {isMailSent ? (
-                        <span className="text-sky-400 font-medium flex items-center gap-1">
-                          ✉️ E-posta İletildi ({r.customerMailSentAt || r.mailSentAt})
-                        </span>
-                      ) : (
-                        <span className="text-amber-400/80 font-medium flex items-center gap-1">
-                          ⚠️ E-posta Henüz Gönderilmedi
-                        </span>
-                      )}
-                      {r.receiptNo && (
-                        <span className="text-slate-400 font-mono">
-                          Makbuz No: #{r.receiptNo}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              {/* Pagination Controls */}
+              {customerReservations.length > pageSize && (
+                <div className="pt-2">
+                  <PaginationControls
+                    currentPage={currentPage}
+                    totalItems={customerReservations.length}
+                    pageSize={pageSize}
+                    pageSizeOptions={[5, 10, 20]}
+                    onPageChange={(p) => setCurrentPage(p)}
+                    onPageSizeChange={(s) => setPageSize(s)}
+                    theme={theme}
+                    itemLabel="etkinlik"
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

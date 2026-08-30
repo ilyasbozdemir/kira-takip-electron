@@ -8,6 +8,7 @@ export function useVenueForm() {
   const [newVenueAddress, setNewVenueAddress] = useState("");
   const [newVenueMapUrl, setNewVenueMapUrl] = useState("");
   const [newVenueCategory, setNewVenueCategory] = useState("Kongre & Balo");
+  const [newVenueManagerPersonnelId, setNewVenueManagerPersonnelId] = useState("");
   const [newVenueManagerName, setNewVenueManagerName] = useState("");
   const [newVenueManagerTitle, setNewVenueManagerTitle] = useState("Tesis Sorumlusu");
   const [newVenueManagerPhone, setNewVenueManagerPhone] = useState("");
@@ -26,6 +27,7 @@ export function useVenueForm() {
         category: newVenueCategory,
         address: newVenueAddress.trim() || undefined,
         mapUrl: newVenueMapUrl.trim() || undefined,
+        managerPersonnelId: newVenueManagerPersonnelId || undefined,
         managerName: newVenueManagerName.trim() || undefined,
         managerTitle: newVenueManagerTitle.trim() || undefined,
         managerPhone: newVenueManagerPhone.trim() || undefined,
@@ -35,6 +37,7 @@ export function useVenueForm() {
       setNewVenueDistrict("");
       setNewVenueAddress("");
       setNewVenueMapUrl("");
+      setNewVenueManagerPersonnelId("");
       setNewVenueManagerName("");
       setNewVenueManagerPhone("");
       if (onSuccess) onSuccess();
@@ -55,6 +58,8 @@ export function useVenueForm() {
     setNewVenueMapUrl,
     newVenueCategory,
     setNewVenueCategory,
+    newVenueManagerPersonnelId,
+    setNewVenueManagerPersonnelId,
     newVenueManagerName,
     setNewVenueManagerName,
     newVenueManagerTitle,

@@ -30,6 +30,7 @@ import {
   updateReservationDetails,
   getPersonnelList,
   addPersonnel,
+  updatePersonnel,
   deletePersonnel,
   getCustomersList,
   addCustomer,
@@ -436,6 +437,10 @@ safeHandle("db:get-personnel", () => {
 
 safeHandle("db:add-personnel", (_event, p) => {
   return addPersonnel(p);
+});
+
+safeHandle("db:update-personnel", (_event, p) => {
+  return updatePersonnel(p);
 });
 
 safeHandle("db:delete-personnel", (_event, id: string) => {

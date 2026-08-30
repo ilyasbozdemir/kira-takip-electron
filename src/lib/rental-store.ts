@@ -25,6 +25,7 @@ export type Venue = {
   category?: string;
   address?: string;
   mapUrl?: string;
+  managerPersonnelId?: string;
   managerName?: string;
   managerPhone?: string;
   managerTitle?: string;

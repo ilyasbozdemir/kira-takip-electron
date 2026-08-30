@@ -4,6 +4,7 @@ import {
   Building2,
   Database,
   ExternalLink,
+  FolderOpen,
   Info,
   Star,
   Wifi,
@@ -12,12 +13,15 @@ import packageJson from "../../package.json";
 
 interface FooterProps {
   currentFilePath?: string | null;
+  fileName?: string;
   institutionName?: string;
   theme?: "light" | "dark";
+  onOpenLauncher?: () => void;
+  onOpenFile?: () => void;
 }
 
 export function Footer(
-  { currentFilePath, institutionName, theme = "dark" }: FooterProps,
+  { currentFilePath, fileName, institutionName, theme = "dark", onOpenLauncher, onOpenFile }: FooterProps,
 ): React.JSX.Element {
   const [showAbout, setShowAbout] = useState(false);
   const [appVersion, setAppVersion] = useState(packageJson.version);
@@ -64,6 +68,16 @@ export function Footer(
     }
   };
 
+  const handleDbClick = () => {
+    if (onOpenLauncher) {
+      onOpenLauncher();
+    } else if (onOpenFile) {
+      onOpenFile();
+    }
+  };
+
+  const activeDbDisplay = (currentFilePath ? currentFilePath.split(/[\\/]/).pop() : fileName) || "venuekeeper-default.vke";
+
   return (
     <footer
       className={`h-8 shrink-0 border-t px-4 flex items-center justify-between text-xs select-none z-40 transition-colors ${
@@ -74,22 +88,26 @@ export function Footer(
     >
       {/* Left Details */}
       <div className="flex items-center space-x-2">
-        {currentFilePath && (
-          <span
-            title={currentFilePath}
-            className="font-semibold truncate max-w-[200px] flex items-center gap-1.5 text-indigo-400"
-          >
-            <Database className="h-3 w-3 shrink-0" />
-            <span className="truncate">
-              {currentFilePath.split(/[\\/]/).pop()}
-            </span>
-          </span>
-        )}
+        <button
+          type="button"
+          onClick={handleDbClick}
+          title={`${currentFilePath || fileName || "Veritabanı (.vke)"}\n\n📁 Tıklayarak veritabanı dosyasını değiştirin veya yeni .vke dosyası açın.`}
+          className={`font-mono text-xs font-bold truncate max-w-65 flex items-center gap-1.5 px-2 py-0.5 rounded-md transition-all cursor-pointer border ${
+            theme === "dark"
+              ? "bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 hover:text-indigo-300 border-indigo-500/30 hover:border-indigo-500/50 shadow-2xs"
+              : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 border-indigo-200 hover:border-indigo-300 shadow-2xs"
+          }`}
+        >
+          <Database className="h-3 w-3 shrink-0 text-indigo-500" />
+          <span className="truncate">{activeDbDisplay}</span>
+          <FolderOpen className="h-3 w-3 shrink-0 opacity-70 ml-0.5 text-indigo-400" />
+        </button>
+
         {institutionName && (
           <>
             <span className="w-px h-3 bg-slate-300 dark:bg-slate-700"></span>
             <span
-              className="truncate max-w-[180px] font-medium flex items-center gap-1"
+              className="truncate max-w-45 font-medium flex items-center gap-1"
               title={institutionName}
             >
               <Building2 className="h-3 w-3 shrink-0 text-sky-400" />

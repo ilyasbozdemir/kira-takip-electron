@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Venue } from "@/lib/rental-store";
+import { normalizeTRPhoneInput } from "@/lib/phone-utils";
 
 interface NewVenueModalProps {
   open: boolean;
@@ -21,6 +22,8 @@ interface NewVenueModalProps {
   setNewVenueMapUrl: (v: string) => void;
   newVenueCategory: string;
   setNewVenueCategory: (v: string) => void;
+  newVenueManagerPersonnelId?: string;
+  setNewVenueManagerPersonnelId?: (v: string) => void;
   newVenueManagerName: string;
   setNewVenueManagerName: (v: string) => void;
   newVenueManagerTitle: string;
@@ -50,6 +53,8 @@ export function NewVenueModal({
   setNewVenueMapUrl,
   newVenueCategory,
   setNewVenueCategory,
+  newVenueManagerPersonnelId,
+  setNewVenueManagerPersonnelId,
   newVenueManagerName,
   setNewVenueManagerName,
   newVenueManagerTitle,
@@ -65,8 +70,8 @@ export function NewVenueModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={theme === "dark"
-          ? "sm:max-w-[420px] bg-slate-900 border-slate-800 text-slate-100"
-          : "sm:max-w-[420px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
+          ? "sm:max-w-105 bg-slate-900 border-slate-800 text-slate-100"
+          : "sm:max-w-105 bg-white border-slate-200 text-slate-900 shadow-2xl"}
       >
         <DialogHeader>
           <DialogTitle
@@ -173,6 +178,7 @@ export function NewVenueModal({
               </Label>
               <Select
                 onValueChange={(pId) => {
+                  if (setNewVenueManagerPersonnelId) setNewVenueManagerPersonnelId(pId);
                   const p = store.personnel?.find((x) => x.id === pId);
                   if (p) {
                     setNewVenueManagerName(p.name);
@@ -238,12 +244,15 @@ export function NewVenueModal({
               </div>
             </div>
             <div>
-              <Label className="text-[11px]">Sorumlu İletişim Telefonu</Label>
+              <Label className="text-[11px] flex items-center justify-between">
+                <span>Sorumlu İletişim Telefonu</span>
+                <span className="text-[9px] text-slate-400 font-mono">🇹🇷 +90</span>
+              </Label>
               <Input
-                placeholder="0532 000 00 00"
+                placeholder="05XX XXX XX XX"
                 value={newVenueManagerPhone}
-                onChange={(e) => setNewVenueManagerPhone(e.target.value)}
-                className={`mt-1 text-xs ${
+                onChange={(e) => setNewVenueManagerPhone(normalizeTRPhoneInput(e.target.value))}
+                className={`mt-1 text-xs font-mono ${
                   theme === "dark"
                     ? "bg-slate-950 border-slate-800 text-slate-100"
                     : "bg-slate-50 border-slate-300 text-slate-900"

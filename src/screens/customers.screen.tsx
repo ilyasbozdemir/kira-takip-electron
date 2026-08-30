@@ -33,6 +33,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { PaginationControls } from "@/components/ui/pagination-controls";
+import { normalizeTRPhoneInput, formatTRPhone, getWhatsAppUrl } from "@/lib/phone-utils";
 
 interface CustomersScreenProps {
   theme: "dark" | "light";
@@ -54,6 +56,14 @@ export function CustomersScreen({
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // New Customer Form State
   const [name, setName] = useState("");
@@ -345,143 +355,163 @@ export function CustomersScreen({
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCustomers.map((c) => {
-            const resCount = getCustomerReservationCount(c.name, c.phone);
-            return (
-              <Card
-                key={c.id}
-                className={`transition-all hover:border-indigo-500/50 ${
-                  theme === "dark"
-                    ? "bg-slate-900/90 border-slate-800"
-                    : "bg-white border-slate-200 shadow-sm"
-                }`}
-              >
-                <CardHeader className="pb-2.5 pt-4 px-4 flex flex-row items-start justify-between space-y-0">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-indigo-600/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-extrabold text-sm shrink-0">
-                      {c.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4
-                        className={`text-sm font-bold truncate max-w-45 ${
-                          theme === "dark" ? "text-slate-100" : "text-slate-900"
-                        }`}
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredCustomers
+              .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+              .map((c) => {
+                const resCount = getCustomerReservationCount(c.name, c.phone);
+                return (
+                  <Card
+                    key={c.id}
+                    className={`transition-all hover:border-indigo-500/50 ${
+                      theme === "dark"
+                        ? "bg-slate-900/90 border-slate-800"
+                        : "bg-white border-slate-200 shadow-sm"
+                    }`}
+                  >
+                    <CardHeader className="pb-2.5 pt-4 px-4 flex flex-row items-start justify-between space-y-0">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-indigo-600/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-extrabold text-sm shrink-0">
+                          {c.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <h4
+                            className={`text-sm font-bold truncate max-w-45 ${
+                              theme === "dark" ? "text-slate-100" : "text-slate-900"
+                            }`}
+                          >
+                            {c.name}
+                          </h4>
+                          {c.company && (
+                            <p className="text-[11px] text-sky-400 font-medium truncate max-w-45">
+                              🏢 {c.company}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold shrink-0"
                       >
-                        {c.name}
-                      </h4>
-                      {c.company && (
-                        <p className="text-[11px] text-sky-400 font-medium truncate max-w-45">
-                          🏢 {c.company}
+                        {resCount} Kiralama
+                      </Badge>
+                    </CardHeader>
+
+                    <CardContent className="px-4 pb-4 space-y-2.5 text-xs">
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                          <span className={`font-mono font-bold ${
+                            theme === "dark" ? "text-slate-200" : "text-slate-900"
+                          }`}>
+                            {formatTRPhone(c.phone) || "Telefon Belirtilmedi"}
+                          </span>
+                        </div>
+
+                        {c.email && (
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-3.5 w-3.5 text-sky-500 shrink-0" />
+                            <span className={`truncate font-medium ${
+                              theme === "dark" ? "text-slate-300" : "text-slate-700"
+                            }`}>{c.email}</span>
+                          </div>
+                        )}
+
+                        {c.taxNo && (
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            <span className={`font-mono text-[11px] font-semibold ${
+                              theme === "dark" ? "text-slate-400" : "text-slate-600"
+                            }`}>
+                              VN/TC: {c.taxNo}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {c.notes && (
+                        <p
+                          className={`text-[11px] p-2 rounded-lg border leading-snug line-clamp-2 font-medium ${
+                            theme === "dark"
+                              ? "bg-slate-950/60 border-slate-800 text-slate-300"
+                              : "bg-slate-100 border-slate-300 text-slate-800"
+                          }`}
+                        >
+                          💬 {c.notes}
                         </p>
                       )}
-                    </div>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] bg-indigo-500/10 border-indigo-500/30 text-indigo-400 font-bold shrink-0"
-                  >
-                    {resCount} Kiralama
-                  </Badge>
-                </CardHeader>
 
-                <CardContent className="px-4 pb-4 space-y-2.5 text-xs">
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                      <span className={`font-mono font-bold ${
-                        theme === "dark" ? "text-slate-200" : "text-slate-900"
+                      <div className={`pt-2 border-t flex items-center justify-between gap-1.5 ${
+                        theme === "dark" ? "border-slate-800/80" : "border-slate-200"
                       }`}>
-                        {c.phone || "Telefon Belirtilmedi"}
-                      </span>
-                    </div>
+                        <div className="flex items-center gap-1.5">
+                          {c.phone && (
+                            <a
+                              href={getWhatsAppUrl(c.phone)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white dark:bg-emerald-500/10 dark:border dark:border-emerald-500/30 dark:text-emerald-400 text-[10px] font-bold transition-colors shadow-2xs"
+                            >
+                              WhatsApp
+                            </a>
+                          )}
+                          {c.email && onOpenMailModal && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenMailModal(c.email)}
+                              className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white dark:bg-indigo-500/10 dark:border dark:border-indigo-500/30 dark:text-indigo-400 text-[10px] font-bold transition-colors shadow-2xs"
+                            >
+                              Mail At
+                            </button>
+                          )}
+                        </div>
 
-                    {c.email && (
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-3.5 w-3.5 text-sky-500 shrink-0" />
-                        <span className={`truncate font-medium ${
-                          theme === "dark" ? "text-slate-300" : "text-slate-700"
-                        }`}>{c.email}</span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => handleOpenEditModal(c)}
+                            className="h-7 w-7 text-slate-400 hover:text-indigo-400"
+                            title="Düzenle"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={async () => {
+                              if (confirm(`${c.name} isimli müşteriyi silmek istediğinize emin misiniz?`)) {
+                                await onRemoveCustomer(c.id);
+                                toast.success("Müşteri kaydı silindi.");
+                              }
+                            }}
+                            className="h-7 w-7 text-slate-400 hover:text-rose-400"
+                            title="Sil"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                    )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
 
-                    {c.taxNo && (
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                        <span className={`font-mono text-[11px] font-semibold ${
-                          theme === "dark" ? "text-slate-400" : "text-slate-600"
-                        }`}>
-                          VN/TC: {c.taxNo}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {c.notes && (
-                    <p
-                      className={`text-[11px] p-2 rounded-lg border leading-snug line-clamp-2 font-medium ${
-                        theme === "dark"
-                          ? "bg-slate-950/60 border-slate-800 text-slate-300"
-                          : "bg-slate-100 border-slate-300 text-slate-800"
-                      }`}
-                    >
-                      💬 {c.notes}
-                    </p>
-                  )}
-
-                  <div className={`pt-2 border-t flex items-center justify-between gap-1.5 ${
-                    theme === "dark" ? "border-slate-800/80" : "border-slate-200"
-                  }`}>
-                    <div className="flex items-center gap-1.5">
-                      {c.phone && (
-                        <a
-                          href={`https://wa.me/${c.phone.replace(/\D/g, "")}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="px-2.5 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white dark:bg-emerald-500/10 dark:border dark:border-emerald-500/30 dark:text-emerald-400 text-[10px] font-bold transition-colors shadow-2xs"
-                        >
-                          WhatsApp
-                        </a>
-                      )}
-                      {c.email && onOpenMailModal && (
-                        <button
-                          type="button"
-                          onClick={() => onOpenMailModal(c.email)}
-                          className="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white dark:bg-indigo-500/10 dark:border dark:border-indigo-500/30 dark:text-indigo-400 text-[10px] font-bold transition-colors shadow-2xs"
-                        >
-                          Mail At
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleOpenEditModal(c)}
-                        className="h-7 w-7 text-slate-400 hover:text-indigo-400"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={async () => {
-                          if (confirm(`${c.name} isimli müşteriyi silmek istediğinize emin misiniz?`)) {
-                            await onRemoveCustomer(c.id);
-                            toast.success("Müşteri kaydı silindi.");
-                          }
-                        }}
-                        className="h-7 w-7 text-slate-400 hover:text-rose-400"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {/* Customer Pagination Controls */}
+          {filteredCustomers.length > 0 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalItems={filteredCustomers.length}
+              pageSize={pageSize}
+              pageSizeOptions={[6, 12, 24, 48, 96]}
+              onPageChange={(p) => setCurrentPage(p)}
+              onPageSizeChange={(s) => setPageSize(s)}
+              theme={theme}
+              itemLabel="müşteri"
+            />
+          )}
         </div>
       )}
 
@@ -517,12 +547,15 @@ export function CustomersScreen({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Telefon Numarası *</Label>
+                <Label className="text-xs font-semibold flex items-center justify-between">
+                  <span>Telefon Numarası *</span>
+                  <span className="text-[10px] text-slate-400 font-mono">🇹🇷 +90 TR</span>
+                </Label>
                 <Input
                   required
-                  placeholder="0555 123 45 67"
+                  placeholder="05XX XXX XX XX"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(normalizeTRPhoneInput(e.target.value))}
                   className="mt-1 text-xs font-mono"
                 />
               </div>
@@ -627,11 +660,14 @@ export function CustomersScreen({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs font-semibold">Telefon Numarası *</Label>
+                <Label className="text-xs font-semibold flex items-center justify-between">
+                  <span>Telefon Numarası *</span>
+                  <span className="text-[10px] text-slate-400 font-mono">🇹🇷 +90 TR</span>
+                </Label>
                 <Input
                   required
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(normalizeTRPhoneInput(e.target.value))}
                   className="mt-1 text-xs font-mono"
                 />
               </div>

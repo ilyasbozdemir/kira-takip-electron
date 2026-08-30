@@ -26,6 +26,7 @@ import {
   type Store,
   toKey,
 } from "@/lib/rental-store";
+import { normalizeTRPhoneInput } from "@/lib/phone-utils";
 
 interface NewReservationModalProps {
   open: boolean;
@@ -132,8 +133,8 @@ export function NewReservationModal({
       <DialogContent
         className={
           theme === "dark"
-            ? "sm:max-w-[560px] bg-slate-900 border-slate-800 text-slate-100"
-            : "sm:max-w-[560px] bg-white border-slate-200 text-slate-900 shadow-2xl"
+            ? "sm:max-w-140 bg-slate-900 border-slate-800 text-slate-100"
+            : "sm:max-w-140 bg-white border-slate-200 text-slate-900 shadow-2xl"
         }
       >
         <DialogHeader>
@@ -158,24 +159,41 @@ export function NewReservationModal({
           {/* Date, Venue & Hall Select (3-Column Grid) */}
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <Label
-                className={`text-xs font-semibold ${
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
-                Etkinlik Tarihi *
-              </Label>
-              <Input
-                type="date"
-                required
-                value={selectedDay}
-                onChange={(e) => setSelectedDay?.(e.target.value)}
-                className={`mt-1 text-xs font-medium ${
-                  theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-200"
-                    : "bg-slate-50 border-slate-300 text-slate-900"
-                }`}
-              />
+              {(() => {
+                const todayStr = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local time
+                const isPast = selectedDay && selectedDay < todayStr;
+                return (
+                  <>
+                    <Label
+                      className={`text-xs font-semibold flex items-center justify-between ${
+                        theme === "dark" ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      <span>Etkinlik Tarihi *</span>
+                      {isPast && <span className="text-[10px] text-rose-500 font-bold">Geçersiz</span>}
+                    </Label>
+                    <Input
+                      type="date"
+                      required
+                      min={todayStr}
+                      value={selectedDay}
+                      onChange={(e) => setSelectedDay?.(e.target.value)}
+                      className={`mt-1 text-xs font-medium ${
+                        isPast
+                          ? "border-rose-500 focus:ring-rose-500"
+                          : theme === "dark"
+                          ? "bg-slate-950 border-slate-800 text-slate-200"
+                          : "bg-slate-50 border-slate-300 text-slate-900"
+                      }`}
+                    />
+                    {isPast && (
+                      <span className="text-[10px] text-rose-500 font-medium block mt-1">
+                        ⚠️ Geçmiş tarihli yeni etkinlik oluşturulamaz!
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             <div>
@@ -525,19 +543,20 @@ export function NewReservationModal({
           <div className="grid grid-cols-3 gap-2">
             <div>
               <Label
-                className={`text-xs font-semibold ${
+                className={`text-xs font-semibold flex items-center justify-between ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Telefon *
+                <span>Telefon *</span>
+                <span className="text-[9px] text-slate-400 font-mono">🇹🇷 +90 TR</span>
               </Label>
               <Input
                 required
                 list="phone-suggestions"
-                placeholder="05xx xxx xx xx"
+                placeholder="05XX XXX XX XX"
                 value={resPhone}
-                onChange={(e) => setResPhone(e.target.value)}
-                className={`mt-1 text-xs ${
+                onChange={(e) => setResPhone(normalizeTRPhoneInput(e.target.value))}
+                className={`mt-1 text-xs font-mono ${
                   theme === "dark"
                     ? "bg-slate-950 border-slate-800 text-slate-100"
                     : "bg-slate-50 border-slate-300 text-slate-900"

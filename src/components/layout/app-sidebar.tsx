@@ -60,35 +60,6 @@ export function AppSidebar({
           : "bg-white border-slate-200"
       }`}
     >
-      {/* Recent Database Switcher Button */}
-      <div className="p-3 border-b border-slate-800/40">
-        <div
-          className={`flex items-center justify-between ${
-            sidebarCollapsed ? "justify-center" : ""
-          }`}
-        >
-          {!sidebarCollapsed && (
-            <div className="truncate">
-              <span className="text-[10px] text-slate-400 uppercase font-mono block">
-                Aktif Veritabanı:
-              </span>
-              <span className="text-xs font-bold truncate block">
-                {fileName || "Varsayılan Veritabanı"}
-              </span>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onOpenLauncher}
-            className="h-7 w-7 text-indigo-400 hover:text-indigo-300"
-            title="Veritabanı Değiştir / Dosya Aç"
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-
       {/* Navigation Items */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {[

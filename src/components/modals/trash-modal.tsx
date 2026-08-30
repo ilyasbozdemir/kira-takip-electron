@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Trash2,
+  AlertTriangle,
+  Building2,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Clock,
+  Clock3,
   RotateCcw,
   Search,
-  Calendar as CalendarIcon,
-  Clock,
-  Building2,
-  AlertTriangle,
-  CheckCircle2,
   Sparkles,
-  Clock3,
+  Trash2,
 } from "lucide-react";
 import { sqliteStore } from "@/lib/db-client";
 import { money, type Venue } from "@/lib/rental-store";
 import { toast } from "sonner";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 interface DeletedReservation {
   id: string;
@@ -58,6 +65,14 @@ export function TrashModal({
   const [loading, setLoading] = useState(false);
   const [retentionDays, setRetentionDays] = useState("30");
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, deletedList.length]);
+
   const loadDeletedItems = async () => {
     setLoading(true);
     try {
@@ -73,7 +88,9 @@ export function TrashModal({
   useEffect(() => {
     if (open) {
       loadDeletedItems();
-      const savedRetention = localStorage.getItem("venue-keeper-trash-retention-days");
+      const savedRetention = localStorage.getItem(
+        "venue-keeper-trash-retention-days",
+      );
       if (savedRetention) setRetentionDays(savedRetention);
     }
   }, [open]);
@@ -81,7 +98,9 @@ export function TrashModal({
   const handleRestore = async (res: DeletedReservation) => {
     try {
       await sqliteStore.restoreReservation(res.id);
-      toast.success(`"${res.customer}" (${res.date}) etkinliği başarıyla geri yüklendi!`);
+      toast.success(
+        `"${res.customer}" (${res.date}) etkinliği başarıyla geri yüklendi!`,
+      );
       loadDeletedItems();
       if (onReservationRestored) onReservationRestored();
     } catch (err: any) {
@@ -91,7 +110,7 @@ export function TrashModal({
 
   const handlePermanentDelete = async (res: DeletedReservation) => {
     const confirm = window.confirm(
-      `⚠️ DİKKAT: "${res.customer}" (${res.date}) etkinliği KALICI OLARAK silinecektir.\n\nBu işlem geri alınamaz! Devam etmek istiyor musunuz?`
+      `⚠️ DİKKAT: "${res.customer}" (${res.date}) etkinliği KALICI OLARAK silinecektir.\n\nBu işlem geri alınamaz! Devam etmek istiyor musunuz?`,
     );
     if (!confirm) return;
 
@@ -107,7 +126,7 @@ export function TrashModal({
   const handleEmptyTrash = async () => {
     if (deletedList.length === 0) return;
     const confirm = window.confirm(
-      `⚠️ ÇÖP KUTUSUNU BOŞALT:\n\nÇöp kutusundaki toplam ${deletedList.length} adet etkinlik kaydı KALICI OLARAK silinecektir.\n\nBu işlem kesinlikle geri alınamaz! Onaylıyor musunuz?`
+      `⚠️ ÇÖP KUTUSUNU BOŞALT:\n\nÇöp kutusundaki toplam ${deletedList.length} adet etkinlik kaydı KALICI OLARAK silinecektir.\n\nBu işlem kesinlikle geri alınamaz! Onaylıyor musunuz?`,
     );
     if (!confirm) return;
 
@@ -125,7 +144,9 @@ export function TrashModal({
     try {
       await sqliteStore.cleanupOldTrash(days);
       localStorage.setItem("venue-keeper-trash-retention-days", retentionDays);
-      toast.success(`${days} günden eski silinmiş kayıtlar kalıcı olarak temizlendi.`);
+      toast.success(
+        `${days} günden eski silinmiş kayıtlar kalıcı olarak temizlendi.`,
+      );
       loadDeletedItems();
     } catch (err: any) {
       toast.error(`Otomatik temizleme hatası: ${err?.message || err}`);
@@ -147,7 +168,7 @@ export function TrashModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className={`sm:max-w-4xl max-h-[85vh] overflow-hidden flex flex-col p-6 rounded-2xl ${
+        className={`sm:max-w-7xl max-h-[90vh] overflow-hidden flex flex-col p-6 rounded-2xl ${
           isDark
             ? "bg-slate-900 border-slate-800 text-slate-100 shadow-2xl"
             : "bg-white border-slate-200 text-slate-900 shadow-2xl"
@@ -164,7 +185,9 @@ export function TrashModal({
                 </Badge>
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Silinen etkinlikler bu alanda güvenle saklanır. İhtiyaç halinde tek tıkla geri yükleyebilir veya kalıcı olarak temizleyebilirsiniz.
+                Silinen etkinlikler bu alanda güvenle saklanır. İhtiyaç halinde
+                tek tıkla geri yükleyebilir veya kalıcı olarak
+                temizleyebilirsiniz.
               </DialogDescription>
             </div>
 
@@ -176,7 +199,8 @@ export function TrashModal({
                   onClick={handleEmptyTrash}
                   className="bg-rose-600 hover:bg-rose-700 text-white text-xs h-8 font-bold px-3 shadow-xs"
                 >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Çöpü Boşalt ({deletedList.length})
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />{" "}
+                  Çöpü Boşalt ({deletedList.length})
                 </Button>
               )}
             </div>
@@ -192,7 +216,9 @@ export function TrashModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`text-xs pl-8 h-8 rounded-xl ${
-                  isDark ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-200 text-slate-900"
+                  isDark
+                    ? "bg-slate-950 border-slate-800 text-slate-100"
+                    : "bg-slate-50 border-slate-200 text-slate-900"
                 }`}
               />
             </div>
@@ -203,7 +229,9 @@ export function TrashModal({
                 value={retentionDays}
                 onChange={(e) => setRetentionDays(e.target.value)}
                 className={`text-xs h-8 px-2 rounded-xl border font-semibold flex-1 ${
-                  isDark ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-slate-50 border-slate-200 text-slate-800"
+                  isDark
+                    ? "bg-slate-950 border-slate-800 text-slate-200"
+                    : "bg-slate-50 border-slate-200 text-slate-800"
                 }`}
                 title="Otomatik Temizleme Süresi"
               >
@@ -227,124 +255,182 @@ export function TrashModal({
 
         {/* Content Table */}
         <div className="flex-1 overflow-y-auto py-2">
-          {loading ? (
-            <div className="text-center py-16 space-y-2">
-              <Clock className="h-8 w-8 mx-auto text-indigo-500 animate-spin opacity-50" />
-              <p className="text-xs text-slate-400">Çöp kutusu yükleniyor...</p>
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="text-center py-16 space-y-3">
-              <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 opacity-60" />
-              <h4 className="font-bold text-sm text-slate-400">
-                {searchQuery ? "Aramanızla eşleşen silinmiş kayıt bulunamadı." : "Geri dönüşüm kutusu tertemiz! Silinmiş etkinlik kaydı yok."}
-              </h4>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Bir etkinliği sildiğinizde kaybolmaz, buraya taşınır ve 30 gün boyunca güvenle geri yüklenebilir.
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-              <table className="w-full text-left text-xs border-collapse font-sans">
-                <thead>
-                  <tr
-                    className={`border-b text-[11px] uppercase font-black tracking-wider ${
-                      isDark ? "bg-slate-950 text-slate-300 border-slate-800" : "bg-slate-100 text-slate-900 border-slate-300"
+          {loading
+            ? (
+              <div className="text-center py-16 space-y-2">
+                <Clock className="h-8 w-8 mx-auto text-indigo-500 animate-spin opacity-50" />
+                <p className="text-xs text-slate-400">
+                  Çöp kutusu yükleniyor...
+                </p>
+              </div>
+            )
+            : filteredItems.length === 0
+            ? (
+              <div className="text-center py-16 space-y-3">
+                <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-500 opacity-60" />
+                <h4 className="font-bold text-sm text-slate-400">
+                  {searchQuery
+                    ? "Aramanızla eşleşen silinmiş kayıt bulunamadı."
+                    : "Geri dönüşüm kutusu tertemiz! Silinmiş etkinlik kaydı yok."}
+                </h4>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  Bir etkinliği sildiğinizde kaybolmaz, buraya taşınır ve 30 gün
+                  boyunca güvenle geri yüklenebilir.
+                </p>
+              </div>
+            )
+            : (
+              <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+                <table className="w-full text-left text-xs border-collapse font-sans">
+                  <thead>
+                    <tr
+                      className={`border-b text-[11px] uppercase font-black tracking-wider ${
+                        isDark
+                          ? "bg-slate-950 text-slate-300 border-slate-800"
+                          : "bg-slate-100 text-slate-900 border-slate-300"
+                      }`}
+                    >
+                      <th className="p-3">Silinme Tarihi</th>
+                      <th className="p-3">Müşteri / Kurum</th>
+                      <th className="p-3">Mekan & Salon</th>
+                      <th className="p-3">Etkinlik Tarihi & Saati</th>
+                      <th className="p-3 text-right">Tutar</th>
+                      <th className="p-3 text-center">İşlemler</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    className={`divide-y ${
+                      isDark ? "divide-slate-800/70" : "divide-slate-200"
                     }`}
                   >
-                    <th className="p-3">Silinme Tarihi</th>
-                    <th className="p-3">Müşteri / Kurum</th>
-                    <th className="p-3">Mekan & Salon</th>
-                    <th className="p-3">Etkinlik Tarihi & Saati</th>
-                    <th className="p-3 text-right">Tutar</th>
-                    <th className="p-3 text-center">İşlemler</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${isDark ? "divide-slate-800/70" : "divide-slate-200"}`}>
-                  {filteredItems.map((r) => {
-                    const v = venues.find((x) => x.id === r.venueId);
-                    const h = v?.halls?.find((x) => x.id === r.hallId);
+                    {filteredItems
+                      .slice(
+                        (currentPage - 1) * pageSize,
+                        currentPage * pageSize,
+                      )
+                      .map((r) => {
+                        const v = venues.find((x) => x.id === r.venueId);
+                        const h = v?.halls?.find((x) => x.id === r.hallId);
 
-                    return (
-                      <tr
-                        key={r.id}
-                        className={`transition-colors ${
-                          isDark ? "hover:bg-slate-800/40 bg-slate-900/30" : "hover:bg-rose-50/40 bg-white"
-                        }`}
-                      >
-                        {/* Deletion Date */}
-                        <td className="p-3 whitespace-nowrap">
-                          <div className="font-mono text-[11px] font-bold text-rose-500 flex items-center gap-1">
-                            🗑️ {r.deletedAt || "Bilinmiyor"}
-                          </div>
-                          <div className="text-[10px] text-slate-400">Silindi</div>
-                        </td>
+                        return (
+                          <tr
+                            key={r.id}
+                            className={`transition-colors ${
+                              isDark
+                                ? "hover:bg-slate-800/40 bg-slate-900/30"
+                                : "hover:bg-rose-50/40 bg-white"
+                            }`}
+                          >
+                            {/* Deletion Date */}
+                            <td className="p-3 whitespace-nowrap">
+                              <div className="font-mono text-[11px] font-bold text-rose-500 flex items-center gap-1">
+                                🗑️ {r.deletedAt || "Bilinmiyor"}
+                              </div>
+                              <div className="text-[10px] text-slate-400">
+                                Silindi
+                              </div>
+                            </td>
 
-                        {/* Customer */}
-                        <td className="p-3">
-                          <div className={`font-black text-sm ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-                            {r.customer}
-                          </div>
-                          {r.phone && (
-                            <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1 mt-0.5">
-                              📞 {r.phone}
-                            </div>
-                          )}
-                        </td>
+                            {/* Customer */}
+                            <td className="p-3">
+                              <div
+                                className={`font-black text-sm ${
+                                  isDark ? "text-slate-100" : "text-slate-900"
+                                }`}
+                              >
+                                {r.customer}
+                              </div>
+                              {r.phone && (
+                                <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1 mt-0.5">
+                                  📞 {r.phone}
+                                </div>
+                              )}
+                            </td>
 
-                        {/* Venue & Hall */}
-                        <td className="p-3">
-                          <div className={`font-bold text-xs ${isDark ? "text-slate-200" : "text-slate-900"}`}>
-                            {v?.name || "Mekan"}
-                          </div>
-                          <div className="text-[11px] text-indigo-500 font-semibold">📍 {h?.name || "Salon"}</div>
-                        </td>
+                            {/* Venue & Hall */}
+                            <td className="p-3">
+                              <div
+                                className={`font-bold text-xs ${
+                                  isDark ? "text-slate-200" : "text-slate-900"
+                                }`}
+                              >
+                                {v?.name || "Mekan"}
+                              </div>
+                              <div className="text-[11px] text-indigo-500 font-semibold">
+                                📍 {h?.name || "Salon"}
+                              </div>
+                            </td>
 
-                        {/* Event Date & Time */}
-                        <td className="p-3 whitespace-nowrap font-mono">
-                          <div className={`font-black text-xs ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-                            📅 {r.date}
-                          </div>
-                          <div className="text-[11px] text-emerald-500 font-bold">
-                            ⏰ {r.start} - {r.end}
-                          </div>
-                        </td>
+                            {/* Event Date & Time */}
+                            <td className="p-3 whitespace-nowrap font-mono">
+                              <div
+                                className={`font-black text-xs ${
+                                  isDark ? "text-slate-100" : "text-slate-900"
+                                }`}
+                              >
+                                📅 {r.date}
+                              </div>
+                              <div className="text-[11px] text-emerald-500 font-bold">
+                                ⏰ {r.start} - {r.end}
+                              </div>
+                            </td>
 
-                        {/* Financial Price */}
-                        <td className="p-3 text-right whitespace-nowrap font-mono font-black text-emerald-500 text-xs">
-                          {money(r.price)}
-                        </td>
+                            {/* Financial Price */}
+                            <td className="p-3 text-right whitespace-nowrap font-mono font-black text-emerald-500 text-xs">
+                              {money(r.price)}
+                            </td>
 
-                        {/* Actions: Restore & Permanent Delete */}
-                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-1.5">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRestore(r)}
-                              className="h-7 px-2.5 text-[11px] font-black border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all shadow-2xs"
-                              title="Bu etkinliği takvime geri yükle"
+                            {/* Actions: Restore & Permanent Delete */}
+                            <td
+                              className="p-3 text-center"
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              <RotateCcw className="h-3 w-3 mr-1" /> Geri Yükle
-                            </Button>
+                              <div className="flex items-center justify-center gap-1.5">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleRestore(r)}
+                                  className="h-7 px-2.5 text-[11px] font-black border-emerald-500/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all shadow-2xs"
+                                  title="Bu etkinliği takvime geri yükle"
+                                >
+                                  <RotateCcw className="h-3 w-3 mr-1" />{" "}
+                                  Geri Yükle
+                                </Button>
 
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handlePermanentDelete(r)}
-                              className="h-7 px-2 text-[11px] font-bold text-slate-400 hover:text-rose-600 hover:bg-rose-500/10"
-                              title="Kalıcı olarak yok et"
-                            >
-                              <Trash2 className="h-3.5 w-3.5 text-rose-500" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handlePermanentDelete(r)}
+                                  className="h-7 px-2 text-[11px] font-bold text-slate-400 hover:text-rose-600 hover:bg-rose-500/10"
+                                  title="Kalıcı olarak yok et"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
+
+                {/* Trash Pagination Controls */}
+                {filteredItems.length > 0 && (
+                  <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+                    <PaginationControls
+                      currentPage={currentPage}
+                      totalItems={filteredItems.length}
+                      pageSize={pageSize}
+                      pageSizeOptions={[5, 10, 20, 50]}
+                      onPageChange={(p) => setCurrentPage(p)}
+                      onPageSizeChange={(s) => setPageSize(s)}
+                      theme={theme}
+                      itemLabel="silinmiş kayıt"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
         </div>
       </DialogContent>
     </Dialog>

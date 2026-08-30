@@ -104,6 +104,16 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
       return;
     }
 
+    const todayStr = (() => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+
+    if (selectedDay && selectedDay < todayStr) {
+      toast.error("Geçmiş tarihli yeni etkinlik kaydı oluşturulamaz. Lütfen bugünün veya ileri bir tarihi seçin.");
+      return;
+    }
+
     try {
       const formattedNote = [
         resNote.trim(),

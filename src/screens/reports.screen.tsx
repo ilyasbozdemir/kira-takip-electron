@@ -23,6 +23,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { money, type Store } from "@/lib/rental-store";
+import { PaginationControls } from "@/components/ui/pagination-controls";
 
 interface ReportsScreenProps {
   theme: "dark" | "light";
@@ -43,6 +44,14 @@ export function ReportsScreen({
   const [activeTab, setActiveTab] = useState<"summary" | "payments">("summary");
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<"all" | "paid" | "partial" | "unpaid">("all");
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, paymentStatusFilter]);
 
   // Venue Financial Breakdown
   const venueStats = useMemo(() => {
@@ -442,7 +451,9 @@ export function ReportsScreen({
                       </td>
                     </tr>
                   ) : (
-                    paymentList.map((r) => {
+                    paymentList
+                      .slice((currentPage - 1) * pageSize, currentPage * pageSize)
+                      .map((r) => {
                       const v = store?.venues.find((x) => x.id === r.venueId);
                       const h = v?.halls?.find((x) => x.id === r.hallId);
                       const price = Number(r.price) || 0;
@@ -456,7 +467,7 @@ export function ReportsScreen({
                         <tr
                           key={r.id}
                           className={`transition-colors ${
-                            isDark ? "hover:bg-slate-800/40" : "hover:bg-indigo-50/50 bg-white"
+                            isDark ? "hover:bg-slate-800/40 bg-slate-900/20" : "hover:bg-indigo-50/50 bg-white"
                           }`}
                         >
                           {/* Date & Time */}
@@ -578,6 +589,20 @@ export function ReportsScreen({
                 </tfoot>
               </table>
             </div>
+
+            {/* Payment List Pagination Controls */}
+            {paymentList.length > 0 && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalItems={paymentList.length}
+                pageSize={pageSize}
+                pageSizeOptions={[10, 15, 25, 50, 100]}
+                onPageChange={(p) => setCurrentPage(p)}
+                onPageSizeChange={(s) => setPageSize(s)}
+                theme={isDark ? "dark" : "light"}
+                itemLabel="tahsilat kaydı"
+              />
+            )}
           </div>
         )}
       </CardContent>

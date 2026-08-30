@@ -532,6 +532,8 @@ export function App(): React.JSX.Element {
     setNewVenueMapUrl,
     newVenueCategory,
     setNewVenueCategory,
+    newVenueManagerPersonnelId,
+    setNewVenueManagerPersonnelId,
     newVenueManagerName,
     setNewVenueManagerName,
     newVenueManagerTitle,
@@ -740,7 +742,7 @@ export function App(): React.JSX.Element {
 
       {/* Kapatılıyor overlay'i */}
       {isClosing && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-sm gap-3">
+        <div className="fixed inset-0 z-9999 flex flex-col items-center justify-center bg-slate-950/90 backdrop-blur-sm gap-3">
           <svg
             className="animate-spin h-10 w-10 text-blue-400"
             viewBox="0 0 24 24"
@@ -1004,8 +1006,11 @@ export function App(): React.JSX.Element {
           {/* Global Application Footer */}
           <Footer
             currentFilePath={currentFilePath}
+            fileName={fileName}
             institutionName={institutionName}
             theme={theme}
+            onOpenLauncher={() => setShowLauncherModal(true)}
+            onOpenFile={() => openFile()}
           />
         </main>
       </div>
@@ -1069,6 +1074,8 @@ export function App(): React.JSX.Element {
         setNewVenueMapUrl={setNewVenueMapUrl}
         newVenueCategory={newVenueCategory}
         setNewVenueCategory={setNewVenueCategory}
+        newVenueManagerPersonnelId={newVenueManagerPersonnelId}
+        setNewVenueManagerPersonnelId={setNewVenueManagerPersonnelId}
         newVenueManagerName={newVenueManagerName}
         setNewVenueManagerName={setNewVenueManagerName}
         newVenueManagerTitle={newVenueManagerTitle}

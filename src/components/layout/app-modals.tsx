@@ -75,6 +75,8 @@ interface AppModalsProps {
   setNewVenueMapUrl: (v: string) => void;
   newVenueCategory: string;
   setNewVenueCategory: (v: string) => void;
+  newVenueManagerPersonnelId?: string;
+  setNewVenueManagerPersonnelId?: (v: string) => void;
   newVenueManagerName: string;
   setNewVenueManagerName: (v: string) => void;
   newVenueManagerTitle: string;
@@ -253,6 +255,8 @@ export function AppModals({
   setNewVenueMapUrl,
   newVenueCategory,
   setNewVenueCategory,
+  newVenueManagerPersonnelId,
+  setNewVenueManagerPersonnelId,
   newVenueManagerName,
   setNewVenueManagerName,
   newVenueManagerTitle,
@@ -398,6 +402,8 @@ export function AppModals({
         setNewVenueMapUrl={setNewVenueMapUrl}
         newVenueCategory={newVenueCategory}
         setNewVenueCategory={setNewVenueCategory}
+        newVenueManagerPersonnelId={newVenueManagerPersonnelId}
+        setNewVenueManagerPersonnelId={setNewVenueManagerPersonnelId}
         newVenueManagerName={newVenueManagerName}
         setNewVenueManagerName={setNewVenueManagerName}
         newVenueManagerTitle={newVenueManagerTitle}

@@ -2072,33 +2072,59 @@ export function SettingsScreen({
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* 1. MAPS & NAVIGATION GUIDE */}
-                <div className="p-4 rounded-2xl border border-indigo-500/20 bg-slate-950/40 space-y-2">
-                  <h4 className="text-xs font-extrabold text-indigo-400 flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-indigo-500" />{" "}
+                <div
+                  className={`p-4 rounded-2xl border space-y-2.5 transition-colors ${
+                    theme === "dark"
+                      ? "bg-slate-950/60 border-indigo-500/30 text-slate-200"
+                      : "bg-indigo-50/70 border-indigo-200 text-slate-900 shadow-2xs"
+                  }`}
+                >
+                  <h4 className="text-sm font-black text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-indigo-500" />
                     1. Akıllı Yol Tarifi & Harita Entegrasyonu (Google & Apple
                     Maps)
                   </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p
+                    className={`text-xs leading-relaxed font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Müşterilerinize gönderilen e-posta ve takvim davetiyelerinde
                     etkinlik alanının yol tarifi otomatik üretilir:
                   </p>
-                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                  <ul
+                    className={`text-xs space-y-1.5 list-disc list-inside pt-1 ${
+                      theme === "dark" ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Google Maps (Android / Web):
                       </strong>{" "}
                       Android ve masaüstü tarayıcılarda tek tıkla canlı Google
                       Haritalar navigasyonunu başlatır.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Apple Maps (iPhone / iOS / Mac):
                       </strong>{" "}
                       iPhone ve iPad kullanıcılarında otomatik yerleşik Apple
                       Haritalar (Apple Maps) uygulamasını açar.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Dinamik Cihaz Algılama:
                       </strong>{" "}
                       Sistem kullanıcının cihaz tipine göre en uygun harita
@@ -2108,33 +2134,68 @@ export function SettingsScreen({
                 </div>
 
                 {/* 2. SMTP & EMAIL GUIDE */}
-                <div className="p-4 rounded-2xl border border-emerald-500/20 bg-slate-950/40 space-y-2">
-                  <h4 className="text-xs font-extrabold text-emerald-400 flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-emerald-500" />{" "}
+                <div
+                  className={`p-4 rounded-2xl border space-y-2.5 transition-colors ${
+                    theme === "dark"
+                      ? "bg-slate-950/60 border-emerald-500/30 text-slate-200"
+                      : "bg-emerald-50/70 border-emerald-200 text-slate-900 shadow-2xs"
+                  }`}
+                >
+                  <h4 className="text-sm font-black text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
                     2. Kurumsal SMTP & E-posta Bildirimleri
                   </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p
+                    className={`text-xs leading-relaxed font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Müşterilere rezervasyon dökümü, ödeme bilgisi ve evrak
                     belgesi göndermek için SMTP entegrasyonu:
                   </p>
-                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                  <ul
+                    className={`text-xs space-y-1.5 list-disc list-inside pt-1 ${
+                      theme === "dark" ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         JSON İçe / Dışa Aktar:
                       </strong>{" "}
-                      Masaüstünden <code>asut_smtp_sablonu.json</code>{" "}
+                      Masaüstünden{" "}
+                      <code
+                        className={`px-1 py-0.5 rounded border text-[11px] font-mono ${
+                          theme === "dark"
+                            ? "bg-slate-900 border-slate-700 text-emerald-300"
+                            : "bg-white border-emerald-300 text-emerald-800"
+                        }`}
+                      >
+                        asut_smtp_sablonu.json
+                      </code>{" "}
                       dosyasını sürükleyip bırakarak veya yapıştırarak ayarları
                       saniyeler içinde yükleyebilirsiniz.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Akıllı TLS/SSL Tespiti:
                       </strong>{" "}
                       Port 587 (STARTTLS) ve Port 465 (Implicit SSL) otomatik
                       ayrıştırılır.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Kibar Özet Kartı:
                       </strong>{" "}
                       Ayarlar kaydedildiğinde şifre ve kritik veriler gizlenip
@@ -2144,69 +2205,129 @@ export function SettingsScreen({
                 </div>
 
                 {/* 3. CALENDAR & ICS GUIDE */}
-                <div className="p-4 rounded-2xl border border-sky-500/20 bg-slate-950/40 space-y-2">
-                  <h4 className="text-xs font-extrabold text-sky-400 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-sky-500" />{" "}
+                <div
+                  className={`p-4 rounded-2xl border space-y-2.5 transition-colors ${
+                    theme === "dark"
+                      ? "bg-slate-950/60 border-sky-500/30 text-slate-200"
+                      : "bg-sky-50/70 border-sky-200 text-slate-900 shadow-2xs"
+                  }`}
+                >
+                  <h4 className="text-sm font-black text-sky-700 dark:text-sky-400 flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-sky-600 dark:text-sky-500" />
                     3. iCal (.ics) & Google Calendar Entegrasyonu
                   </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p
+                    className={`text-xs leading-relaxed font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Rezervasyonlarınızı Google Calendar, Outlook ve Apple Takvim
                     uygulamalarına canlı aktarın:
                   </p>
-                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                  <ul
+                    className={`text-xs space-y-1.5 list-disc list-inside pt-1 ${
+                      theme === "dark" ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Mail Eki (.ics Attachment):
                       </strong>{" "}
-                      Gönderilen e-postada <code>.ics</code>{" "}
+                      Gönderilen e-postada{" "}
+                      <code
+                        className={`px-1 py-0.5 rounded border text-[11px] font-mono ${
+                          theme === "dark"
+                            ? "bg-slate-900 border-slate-700 text-sky-300"
+                            : "bg-white border-sky-300 text-sky-800"
+                        }`}
+                      >
+                        .ics
+                      </code>{" "}
                       takvim dosyası eklenir ve Gmail/Outlook kutusunda{" "}
                       <b>"Takvime Ekle"</b> düğmesi çıkar.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Görsel Takvim Kartı:
                       </strong>{" "}
-                      <code>.ics</code>{" "}
-                      dosyasını indirmeden önce görsel davetiye kartı olarak
-                      önizleyebilirsiniz.
+                      Takvim davetiyesini indirmeden önce görsel davetiye kartı
+                      olarak önizleyebilirsiniz.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
-                        Google Calendar OAuth Sync:
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
+                        Apple & Google Sync:
                       </strong>{" "}
-                      Tüm mekan kiralamalarını Google Takvim ile çift yönlü
-                      senkronize eder.
+                      Tüm mekan kiralamalarını mobil cihazların takvimleri ile
+                      tam uyumlu senkronize eder.
                     </li>
                   </ul>
                 </div>
 
                 {/* 4. CRM & CUSTOMERS GUIDE */}
-                <div className="p-4 rounded-2xl border border-purple-500/20 bg-slate-950/40 space-y-2">
-                  <h4 className="text-xs font-extrabold text-purple-400 flex items-center gap-2">
-                    <User className="h-4 w-4 text-purple-500" />{" "}
+                <div
+                  className={`p-4 rounded-2xl border space-y-2.5 transition-colors ${
+                    theme === "dark"
+                      ? "bg-slate-950/60 border-purple-500/30 text-slate-200"
+                      : "bg-purple-50/70 border-purple-200 text-slate-900 shadow-2xs"
+                  }`}
+                >
+                  <h4 className="text-sm font-black text-purple-700 dark:text-purple-400 flex items-center gap-2">
+                    <User className="h-4 w-4 text-purple-600 dark:text-purple-500" />
                     4. Otomatik CRM Müşteri Kataloğu & Bağımsız Kayıt
                   </h4>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p
+                    className={`text-xs leading-relaxed font-medium ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
                     Müşteri bilgileri rezervasyon verilerinden otomatik derlenir
                     ve CRM kataloğuna aktarılır:
                   </p>
-                  <ul className="text-xs text-slate-400 space-y-1 list-disc list-inside pt-1">
+                  <ul
+                    className={`text-xs space-y-1.5 list-disc list-inside pt-1 ${
+                      theme === "dark" ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Otomatik Derleme:
                       </strong>{" "}
                       Rezervasyon yazılırken yazılan müşteri ad ve telefonları
                       CRM listesine otomatik işlenir.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         Cascading Olmayan Esneklik:
                       </strong>{" "}
                       Rezervasyon üzerindeki müşteri adı değiştirildiğinde
                       geçmiş kayıtlar bozulmaz.
                     </li>
                     <li>
-                      <strong className="text-slate-200">
+                      <strong
+                        className={`font-bold ${
+                          theme === "dark" ? "text-slate-100" : "text-slate-900"
+                        }`}
+                      >
                         CRM Rehberine Terfi Et:
                       </strong>{" "}
                       Otomatik derlenen müşterileri tek tıkla kalıcı kayıtlı

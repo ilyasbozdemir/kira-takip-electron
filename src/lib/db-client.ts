@@ -174,6 +174,19 @@ export const sqliteStore = {
     }
     await this.loadFromDb();
   },
+  async updatePersonnel(p: any) {
+    if (window.electronAPI?.db?.updatePersonnel) {
+      await window.electronAPI.db.updatePersonnel(p);
+    } else {
+      if (currentStoreData.personnel) {
+        currentStoreData.personnel = currentStoreData.personnel.map((x) =>
+          x.id === p.id ? { ...x, ...p } : x
+        );
+      }
+      localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
+    }
+    await this.loadFromDb();
+  },
   async deletePersonnel(id: string) {
     if (window.electronAPI?.db?.deletePersonnel) {
       await window.electronAPI.db.deletePersonnel(id);

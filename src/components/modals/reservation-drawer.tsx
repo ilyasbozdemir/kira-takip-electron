@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
+  Clock,
   Mail,
   MessageSquare,
   Printer,
@@ -17,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { hoursBetween, money, type Reservation, type Venue } from "@/lib/rental-store";
+import { formatTRPhone, getWhatsAppUrl } from "@/lib/phone-utils";
 
 interface ReservationDrawerProps {
   reservation: Reservation | null;
@@ -208,12 +210,18 @@ export function ReservationDrawer({
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
-                    {reservation.phone}
+                    {formatTRPhone(reservation.phone)}
                   </span>
                   <a
-                    href={`https://wa.me/90${reservation.phone.replace(/\D/g, "")}`}
+                    href={getWhatsAppUrl(reservation.phone)}
                     target="_blank"
                     rel="noreferrer"
+                    onClick={(e) => {
+                      if (window.electronAPI?.openExternalLink) {
+                        e.preventDefault();
+                        window.electronAPI.openExternalLink(getWhatsAppUrl(reservation.phone));
+                      }
+                    }}
                     className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-600/20 dark:text-emerald-400 px-2 py-0.5 rounded font-bold hover:bg-emerald-200 dark:hover:bg-emerald-600/30 border border-emerald-300 dark:border-emerald-700/50"
                   >
                     WhatsApp
@@ -326,20 +334,18 @@ export function ReservationDrawer({
                 {manager?.phone && (
                   <div className="flex items-center gap-2 pt-1 font-mono">
                     <a
-                      href={`https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`}
+                      href={getWhatsAppUrl(manager.phone)}
                       target="_blank"
                       rel="noreferrer"
                       onClick={(e) => {
                         if (window.electronAPI?.openExternalLink) {
                           e.preventDefault();
-                          window.electronAPI.openExternalLink(
-                            `https://wa.me/90${(manager.phone || "").replace(/\D/g, "")}`,
-                          );
+                          window.electronAPI.openExternalLink(getWhatsAppUrl(manager.phone));
                         }
                       }}
                       className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline text-[11px]"
                     >
-                      📞 {manager.phone} (WhatsApp)
+                      📞 {formatTRPhone(manager.phone)} (WhatsApp)
                     </a>
                   </div>
                 )}
@@ -439,6 +445,22 @@ export function ReservationDrawer({
                 </div>
               </div>
             </div>
+
+            {/* Past Event Financial Update Note */}
+            {(() => {
+              const todayStr = new Date().toLocaleDateString("en-CA");
+              const isPast = reservation.date < todayStr;
+              if (!isPast) return null;
+              return (
+                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-[11px] flex items-start gap-2">
+                  <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold block">Geçmiş Tarihli Etkinlik</span>
+                    Muhasebe ve denetim kayıtları için tahsilat, makbuz ve ödeme yöntemi güncellemeleri serbesttir.
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Receipt & Payment Method Form Fields */}
             <div className="space-y-2.5 pt-2">

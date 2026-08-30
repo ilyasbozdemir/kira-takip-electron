@@ -47,6 +47,7 @@ export const electronAPI = {
     getAllSettings: () => ipcRenderer.invoke("db:get-all-settings"),
     getPersonnel: () => ipcRenderer.invoke("db:get-personnel"),
     addPersonnel: (p: { name: string; title?: string; phone?: string; email?: string; notes?: string }) => ipcRenderer.invoke("db:add-personnel", p),
+    updatePersonnel: (p: { id: string; name: string; title?: string; phone?: string; email?: string; notes?: string }) => ipcRenderer.invoke("db:update-personnel", p),
     deletePersonnel: (id: string) => ipcRenderer.invoke("db:delete-personnel", id),
     getCustomers: () => ipcRenderer.invoke("db:get-customers"),
     addCustomer: (c: any) => ipcRenderer.invoke("db:add-customer", c),

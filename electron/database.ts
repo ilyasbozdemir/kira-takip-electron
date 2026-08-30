@@ -144,6 +144,7 @@ function ensureDynamicColumns(d: Database.Database) {
   ensureCols("TANIM_Mekan", [
     { name: "address", def: "TEXT DEFAULT ''" },
     { name: "mapUrl", def: "TEXT DEFAULT ''" },
+    { name: "managerPersonnelId", def: "TEXT DEFAULT ''" },
     { name: "managerName", def: "TEXT DEFAULT ''" },
     { name: "managerPhone", def: "TEXT DEFAULT ''" },
     { name: "managerTitle", def: "TEXT DEFAULT ''" },
@@ -402,6 +403,22 @@ export function addPersonnel(personnel: { name: string; title?: string; phone?: 
   return { id: newId, ...personnel };
 }
 
+export function updatePersonnel(personnel: { id: string; name: string; title?: string; phone?: string; email?: string; notes?: string }): { success: boolean } {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  db!.prepare(
+    "UPDATE TANIM_Personel SET name = ?, title = ?, phone = ?, email = ?, notes = ? WHERE id = ?"
+  ).run(
+    personnel.name,
+    personnel.title || "Tesis Sorumlusu",
+    personnel.phone || "",
+    personnel.email || "",
+    personnel.notes || "",
+    personnel.id
+  );
+  saveWorkspaceIfActive();
+  return { success: true };
+}
+
 export function deletePersonnel(id: string): { success: boolean } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   db!.prepare("DELETE FROM TANIM_Personel WHERE id = ?").run(id);
@@ -470,6 +487,7 @@ export function addVenue(venueData: {
   category?: string;
   address?: string;
   mapUrl?: string;
+  managerPersonnelId?: string;
   managerName?: string;
   managerPhone?: string;
   managerTitle?: string;
@@ -478,7 +496,7 @@ export function addVenue(venueData: {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   const newId = uid();
   db!.prepare(
-    "INSERT INTO TANIM_Mekan (id, name, district, category, address, mapUrl, managerName, managerPhone, managerTitle, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO TANIM_Mekan (id, name, district, category, address, mapUrl, managerPersonnelId, managerName, managerPhone, managerTitle, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     newId,
     venueData.name,
@@ -486,6 +504,7 @@ export function addVenue(venueData: {
     venueData.category || "Genel",
     venueData.address || "",
     venueData.mapUrl || "",
+    venueData.managerPersonnelId || "",
     venueData.managerName || "",
     venueData.managerPhone || "",
     venueData.managerTitle || "",
@@ -502,6 +521,7 @@ export function updateVenue(venueData: {
   category?: string;
   address?: string;
   mapUrl?: string;
+  managerPersonnelId?: string;
   managerName?: string;
   managerPhone?: string;
   managerTitle?: string;
@@ -509,13 +529,14 @@ export function updateVenue(venueData: {
 }): { success: boolean } {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   db!.prepare(
-    "UPDATE TANIM_Mekan SET name = ?, district = ?, category = ?, address = ?, mapUrl = ?, managerName = ?, managerPhone = ?, managerTitle = ?, color = ? WHERE id = ?"
+    "UPDATE TANIM_Mekan SET name = ?, district = ?, category = ?, address = ?, mapUrl = ?, managerPersonnelId = ?, managerName = ?, managerPhone = ?, managerTitle = ?, color = ? WHERE id = ?"
   ).run(
     venueData.name,
     venueData.district,
     venueData.category || "Genel",
     venueData.address || "",
     venueData.mapUrl || "",
+    venueData.managerPersonnelId || "",
     venueData.managerName || "",
     venueData.managerPhone || "",
     venueData.managerTitle || "",
