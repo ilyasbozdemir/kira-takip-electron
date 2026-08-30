@@ -74,41 +74,13 @@ export class DtmWorkspace {
     const lockPath = filePath + ".lock";
     if (fs.existsSync(lockPath)) {
       try {
-        const pidStr = fs.readFileSync(lockPath, "utf-8");
-        const pid = parseInt(pidStr, 10);
-        if (!isNaN(pid) && pid !== process.pid) {
-          let isRunning = false;
-          try {
-            process.kill(pid, 0);
-            isRunning = true;
-          } catch {
-            isRunning = false;
-          }
-          if (!isRunning) {
-            fs.unlinkSync(lockPath);
-          } else {
-            throw new Error(
-              "LOCKED|Bu dosya şu anda başka bir pencerede veya programda açık durumda. Çakışmayı önlemek için önce diğer taraftan kapatmalısınız."
-            );
-          }
-        } else if (isNaN(pid)) {
-          throw new Error(
-            "LOCKED|Bu dosya şu anda başka bir pencerede veya programda açık durumda. Çakışmayı önlemek için önce diğer taraftan kapatmalısınız."
-          );
-        }
-      } catch (err: any) {
-        if (err.message.startsWith("LOCKED|")) throw err;
-        throw new Error(
-          "LOCKED|Bu dosya şu anda başka bir pencerede veya programda açık durumda."
-        );
-      }
+        fs.unlinkSync(lockPath);
+      } catch {}
     }
 
     try {
       fs.writeFileSync(lockPath, process.pid.toString(), { encoding: "utf-8" });
-    } catch (err: any) {
-      throw new Error(`Kilit dosyası oluşturulamadı: ${err.message}`);
-    }
+    } catch {}
 
     this.currentFilePath = filePath;
     this.ensureTempDir();

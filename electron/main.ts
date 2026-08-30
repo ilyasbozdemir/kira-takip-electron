@@ -130,22 +130,38 @@ process.env.VITE_PUBLIC = app.isPackaged
 let win: BrowserWindow | null = null;
 let openedFilePath: string | null = null;
 
+process.on("uncaughtException", (error) => {
+  console.error("Uncaught Exception in Main Process:", error);
+  if (win && !win.isDestroyed()) {
+    win.show();
+    win.focus();
+  }
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection in Main Process:", reason);
+});
+
 // Single instance lock (only enforced in production)
 const isDev = !app.isPackaged || Boolean(process.env.VITE_DEV_SERVER_URL);
 
 function setupAppLifecycle() {
   app.whenReady().then(() => {
-    // Initial DB init only if passed via CLI argument (e.g. double-clicked in Explorer)
+    createWindow();
+    buildAppMenu();
+
     const initialFilePath = extractFilePathFromArgs(process.argv);
     if (initialFilePath) {
       openedFilePath = initialFilePath;
-      initDatabase(initialFilePath);
+      try {
+        initDatabase(initialFilePath);
+      } catch (err) {
+        console.error("Failed to init database on startup:", err);
+      }
     } else {
       openedFilePath = null;
     }
 
-    createWindow();
-    buildAppMenu();
     initAutoUpdater();
   });
 }
@@ -158,13 +174,19 @@ if (!isDev) {
     app.on("second-instance", (_event, commandLine) => {
       if (win) {
         if (win.isMinimized()) win.restore();
+        win.show();
         win.focus();
 
         const filePath = extractFilePathFromArgs(commandLine);
         if (filePath) {
           openedFilePath = filePath;
-          initDatabase(filePath);
-          win.webContents.send("db-updated");
+          try {
+            initDatabase(filePath);
+            win.webContents.send("db-updated");
+            win.webContents.send("file-opened", filePath);
+          } catch (err) {
+            console.error("Failed to open file on second-instance:", err);
+          }
         }
       }
     });
@@ -191,13 +213,14 @@ function extractFilePathFromArgs(args: string[]): string | null {
 
 function createWindow() {
   win = new BrowserWindow({
-    title: "KİRA KONTROL UYGULAMASI- Mekan, Salon ve Etkinlik Yönetim Sistemi",
+    title: "İşletme & Salon Kira Takip PRO",
     icon: path.join(process.env.VITE_PUBLIC || "", "app-logo.png"),
     width: 1350,
     height: 900,
     minWidth: 1024,
     minHeight: 680,
     frame: false,
+    show: true,
     webPreferences: {
       preload: path.join(_dirname, "preload.js"),
       nodeIntegration: false,
@@ -205,6 +228,9 @@ function createWindow() {
       devTools: true,
     },
   });
+
+  win.center();
+  win.focus();
 
   win.webContents.on("before-input-event", (event, input) => {
     if ((input.key === "F12" || (input.control && input.shift && input.key.toLowerCase() === "i")) && input.type === "keyDown") {
