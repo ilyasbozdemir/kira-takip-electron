@@ -1,7 +1,7 @@
 appId: com.isletmetakip.app
 productName: İşletmeTakipAppPro
 directories:
-  output: release/${version}
+  output: release
 asar: true
 asarUnpack:
   - "**/*.node"

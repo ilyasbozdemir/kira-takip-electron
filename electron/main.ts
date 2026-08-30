@@ -837,7 +837,8 @@ function initAutoUpdater() {
   });
 
   autoUpdater.on("error", (err) => {
-    win?.webContents.send("updater-status", { status: "error", error: err.message });
+    console.warn("AutoUpdater Notice:", err?.message || err);
+    win?.webContents.send("updater-status", { status: "not-available" });
   });
 
   safeHandle("check-for-updates", async () => {
@@ -845,7 +846,8 @@ function initAutoUpdater() {
       const result = await autoUpdater.checkForUpdates();
       return result?.updateInfo;
     } catch (err: any) {
-      return { error: err.message };
+      console.warn("Check updates error:", err?.message || err);
+      return { status: "not-available" };
     }
   });
 
