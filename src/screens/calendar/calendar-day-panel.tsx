@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Building2,
   Calendar as CalendarIcon,
   Clock,
   Copy,
@@ -50,6 +51,18 @@ interface CalendarDayPanelProps {
   onNavigateToCustomer?: (customerName: string) => void;
 }
 
+const TIMELINE_START_HOUR = 8;
+const TIMELINE_END_HOUR = 24;
+const TIMELINE_ROW_HEIGHT = 48; // px per hour
+
+function parseTimeToHours(timeStr: string): number {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(":");
+  const h = parseInt(parts[0], 10) || 0;
+  const m = parseInt(parts[1], 10) || 0;
+  return h + m / 60;
+}
+
 export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
   theme,
   selectedDay,
@@ -72,14 +85,14 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
 
   return (
     <Card
-      className={`lg:col-span-4 flex flex-col rounded-2xl shadow-xs ${
+      className={`lg:col-span-4 flex flex-col rounded-2xl shadow-xs overflow-hidden ${
         isDark
           ? "bg-slate-900/90 border-slate-800 text-slate-100"
           : "bg-white border-slate-200 text-slate-900 shadow-sm"
       }`}
     >
       <CardHeader
-        className={`pb-3 border-b space-y-3 ${
+        className={`pb-3 border-b space-y-3 shrink-0 ${
           isDark ? "border-slate-800/80" : "border-slate-100"
         }`}
       >
@@ -164,7 +177,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 flex-1 overflow-y-auto space-y-3 max-h-[550px]">
+      <CardContent className="p-4 flex-1 overflow-y-auto space-y-3 max-h-[600px]">
         {dayReservations.length === 0 ? (
           <div
             className={`text-center py-12 space-y-2 ${
@@ -185,7 +198,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
           </div>
         ) : rightPanelViewMode === "list" ? (
           /* VIEW MODE 1: MULTI-ROW LIST */
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {dayReservations.map((r) => {
               const h = hallById(r.hallId);
               const v = venues.find((x) => x.id === r.venueId);
@@ -236,38 +249,35 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     )}
                   </div>
 
+                  {/* Spacious Location & Details Box */}
                   <div
-                    className={`grid grid-cols-2 gap-2 text-[11px] p-2.5 rounded-xl border ${
+                    className={`p-2.5 rounded-xl border space-y-1.5 ${
                       isDark
                         ? "bg-slate-900/60 border-slate-800/80"
                         : "bg-white border-slate-200/90 shadow-2xs"
                     }`}
                   >
-                    <div className="space-y-1">
-                      <div
-                        className={`font-mono font-bold text-xs flex items-center gap-1 ${
-                          isDark ? "text-slate-200" : "text-slate-900"
-                        }`}
-                      >
-                        ⏰ {r.start} - {r.end}
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
+                        <Building2 className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                        <span className="truncate">{v?.name || "Mekan"}</span>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={`text-[9.5px] px-1.5 py-0 font-bold ${colorClass}`}
-                      >
-                        {r.eventType || "Etkinlik"}
-                      </Badge>
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 pl-5 truncate">
+                        <span
+                          className="h-2 w-2 rounded-full shrink-0"
+                          style={{ backgroundColor: h?.color || "#6366f1" }}
+                        />
+                        <span className="truncate">{h?.name || "Salon"}</span>
+                      </div>
                     </div>
-                    <div className="space-y-1 text-right">
-                      <div
-                        className="font-bold truncate text-[11px] text-indigo-600 dark:text-indigo-400"
-                        title={`${v?.name} (${h?.name})`}
-                      >
-                        🏛️ {v?.name || "Mekan"}
-                      </div>
-                      <div className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800/60 font-mono">
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        ⏰ {r.start} - {r.end}
+                      </span>
+                      <span className="font-black text-emerald-600 dark:text-emerald-400">
                         {money(r.price)}
-                      </div>
+                      </span>
                     </div>
                   </div>
 
@@ -324,81 +334,98 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
             })}
           </div>
         ) : rightPanelViewMode === "timeline" ? (
-          /* VIEW MODE 2: HOURLY DAY TIMELINE VIEW */
-          <div className="space-y-1 relative pl-12 pr-1 py-2 font-mono">
-            {[
-              "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
-              "14:00", "15:00", "16:00", "17:00", "18:00", "19:00",
-              "20:00", "21:00", "22:00", "23:00",
-            ].map((hourStr) => {
-              const hourInt = parseInt(hourStr.split(":")[0], 10);
-              const activeReservations = dayReservations.filter((r) => {
-                const startH = parseInt(r.start.split(":")[0], 10);
-                const endH = parseInt(r.end.split(":")[0], 10) || 24;
-                return hourInt >= startH && hourInt < endH;
-              });
+          /* VIEW MODE 2: PROPORTIONAL HOURLY DAY TIMELINE VIEW */
+          <div className="relative pl-12 pr-1 py-2 select-none">
+            {/* Background Hour Lines */}
+            <div
+              className="relative border-l border-slate-300 dark:border-slate-800"
+              style={{ height: (TIMELINE_END_HOUR - TIMELINE_START_HOUR) * TIMELINE_ROW_HEIGHT }}
+            >
+              {Array.from({ length: TIMELINE_END_HOUR - TIMELINE_START_HOUR + 1 }).map((_, i) => {
+                const hourInt = TIMELINE_START_HOUR + i;
+                const hourStr = `${String(hourInt).padStart(2, "0")}:00`;
+                const topPos = i * TIMELINE_ROW_HEIGHT;
 
-              return (
-                <div
-                  key={hourStr}
-                  className="relative min-h-10.5 border-t border-slate-200 dark:border-slate-800/50 flex items-start"
-                >
-                  <span className="absolute -left-12 -top-2.5 text-[10px] text-slate-500 font-bold">
-                    {hourStr}
-                  </span>
+                return (
+                  <div
+                    key={hourStr}
+                    className="absolute left-0 right-0 border-t border-slate-200/80 dark:border-slate-800/60"
+                    style={{ top: topPos }}
+                  >
+                    <span className="absolute -left-12 -top-2.5 text-[10px] text-slate-500 font-mono font-bold">
+                      {hourStr}
+                    </span>
+                  </div>
+                );
+              })}
 
-                  {activeReservations.length > 0 && (
-                    <div className="w-full space-y-1 py-0.5">
-                      {activeReservations.map((r) => {
-                        const isStartHour = parseInt(r.start.split(":")[0], 10) === hourInt;
-                        if (!isStartHour) return null;
+              {/* Event Blocks Spanning Real Duration Proportional to Start and End Times */}
+              {dayReservations.map((r) => {
+                const startHour = parseTimeToHours(r.start);
+                const endHour = parseTimeToHours(r.end) || (startHour + 1);
 
-                        const h = hallById(r.hallId);
-                        const v = venues.find((x) => x.id === r.venueId);
+                // Calculate Top & Height
+                const clampedStart = Math.max(startHour, TIMELINE_START_HOUR);
+                const clampedEnd = Math.min(endHour, TIMELINE_END_HOUR);
+                const top = (clampedStart - TIMELINE_START_HOUR) * TIMELINE_ROW_HEIGHT;
+                const durationHours = Math.max(clampedEnd - clampedStart, 0.5);
+                const height = durationHours * TIMELINE_ROW_HEIGHT;
 
-                        return (
-                          <div
-                            key={r.id}
-                            onClick={() => onSelectReservation(r)}
-                            className={`p-2.5 rounded-xl border cursor-pointer shadow-sm transition-all space-y-1 ${
-                              isDark
-                                ? "bg-slate-900 border-indigo-500/50 hover:border-indigo-400 text-slate-200"
-                                : "bg-indigo-50/80 border-indigo-200 hover:border-indigo-400 text-slate-900 shadow-2xs"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between text-xs">
-                              <span
-                                className={`font-black flex items-center gap-1.5 ${
-                                  isDark ? "text-slate-100" : "text-slate-900"
-                                }`}
-                              >
-                                <Clock className="h-3 w-3 text-indigo-500" />
-                                {" "}{r.customer}
-                              </span>
-                              <Badge className="bg-indigo-600 text-white text-[9px] font-bold">
-                                ⏰ {r.start} - {r.end}
-                              </Badge>
-                            </div>
-                            <div
-                              className={`text-[10px] font-sans flex items-center justify-between ${
-                                isDark
-                                  ? "text-slate-300"
-                                  : "text-slate-700 font-medium"
-                              }`}
-                            >
-                              <span>🏛️ {v?.name} • 📍 {h?.name}</span>
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                                {money(r.price)}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                const h = hallById(r.hallId);
+                const v = venues.find((x) => x.id === r.venueId);
+
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => onSelectReservation(r)}
+                    style={{
+                      top: `${top}px`,
+                      height: `${height}px`,
+                      minHeight: "44px",
+                    }}
+                    className={`absolute left-2 right-1 rounded-xl p-2.5 border shadow-md cursor-pointer transition-all hover:scale-[1.01] hover:z-20 overflow-hidden flex flex-col justify-between ${
+                      r.status === "option"
+                        ? isDark
+                          ? "bg-amber-950/80 border-amber-500/60 text-amber-100"
+                          : "bg-amber-50 border-amber-300 text-amber-950 shadow-xs"
+                        : isDark
+                        ? "bg-indigo-950/85 border-indigo-500/60 text-indigo-100"
+                        : "bg-indigo-50 border-indigo-300 text-indigo-950 shadow-xs"
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 text-xs">
+                        <span className="font-black truncate flex items-center gap-1">
+                          <span
+                            className="h-2 w-2 rounded-full shrink-0"
+                            style={{ backgroundColor: h?.color || "#6366f1" }}
+                          />
+                          {r.customer}
+                        </span>
+                        <Badge
+                          className={`text-[9px] px-1.5 py-0 font-bold shrink-0 ${
+                            r.status === "option"
+                              ? "bg-amber-600 text-white"
+                              : "bg-indigo-600 text-white"
+                          }`}
+                        >
+                          ⏰ {r.start} - {r.end} ({durationHours.toFixed(1)} sa)
+                        </Badge>
+                      </div>
+
+                      <div className="text-[11px] font-semibold opacity-90 truncate mt-0.5">
+                        🏛️ {v?.name} • 📍 {h?.name}
+                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+
+                    <div className="flex items-center justify-between text-[10px] font-mono font-bold pt-1 border-t border-current/15">
+                      <span>{r.eventType || "Etkinlik"}</span>
+                      <span className="font-black text-xs">{money(r.price)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ) : rightPanelViewMode === "table" ? (
           /* VIEW MODE 3: TABLE VIEW */
@@ -508,7 +535,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
             </table>
           </div>
         ) : (
-          /* VIEW MODE 4: DETAILED CARDS */
+          /* VIEW MODE 4: DETAILED CARDS (Spacious vertical layout - No horizontal squeezing) */
           dayReservations.map((r) => {
             const h = hallById(r.hallId);
             const v = venues.find((x) => x.id === r.venueId);
@@ -519,10 +546,10 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
               <div
                 key={r.id}
                 onClick={() => onSelectReservation(r)}
-                className={`p-4 rounded-xl border space-y-3 cursor-pointer transition-all ${
+                className={`p-4 rounded-2xl border space-y-3 cursor-pointer transition-all ${
                   isDark
-                    ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
-                    : "bg-slate-50 border-slate-200 hover:bg-white shadow-2xs"
+                    ? "bg-slate-950 border-slate-800 hover:bg-slate-900/60"
+                    : "bg-slate-50/80 border-slate-200 hover:bg-white shadow-2xs"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -583,27 +610,30 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                   </Button>
                 </div>
 
+                {/* Spacious Vertical Venue & Hall Hierarchy (No squeezed text!) */}
                 <div
-                  className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${
+                  className={`p-3 rounded-xl border text-xs space-y-2 ${
                     isDark
                       ? "bg-slate-900/80 border-slate-800"
                       : "bg-white border-slate-200/90 shadow-2xs"
                   }`}
                 >
-                  <div className="flex justify-between items-center">
-                    <span
-                      className={`font-bold ${
-                        isDark ? "text-slate-200" : "text-slate-800"
-                      }`}
-                    >
-                      {v?.name}
-                    </span>
-                    <span className="text-indigo-600 dark:text-indigo-400 font-bold">
-                      {h?.name}
-                    </span>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-extrabold text-slate-900 dark:text-slate-100">
+                      <Building2 className="h-4 w-4 text-indigo-500 shrink-0" />
+                      <span className="truncate">{v?.name || "Mekan / Tesis"}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 pl-5.5">
+                      <span
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: h?.color || "#6366f1" }}
+                      />
+                      <span className="truncate">{h?.name || "Salon"}</span>
+                    </div>
                   </div>
+
                   <div
-                    className={`text-[11px] flex justify-between items-center border-t pt-1 ${
+                    className={`text-[11px] flex justify-between items-center border-t pt-1.5 ${
                       isDark
                         ? "border-slate-800 text-slate-400"
                         : "border-slate-100 text-slate-600 font-medium"
