@@ -130,26 +130,10 @@ process.env.VITE_PUBLIC = app.isPackaged
 let win: BrowserWindow | null = null;
 let openedFilePath: string | null = null;
 
-// Single instance lock
-const gotTheLock = app.requestSingleInstanceLock();
+// Single instance lock (only enforced in production)
+const isDev = !app.isPackaged || Boolean(process.env.VITE_DEV_SERVER_URL);
 
-if (!gotTheLock) {
-  app.quit();
-} else {
-  app.on("second-instance", (_event, commandLine) => {
-    if (win) {
-      if (win.isMinimized()) win.restore();
-      win.focus();
-
-      const filePath = extractFilePathFromArgs(commandLine);
-      if (filePath) {
-        openedFilePath = filePath;
-        initDatabase(filePath);
-        win.webContents.send("db-updated");
-      }
-    }
-  });
-
+function setupAppLifecycle() {
   app.whenReady().then(() => {
     // Initial DB init only if passed via CLI argument (e.g. double-clicked in Explorer)
     const initialFilePath = extractFilePathFromArgs(process.argv);
@@ -164,6 +148,30 @@ if (!gotTheLock) {
     buildAppMenu();
     initAutoUpdater();
   });
+}
+
+if (!isDev) {
+  const gotTheLock = app.requestSingleInstanceLock();
+  if (!gotTheLock) {
+    app.quit();
+  } else {
+    app.on("second-instance", (_event, commandLine) => {
+      if (win) {
+        if (win.isMinimized()) win.restore();
+        win.focus();
+
+        const filePath = extractFilePathFromArgs(commandLine);
+        if (filePath) {
+          openedFilePath = filePath;
+          initDatabase(filePath);
+          win.webContents.send("db-updated");
+        }
+      }
+    });
+    setupAppLifecycle();
+  }
+} else {
+  setupAppLifecycle();
 }
 
 function extractFilePathFromArgs(args: string[]): string | null {
@@ -333,7 +341,16 @@ app.on("open-file", (event, filePath) => {
   }
 });
 
+app.on("before-quit", () => {
+  try {
+    workspaceManager.close();
+  } catch {}
+});
+
 app.on("window-all-closed", () => {
+  try {
+    workspaceManager.close();
+  } catch {}
   if (process.platform !== "darwin") {
     app.quit();
   }
