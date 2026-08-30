@@ -107,18 +107,23 @@ async function sendBackupEmail(
     console.log(`${logPrefix} 📦 Dosya Boyutu: ${fileSizeMb} MB`);
 
     const portNum = Number(smtpConfig.port) || 587;
-    const isSecure = smtpConfig.secure !== undefined ? Boolean(smtpConfig.secure) : (portNum === 465);
-    console.log(`${logPrefix} 🔒 SSL/TLS Modu: ${isSecure ? "Aktif (Port 465 SSL)" : "STARTTLS (Port " + portNum + ")"}`);
+    // Port 465 is direct SSL (secure: true). Port 587/25/2525 use STARTTLS (secure: false).
+    // If secure: true is passed on port 587, BoringSSL throws WRONG_VERSION_NUMBER error!
+    const isSecure = portNum === 465;
+    console.log(`${logPrefix} 🔒 SSL/TLS Modu: ${isSecure ? "SSL/TLS Doğrudan (Port 465)" : "STARTTLS (Port " + portNum + ")"}`);
 
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: portNum,
       secure: isSecure,
+      requireTLS: portNum === 587,
       auth: { user: smtpConfig.user, pass: smtpConfig.pass },
-      tls: { rejectUnauthorized: false },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 30000,
+      tls: {
+        rejectUnauthorized: false,
+      },
+      connectionTimeout: 20000,
+      greetingTimeout: 20000,
+      socketTimeout: 35000,
     });
 
     const now = new Date().toLocaleString("tr-TR");
@@ -694,13 +699,14 @@ safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
 
   try {
     const portNum = Number(smtpConfig?.port) || 587;
-    const isSecure = smtpConfig?.secure !== undefined ? Boolean(smtpConfig?.secure) : (portNum === 465);
-    console.log(`${logPrefix} 🔒 SSL/TLS Modu: ${isSecure ? "Aktif (Port 465 SSL)" : "STARTTLS (Port " + portNum + ")"}`);
+    const isSecure = portNum === 465;
+    console.log(`${logPrefix} 🔒 SSL/TLS Modu: ${isSecure ? "SSL/TLS Doğrudan (Port 465)" : "STARTTLS (Port " + portNum + ")"}`);
 
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: portNum,
       secure: isSecure,
+      requireTLS: portNum === 587,
       auth: {
         user: smtpConfig.user,
         pass: smtpConfig.pass,
@@ -708,9 +714,9 @@ safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
       tls: {
         rejectUnauthorized: false,
       },
-      connectionTimeout: 15000,
-      greetingTimeout: 15000,
-      socketTimeout: 30000,
+      connectionTimeout: 20000,
+      greetingTimeout: 20000,
+      socketTimeout: 35000,
     });
 
     const info = await transporter.sendMail({
