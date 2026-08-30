@@ -1,8 +1,19 @@
 import React, { useRef } from "react";
-import { Check, Upload, User } from "lucide-react";
+import {
+  Building2,
+  Check,
+  Globe,
+  Mail,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  Upload,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -10,6 +21,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { normalizeTRPhoneInput } from "@/lib/phone-utils";
 
 interface IdentityTabProps {
   theme: "dark" | "light";
@@ -22,6 +34,16 @@ interface IdentityTabProps {
   draftInstitutionLogo: string;
   handleDraftLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleRemoveDraftLogo: () => void;
+  draftInstitutionPhone?: string;
+  setDraftInstitutionPhone?: (v: string) => void;
+  draftInstitutionEmail?: string;
+  setDraftInstitutionEmail?: (v: string) => void;
+  draftInstitutionWebsite?: string;
+  setDraftInstitutionWebsite?: (v: string) => void;
+  draftInstitutionKepAddress?: string;
+  setDraftInstitutionKepAddress?: (v: string) => void;
+  draftInstitutionAddress?: string;
+  setDraftInstitutionAddress?: (v: string) => void;
   handleCancelInstitutionSettings: () => void;
   handleSaveInstitutionSettings: () => void;
 }
@@ -37,6 +59,16 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
   draftInstitutionLogo,
   handleDraftLogoUpload,
   handleRemoveDraftLogo,
+  draftInstitutionPhone = "",
+  setDraftInstitutionPhone,
+  draftInstitutionEmail = "",
+  setDraftInstitutionEmail,
+  draftInstitutionWebsite = "",
+  setDraftInstitutionWebsite,
+  draftInstitutionKepAddress = "",
+  setDraftInstitutionKepAddress,
+  draftInstitutionAddress = "",
+  setDraftInstitutionAddress,
   handleCancelInstitutionSettings,
   handleSaveInstitutionSettings,
 }) => {
@@ -45,13 +77,14 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
 
   return (
     <div className="space-y-4 pt-1">
+      {/* 1. Kurum Kimliği ve Logo */}
       <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
         <CardHeader>
           <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
             <User className="h-5 w-5 text-indigo-500" /> Kurum / İşletme Kimlik Bilgileri
           </CardTitle>
           <CardDescription className="text-xs text-slate-400">
-            Resmi evraklarda, tahsis belgelerinde ve sistem başlığında görünecek bilgileri düzenleyin.
+            Resmi evraklarda, tahsis belgelerinde, e-posta şablonlarında ve sistem başlığında görünecek bilgileri düzenleyin.
           </CardDescription>
         </CardHeader>
 
@@ -73,7 +106,7 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
             <Input
               value={draftInstitutionName}
               onChange={(e) => setDraftInstitutionName(e.target.value)}
-              placeholder="Örn: ANKARA BÜYÜKŞEHİR BELEDİYESİ"
+              placeholder="Örn: T.C. BELEDİYE BAŞKANLIĞI"
               className="mt-1 text-xs font-bold uppercase"
             />
           </div>
@@ -83,7 +116,7 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
             <Input
               value={draftInstitutionSubHeader}
               onChange={(e) => setDraftInstitutionSubHeader(e.target.value)}
-              placeholder="Örn: Sosyal Hizmetler Dairesi Başkanlığı - Tesisler Şube Müdürlüğü"
+              placeholder="Örn: Kültür ve Sosyal İşler Dairesi / Tesis İşletme Müdürlüğü"
               className="mt-1 text-xs"
             />
           </div>
@@ -143,10 +176,113 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
                   </Button>
                 )}
                 <p className="text-[10px] text-slate-500">
-                  PNG veya SVG şeffaf arka planlı logolar tavsiye edilir.
+                  PNG veya SVG şeffaf arka planlı logolar tavsiye edilir (Otomatik e-posta ve evraklara gömülür).
                 </p>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. Kurumsal İletişim Bilgileri */}
+      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+        <CardHeader>
+          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            <Phone className="h-5 w-5 text-emerald-500" /> Kurumsal İletişim Bilgileri
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-400">
+            E-postalarda, tahsis belgelerinde ve sözleşmelerde yer alacak resmi iletişim detayları.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 text-emerald-500" /> Telefon Numarası
+              </Label>
+              <Input
+                value={draftInstitutionPhone}
+                onChange={(e) =>
+                  setDraftInstitutionPhone &&
+                  setDraftInstitutionPhone(normalizeTRPhoneInput(e.target.value))
+                }
+                placeholder="Örn: 0850 000 00 00"
+                className="mt-1 text-xs font-mono"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-sky-500" /> Kurumsal E-posta
+              </Label>
+              <Input
+                value={draftInstitutionEmail}
+                onChange={(e) =>
+                  setDraftInstitutionEmail && setDraftInstitutionEmail(e.target.value)
+                }
+                placeholder="Örn: info@kurum.bel.tr"
+                className="mt-1 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Globe className="h-3.5 w-3.5 text-indigo-500" /> Web Sitesi
+              </Label>
+              <Input
+                value={draftInstitutionWebsite}
+                onChange={(e) =>
+                  setDraftInstitutionWebsite && setDraftInstitutionWebsite(e.target.value)
+                }
+                placeholder="Örn: www.kurum.bel.tr"
+                className="mt-1 text-xs"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 3. Resmi Kayıt & KEP & Adres */}
+      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+        <CardHeader>
+          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            <ShieldCheck className="h-5 w-5 text-amber-500" /> Resmi Kayıt, KEP & Adres Bilgileri
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-400">
+            Resmi tebligat, KEP adresi ve kurum açık adres detayları.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4 text-xs">
+          <div>
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <ShieldCheck className="h-3.5 w-3.5 text-amber-500" /> Kayıtlı Elektronik Posta (KEP) Adresi
+            </Label>
+            <Input
+              value={draftInstitutionKepAddress}
+              onChange={(e) =>
+                setDraftInstitutionKepAddress &&
+                setDraftInstitutionKepAddress(e.target.value)
+              }
+              placeholder="Örn: kurumbelediyesi@hs01.kep.tr"
+              className="mt-1 text-xs font-mono"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-rose-500" /> Kurum Açık Adresi
+            </Label>
+            <Textarea
+              value={draftInstitutionAddress}
+              onChange={(e) =>
+                setDraftInstitutionAddress && setDraftInstitutionAddress(e.target.value)
+              }
+              placeholder="Örn: Belediye Hizmet Binası, Atatürk Caddesi No:1, Merkez"
+              rows={2}
+              className="mt-1 text-xs resize-none"
+            />
           </div>
 
           <div className="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-2">
@@ -163,7 +299,7 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
               type="button"
               size="sm"
               onClick={handleSaveInstitutionSettings}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
             >
               <Check className="h-3.5 w-3.5 mr-1" /> Bilgileri Kaydet
             </Button>

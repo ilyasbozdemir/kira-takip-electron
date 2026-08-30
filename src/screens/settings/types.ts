@@ -24,6 +24,16 @@ export interface SettingsScreenProps {
   draftInstitutionLogo: string;
   handleDraftLogoUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleRemoveDraftLogo: () => void;
+  draftInstitutionPhone: string;
+  setDraftInstitutionPhone: (v: string) => void;
+  draftInstitutionEmail: string;
+  setDraftInstitutionEmail: (v: string) => void;
+  draftInstitutionWebsite: string;
+  setDraftInstitutionWebsite: (v: string) => void;
+  draftInstitutionKepAddress: string;
+  setDraftInstitutionKepAddress: (v: string) => void;
+  draftInstitutionAddress: string;
+  setDraftInstitutionAddress: (v: string) => void;
   handleCancelInstitutionSettings: () => void;
   handleSaveInstitutionSettings: () => void;
   draftTariffBasis: string;

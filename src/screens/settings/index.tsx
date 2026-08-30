@@ -33,6 +33,16 @@ export function SettingsScreen({
   draftInstitutionLogo,
   handleDraftLogoUpload,
   handleRemoveDraftLogo,
+  draftInstitutionPhone,
+  setDraftInstitutionPhone,
+  draftInstitutionEmail,
+  setDraftInstitutionEmail,
+  draftInstitutionWebsite,
+  setDraftInstitutionWebsite,
+  draftInstitutionKepAddress,
+  setDraftInstitutionKepAddress,
+  draftInstitutionAddress,
+  setDraftInstitutionAddress,
   handleCancelInstitutionSettings,
   handleSaveInstitutionSettings,
   draftTariffBasis,
@@ -107,6 +117,16 @@ export function SettingsScreen({
             draftInstitutionLogo={draftInstitutionLogo}
             handleDraftLogoUpload={handleDraftLogoUpload}
             handleRemoveDraftLogo={handleRemoveDraftLogo}
+            draftInstitutionPhone={draftInstitutionPhone}
+            setDraftInstitutionPhone={setDraftInstitutionPhone}
+            draftInstitutionEmail={draftInstitutionEmail}
+            setDraftInstitutionEmail={setDraftInstitutionEmail}
+            draftInstitutionWebsite={draftInstitutionWebsite}
+            setDraftInstitutionWebsite={setDraftInstitutionWebsite}
+            draftInstitutionKepAddress={draftInstitutionKepAddress}
+            setDraftInstitutionKepAddress={setDraftInstitutionKepAddress}
+            draftInstitutionAddress={draftInstitutionAddress}
+            setDraftInstitutionAddress={setDraftInstitutionAddress}
             handleCancelInstitutionSettings={handleCancelInstitutionSettings}
             handleSaveInstitutionSettings={handleSaveInstitutionSettings}
           />

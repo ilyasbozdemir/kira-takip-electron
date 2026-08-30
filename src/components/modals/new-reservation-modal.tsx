@@ -54,6 +54,8 @@ interface NewReservationModalProps {
   setGuestCount?: (v: number | "") => void;
   resPhone: string;
   setResPhone: (v: string) => void;
+  resEmail?: string;
+  setResEmail?: (v: string) => void;
   resPrice: number | "";
   setResPrice: (v: number | "") => void;
   resPaid: number | "";
@@ -103,6 +105,8 @@ export function NewReservationModal({
   setGuestCount,
   resPhone,
   setResPhone,
+  resEmail = "",
+  setResEmail,
   resPrice,
   setResPrice,
   resPaid,
@@ -546,15 +550,15 @@ export function NewReservationModal({
 
 
 
-          {/* Contact Phone & Price Fields */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* Customer Contact: Phone & Email */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <Label
                 className={`text-xs font-semibold flex items-center justify-between ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                <span>Telefon *</span>
+                <span>Müşteri Telefonu *</span>
                 <span className="text-[9px] text-slate-400 font-mono">🇹🇷 +90 TR</span>
               </Label>
               <Input
@@ -576,6 +580,31 @@ export function NewReservationModal({
               </datalist>
             </div>
 
+            <div>
+              <Label
+                className={`text-xs font-semibold flex items-center justify-between ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                <span>Müşteri E-posta Adresi</span>
+                <span className="text-[9px] text-slate-400">İsteğe Bağlı</span>
+              </Label>
+              <Input
+                type="email"
+                placeholder="ornek@musteri.com"
+                value={resEmail}
+                onChange={(e) => setResEmail && setResEmail(e.target.value)}
+                className={`mt-1 text-xs ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100"
+                    : "bg-slate-50 border-slate-300 text-slate-900"
+                }`}
+              />
+            </div>
+          </div>
+
+          {/* Pricing Row: Total Price & Paid Advance */}
+          <div className="grid grid-cols-2 gap-2">
             <div>
               <Label
                 className={`text-xs font-semibold ${
@@ -605,7 +634,7 @@ export function NewReservationModal({
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Ödenen Peşinat (TL)
+                Ödenen Peşinat / Tahsilat (TL)
               </Label>
               <Input
                 type="number"

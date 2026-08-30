@@ -19,6 +19,7 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
   );
   const [resCustomer, setResCustomer] = useState("");
   const [resPhone, setResPhone] = useState("");
+  const [resEmail, setResEmail] = useState("");
   // Default to daily/session fixed lump-sum pricing as requested
   const [pricingMode, setPricingMode] = useState<PricingMode>("daily");
   const [timeSlotSession, setTimeSlotSession] = useState<"Gece" | "Gündüz" | "Tüm Gün">("Gece");
@@ -129,6 +130,7 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
         eventType: resEventType,
         customer: resCustomer,
         phone: resPhone,
+        email: resEmail.trim() || undefined,
         date: selectedDay,
         start: resStart,
         end: resEnd,
@@ -145,10 +147,14 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
       try {
         const autoSettingsRaw = localStorage.getItem("venue-keeper-auto-email-settings");
         const smtpSettingsRaw = localStorage.getItem("venue-keeper-smtp-settings");
-        const autoSettings = autoSettingsRaw ? JSON.parse(autoSettingsRaw) : { mode: "instant", attachIcs: true, target: "both" };
+        const autoSettings = autoSettingsRaw
+          ? JSON.parse(autoSettingsRaw)
+          : { mode: "manual", enabled: false, attachIcs: true, target: "both" };
         const smtpSettings = smtpSettingsRaw ? JSON.parse(smtpSettingsRaw) : null;
 
-        if (autoSettings.mode === "instant" && smtpSettings && smtpSettings.user && smtpSettings.pass) {
+        const isAutoEmailActive = (autoSettings.mode === "instant" || autoSettings.enabled === true) && autoSettings.mode !== "manual";
+
+        if (isAutoEmailActive && smtpSettings && smtpSettings.user && smtpSettings.pass) {
           const venue = store.venues.find((v) => v.id === resVenueId);
           const hall = venue?.halls?.find((h) => h.id === resHallId);
           const venueName = venue?.name || "Tesis";
@@ -157,21 +163,27 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
           const venueMapUrl = venue?.mapUrl;
           const venueDistrict = venue?.district;
 
-          // Determine recipient first — if there is no valid email, skip auto-send.
-          // Müşteri adı e-posta değilse (@ içermiyorsa) otomatik göndermiyoruz;
-          // kullanıcı etkinlik listesinden manuel olarak gönderebilir.
+          // Determine recipient:
+          // 1. resEmail alanına girilen müşteri e-postası (en güvenilir)
+          // 2. Müşteri adının kendisi e-posta formatında ise (eski destek)
+          // 3. Backup modu aktifse backup adresi
+          // 4. Hiçbiri yoksa → otomatik gönderim atlanır
+          const directEmail = resEmail.trim();
           const customerHasEmail = resCustomer.includes("@");
           const backupEmail = smtpSettings.backupEmail || "";
 
           let recipientEmail = "";
           if (autoSettings.target === "backup" && backupEmail) {
-            // Yalnızca backup modunda → backup adresine gönder
+            // Backup modu: daima backup adresine gönder
             recipientEmail = backupEmail;
+          } else if (directEmail) {
+            // Etkinlik formuna direkt girilen e-posta
+            recipientEmail = directEmail;
           } else if (autoSettings.target === "both" && backupEmail) {
-            // Both modunda da sadece backup'a gönder (müşteri e-postası yoksa)
+            // Both modunda müşteri e-postası yoksa backup'a gönder
             recipientEmail = customerHasEmail ? resCustomer : backupEmail;
           } else if (customerHasEmail) {
-            // Sadece müşteriye gönder — e-posta adresi olan müşteriler
+            // Sadece müşteriye gönder
             recipientEmail = resCustomer;
           }
 
@@ -250,6 +262,7 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
 
       setResCustomer("");
       setResPhone("");
+      setResEmail("");
       setResReceiptNo("");
       setResNote("");
       if (onSuccess) onSuccess();
@@ -270,6 +283,8 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     setResCustomer,
     resPhone,
     setResPhone,
+    resEmail,
+    setResEmail,
     pricingMode,
     setPricingMode,
     timeSlotSession,

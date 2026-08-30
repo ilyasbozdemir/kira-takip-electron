@@ -42,6 +42,8 @@ interface AppModalsProps {
   setGuestCount?: (v: number | "") => void;
   resPhone: string;
   setResPhone: (v: string) => void;
+  resEmail?: string;
+  setResEmail?: (v: string) => void;
   resPrice: number | "";
   setResPrice: (v: number | "") => void;
   resPaid: number | "";
@@ -224,6 +226,8 @@ export function AppModals({
   setGuestCount,
   resPhone,
   setResPhone,
+  resEmail,
+  setResEmail,
   resPrice,
   setResPrice,
   resPaid,
@@ -365,6 +369,8 @@ export function AppModals({
         setGuestCount={setGuestCount}
         resPhone={resPhone}
         setResPhone={setResPhone}
+        resEmail={resEmail}
+        setResEmail={setResEmail}
         resPrice={resPrice}
         setResPrice={setResPrice}
         resPaid={resPaid}

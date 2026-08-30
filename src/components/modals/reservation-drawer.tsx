@@ -232,6 +232,16 @@ export function ReservationDrawer({
                   </a>
                 </div>
               </div>
+              {reservation.email && (
+                <div className="flex justify-between items-center">
+                  <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>
+                    E-posta:
+                  </span>
+                  <span className="font-mono font-medium text-sky-600 dark:text-sky-400">
+                    {reservation.email}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className={theme === "dark" ? "text-slate-400" : "text-slate-600"}>
                   Etkinlik Türü:

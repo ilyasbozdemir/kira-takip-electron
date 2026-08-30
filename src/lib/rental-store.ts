@@ -44,6 +44,7 @@ export type Reservation = {
   end: string; // HH:MM
   customer: string;
   phone: string;
+  email?: string;
   eventType?: string;
   price: number;
   paid: number;

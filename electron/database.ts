@@ -325,9 +325,8 @@ function runMigrations(database: Database.Database) {
       version: 5,
       name: "005_venue_address_manager_personnel",
       up: (d: Database.Database) => {
-        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN address TEXT DEFAULT ''"); } catch {}
-        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN mapUrl TEXT DEFAULT ''"); } catch {}
         try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN managerName TEXT DEFAULT ''"); } catch {}
+        try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN mapUrl TEXT DEFAULT ''"); } catch {}
         try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN managerPhone TEXT DEFAULT ''"); } catch {}
         try { d.exec("ALTER TABLE TANIM_Mekan ADD COLUMN managerTitle TEXT DEFAULT ''"); } catch {}
         try {
@@ -342,6 +341,14 @@ function runMigrations(database: Database.Database) {
             );
           `);
         } catch {}
+      },
+    },
+    {
+      version: 6,
+      name: "006_reservation_customer_email",
+      up: (d: Database.Database) => {
+        try { d.exec("ALTER TABLE DATA_Rezervasyon ADD COLUMN email TEXT DEFAULT ''"); } catch {}
+        try { d.exec("ALTER TABLE reservations ADD COLUMN email TEXT DEFAULT ''"); } catch {}
       },
     },
   ];
@@ -468,6 +475,7 @@ export function getStoreData(): StoreData {
     end: r.end_time,
     customer: r.customer,
     phone: r.phone,
+    email: r.email || "",
     eventType: r.event_type || "Genel Etkinlik",
     price: r.price,
     paid: r.paid,
@@ -645,6 +653,7 @@ export function addReservation(res: {
   end: string;
   customer: string;
   phone: string;
+  email?: string;
   eventType: string;
   price: number;
   paid: number;
@@ -670,7 +679,7 @@ export function addReservation(res: {
 
   const newId = uid();
   db!.prepare(
-    "INSERT INTO DATA_Rezervasyon (id, venueId, hallId, date, startTime, endTime, customer, phone, eventType, price, paid, note, decisionInfo, status, receiptNo, paymentMethod) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO DATA_Rezervasyon (id, venueId, hallId, date, startTime, endTime, customer, phone, email, eventType, price, paid, note, decisionInfo, status, receiptNo, paymentMethod) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
   ).run(
     newId,
     res.venueId,
@@ -680,6 +689,7 @@ export function addReservation(res: {
     res.end,
     res.customer,
     res.phone,
+    res.email || "",
     res.eventType || "Genel Etkinlik",
     res.price,
     res.paid || 0,

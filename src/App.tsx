@@ -278,7 +278,7 @@ export function App(): React.JSX.Element {
     });
 
     setMailPreset({
-      recipient: "",
+      recipient: r.email || (r.customer.includes("@") ? r.customer : ""),
       recipientType: "customer",
       subject,
       body: htmlBody,
@@ -503,6 +503,8 @@ export function App(): React.JSX.Element {
     setResCustomer,
     resPhone,
     setResPhone,
+    resEmail,
+    setResEmail,
     pricingMode,
     setPricingMode,
     timeSlotSession,
@@ -1008,6 +1010,16 @@ export function App(): React.JSX.Element {
                   draftInstitutionLogo={draftInstitutionLogo}
                   handleDraftLogoUpload={handleDraftLogoUpload}
                   handleRemoveDraftLogo={handleRemoveDraftLogo}
+                  draftInstitutionPhone={draftInstitutionPhone}
+                  setDraftInstitutionPhone={setDraftInstitutionPhone}
+                  draftInstitutionEmail={draftInstitutionEmail}
+                  setDraftInstitutionEmail={setDraftInstitutionEmail}
+                  draftInstitutionWebsite={draftInstitutionWebsite}
+                  setDraftInstitutionWebsite={setDraftInstitutionWebsite}
+                  draftInstitutionKepAddress={draftInstitutionKepAddress}
+                  setDraftInstitutionKepAddress={setDraftInstitutionKepAddress}
+                  draftInstitutionAddress={draftInstitutionAddress}
+                  setDraftInstitutionAddress={setDraftInstitutionAddress}
                   handleCancelInstitutionSettings={handleCancelInstitutionSettings}
                   handleSaveInstitutionSettings={handleSaveInstitutionSettings}
                   draftTariffBasis={draftTariffBasis}
@@ -1061,6 +1073,8 @@ export function App(): React.JSX.Element {
         setGuestCount={setGuestCount}
         resPhone={resPhone}
         setResPhone={setResPhone}
+        resEmail={resEmail}
+        setResEmail={setResEmail}
         resPrice={resPrice}
         setResPrice={setResPrice}
         resPaid={resPaid}

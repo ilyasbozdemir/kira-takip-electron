@@ -87,10 +87,12 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpSenderName, setSmtpSenderName] = useState("Mekan & Tesis Yönetimi");
+  const [smtpBackupEmail, setSmtpBackupEmail] = useState("");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isJsonModalOpen, setIsJsonModalOpen] = useState(false);
-  const [jsonPasteText, setJsonPasteText] = useState("");
+  // Auto-Email Dispatch Settings (Default is DISABLED / FALSE)
+  const [autoEmailEnabled, setAutoEmailEnabled] = useState(false);
+  const [autoEmailAttachIcs, setAutoEmailAttachIcs] = useState(true);
+  const [autoEmailTarget, setAutoEmailTarget] = useState<"customer" | "backup" | "both">("both");
 
   useEffect(() => {
     try {
@@ -103,6 +105,17 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         if (parsed.user) setSmtpUser(parsed.user);
         if (parsed.pass) setSmtpPass(parsed.pass);
         if (parsed.senderName) setSmtpSenderName(parsed.senderName);
+        if (parsed.backupEmail) setSmtpBackupEmail(parsed.backupEmail);
+      }
+
+      const autoSaved = localStorage.getItem("venue-keeper-auto-email-settings");
+      if (autoSaved) {
+        const autoParsed = JSON.parse(autoSaved);
+        setAutoEmailEnabled(autoParsed.mode === "instant" || autoParsed.enabled === true);
+        if (autoParsed.attachIcs !== undefined) setAutoEmailAttachIcs(autoParsed.attachIcs);
+        if (autoParsed.target) setAutoEmailTarget(autoParsed.target);
+      } else {
+        setAutoEmailEnabled(false);
       }
     } catch {
       // ignore
@@ -117,9 +130,19 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
       user: smtpUser,
       pass: smtpPass,
       senderName: smtpSenderName,
+      backupEmail: smtpBackupEmail,
     };
     localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
-    toast.success("SMTP e-posta sunucu ayarları başarıyla kaydedildi!");
+
+    const autoConfig = {
+      mode: autoEmailEnabled ? "instant" : "manual",
+      enabled: autoEmailEnabled,
+      attachIcs: autoEmailAttachIcs,
+      target: autoEmailTarget,
+    };
+    localStorage.setItem("venue-keeper-auto-email-settings", JSON.stringify(autoConfig));
+
+    toast.success("SMTP ve otomatik bildirim ayarları kaydedildi!");
   };
 
   const handleExportICS = () => {
@@ -199,14 +222,25 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             </div>
           </div>
 
-          <div>
-            <Label className="text-xs font-semibold">Gönderen Başlığı / Unvanı</Label>
-            <Input
-              value={smtpSenderName}
-              onChange={(e) => setSmtpSenderName(e.target.value)}
-              placeholder="Örn: T.C. Belediye Başkanlığı - Tesisler Birimi"
-              className="mt-1 text-xs"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Gönderen Başlığı / Unvanı</Label>
+              <Input
+                value={smtpSenderName}
+                onChange={(e) => setSmtpSenderName(e.target.value)}
+                placeholder="Örn: T.C. Belediye Başkanlığı - Tesisler Birimi"
+                className="mt-1 text-xs"
+              />
+            </div>
+            <div>
+              <Label className="text-xs font-semibold">Yedek / Bilgi E-posta Adresi (İsteğe Bağlı)</Label>
+              <Input
+                value={smtpBackupEmail}
+                onChange={(e) => setSmtpBackupEmail(e.target.value)}
+                placeholder="Örn: mudurluk@kurum.bel.tr"
+                className="mt-1 text-xs"
+              />
+            </div>
           </div>
 
           <div className="flex items-center space-x-2 pt-1">
@@ -228,9 +262,118 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
               type="button"
               size="sm"
               onClick={handleSaveSmtp}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
             >
               <Check className="h-3.5 w-3.5 mr-1" /> SMTP Ayarlarını Kaydet
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Automatic Email & Calendar Dispatch Toggle Card (Default: False) */}
+      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+        <CardHeader>
+          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            <Mail className="h-5 w-5 text-emerald-500" /> Otomatik E-posta & Takvim Davetiyesi Bildirimi
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-400">
+            Yeni bir etkinlik/salon tahsisi kaydedildiğinde arka planda otomatik e-posta gönderilsin mi? (Varsayılan: Kapalı)
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4 text-xs">
+          <div className={`p-3.5 rounded-xl border flex items-start gap-3 transition-colors ${
+            autoEmailEnabled
+              ? isDark ? "bg-emerald-950/30 border-emerald-800/60" : "bg-emerald-50 border-emerald-200"
+              : isDark ? "bg-slate-950/40 border-slate-800" : "bg-slate-50 border-slate-200"
+          }`}>
+            <Checkbox
+              id="autoEmailEnabled"
+              checked={autoEmailEnabled}
+              onCheckedChange={(checked) => setAutoEmailEnabled(!!checked)}
+              className="mt-0.5"
+            />
+            <div className="space-y-1">
+              <label
+                htmlFor="autoEmailEnabled"
+                className={`text-xs font-bold cursor-pointer block ${
+                  autoEmailEnabled
+                    ? isDark ? "text-emerald-300" : "text-emerald-800"
+                    : isDark ? "text-slate-200" : "text-slate-800"
+                }`}
+              >
+                ⚡ Yeni Etkinlik Kaydedildiğinde Otomatik E-posta Gönder
+              </label>
+              <p className="text-[11px] text-slate-400">
+                {autoEmailEnabled
+                  ? "Aktif: Yeni etkinlik oluşturulduğunda geçerli e-posta adresi varsa anında takvim davetiyesi (.ics) ile birlikte e-posta iletilecektir."
+                  : "Kapalı (Önerilen): Otomatik mail atılmaz. Etkinlik listesinden dilediğiniz zaman 'E-posta' butonuyla manuel gönderebilirsiniz."}
+              </p>
+            </div>
+          </div>
+
+          {autoEmailEnabled && (
+            <div className="space-y-3 pt-1 pl-1 animate-in fade-in duration-200">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="autoEmailAttachIcs"
+                  checked={autoEmailAttachIcs}
+                  onCheckedChange={(checked) => setAutoEmailAttachIcs(!!checked)}
+                />
+                <label
+                  htmlFor="autoEmailAttachIcs"
+                  className={`text-xs font-medium cursor-pointer ${isDark ? "text-slate-300" : "text-slate-700"}`}
+                >
+                  📅 E-postaya .ics Takvim Davetiye Dosyasını Ekle (Google / Outlook / Apple Takvim uyumlu)
+                </label>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold block mb-1.5">Otomatik Gönderim Hedefi</Label>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name="autoEmailTarget"
+                      checked={autoEmailTarget === "customer"}
+                      onChange={() => setAutoEmailTarget("customer")}
+                      className="accent-indigo-600"
+                    />
+                    Sadece Müşteriye
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name="autoEmailTarget"
+                      checked={autoEmailTarget === "both"}
+                      onChange={() => setAutoEmailTarget("both")}
+                      className="accent-indigo-600"
+                    />
+                    Müşteri & Yedek Adres (Her İkisi)
+                  </label>
+                  <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                    <input
+                      type="radio"
+                      name="autoEmailTarget"
+                      checked={autoEmailTarget === "backup"}
+                      onChange={() => setAutoEmailTarget("backup")}
+                      className="accent-indigo-600"
+                    />
+                    Sadece Yedek E-posta Adresine
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-3 border-t border-slate-800/80 flex items-center justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSaveSmtp}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8 font-semibold shadow-xs"
+            >
+              <Check className="h-3.5 w-3.5 mr-1" /> Bildirim Tercihlerini Kaydet
             </Button>
           </div>
         </CardContent>
