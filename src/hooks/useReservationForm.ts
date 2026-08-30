@@ -236,7 +236,8 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
             : undefined;
 
           if (window.electronAPI?.sendEmail) {
-            await window.electronAPI.sendEmail({
+            console.log("[AUTO-EMAIL] ✉️ Otomatik e-posta gönderiliyor ->", recipientEmail);
+            const res = await window.electronAPI.sendEmail({
               smtpConfig: {
                 host: smtpSettings.host || "smtp.gmail.com",
                 port: Number(smtpSettings.port) || 587,
@@ -252,12 +253,17 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
                 attachments,
               },
             });
-            toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi gönderildi!");
+            console.log("[AUTO-EMAIL] 📨 Gönderim Sonucu:", res);
+            if (res?.success) {
+              toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi gönderildi!");
+            } else {
+              console.warn("[AUTO-EMAIL] ⚠️ Gönderim başarısız:", res?.error);
+            }
           }
           } // end else (shouldSendEmail)
         }
       } catch (e) {
-        console.error("Otomatik e-posta gönderim hatası:", e);
+        console.error("[AUTO-EMAIL] ❌ Otomatik e-posta gönderim hatası:", e);
       }
 
       setResCustomer("");

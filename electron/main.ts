@@ -89,23 +89,45 @@ async function sendBackupEmail(
   customHtml?: string,
   customText?: string,
 ): Promise<{ success: boolean; error?: string }> {
+  const logPrefix = "[BACKUP-EMAIL]";
+  console.log(`${logPrefix} 🚀 E-posta yedekleme başlatılıyor...`);
+  console.log(`${logPrefix} 📍 Hedef Alıcı:`, backupEmail);
+  console.log(`${logPrefix} 🖥️ SMTP Sunucu:`, `${smtpConfig.host}:${smtpConfig.port}`);
+  console.log(`${logPrefix} 👤 Gönderen Kullanıcı:`, smtpConfig.user);
+  console.log(`${logPrefix} 📎 Ek Dosyası:`, attachmentPath);
+
   try {
+    if (!fs.existsSync(attachmentPath)) {
+      const err = `Ek dosyası bulunamadı: ${attachmentPath}`;
+      console.error(`${logPrefix} ❌ ${err}`);
+      return { success: false, error: err };
+    }
+
+    const fileSizeMb = (fs.statSync(attachmentPath).size / (1024 * 1024)).toFixed(2);
+    console.log(`${logPrefix} 📦 Dosya Boyutu: ${fileSizeMb} MB`);
+
     const portNum = Number(smtpConfig.port) || 587;
     const isSecure = smtpConfig.secure !== undefined ? Boolean(smtpConfig.secure) : (portNum === 465);
+    console.log(`${logPrefix} 🔒 SSL/TLS Modu: ${isSecure ? "Aktif (Port 465 SSL)" : "STARTTLS (Port " + portNum + ")"}`);
+
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: portNum,
       secure: isSecure,
       auth: { user: smtpConfig.user, pass: smtpConfig.pass },
       tls: { rejectUnauthorized: false },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
     });
-    const now = new Date().toLocaleString("tr-TR");
 
+    const now = new Date().toLocaleString("tr-TR");
     const subject = customSubject || `[İŞLETME KİRA TAKİP Yedek] ${dbFileName} — ${now}`;
     const text = customText || `İşletme Kira Takip otomatik yedek\n\nDosya: ${dbFileName}\nTarih: ${now}\n\nBu e-posta uygulama kapatılırken otomatik oluşturulmuştur.`;
     const html = customHtml || `<p><b>İşletme Kira Takip — Otomatik Yedek</b></p><p>Dosya: <code>${dbFileName}</code><br>Tarih: ${now}</p><p>Bu e-posta uygulama kapatılırken otomatik oluşturulmuştur.</p>`;
 
-    await transporter.sendMail({
+    console.log(`${logPrefix} ✉️ Mail gönderiliyor...`);
+    const info = await transporter.sendMail({
       from: `"${smtpConfig.senderName || "VenueKeeper Pro"}" <${smtpConfig.user}>`,
       to: backupEmail,
       subject,
@@ -115,9 +137,12 @@ async function sendBackupEmail(
         { filename: path.basename(attachmentPath), path: attachmentPath },
       ],
     });
+
+    console.log(`${logPrefix} ✅ E-posta başarıyla gönderildi! MessageId:`, info.messageId);
     return { success: true };
   } catch (e: any) {
-    return { success: false, error: e.message };
+    console.error(`${logPrefix} ❌ SMTP Gönderim Hatası:`, e?.message || e);
+    return { success: false, error: e?.message || "Bilinmeyen SMTP hatası" };
   }
 }
 
@@ -660,10 +685,17 @@ safeHandle("save-file-dialog", async (_event, data?: { defaultName?: string }) =
 });
 
 safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
+  const logPrefix = "[SEND-EMAIL]";
+  console.log(`${logPrefix} 🚀 E-posta gönderimi başlatılıyor...`);
+  console.log(`${logPrefix} 📍 Alıcı:`, mailData?.to);
+  console.log(`${logPrefix} 📝 Konu:`, mailData?.subject);
+  console.log(`${logPrefix} 🖥️ SMTP Sunucu:`, `${smtpConfig?.host}:${smtpConfig?.port}`);
+  console.log(`${logPrefix} 👤 Gönderen Kullanıcı:`, smtpConfig?.user);
+
   try {
-    const portNum = Number(smtpConfig.port) || 587;
-    // Port 465 requires implicit TLS (secure: true). Port 587 requires STARTTLS (secure: false).
-    const isSecure = portNum === 465;
+    const portNum = Number(smtpConfig?.port) || 587;
+    const isSecure = smtpConfig?.secure !== undefined ? Boolean(smtpConfig?.secure) : (portNum === 465);
+    console.log(`${logPrefix} 🔒 SSL/TLS Modu: ${isSecure ? "Aktif (Port 465 SSL)" : "STARTTLS (Port " + portNum + ")"}`);
 
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
@@ -674,8 +706,11 @@ safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
         pass: smtpConfig.pass,
       },
       tls: {
-        rejectUnauthorized: false, // Bypass BoringSSL / OpenSSL version mismatch & proxy certificate errors
+        rejectUnauthorized: false,
       },
+      connectionTimeout: 15000,
+      greetingTimeout: 15000,
+      socketTimeout: 30000,
     });
 
     const info = await transporter.sendMail({
@@ -687,9 +722,11 @@ safeHandle("send-email", async (_event, { smtpConfig, mailData }) => {
       attachments: mailData.attachments,
     });
 
+    console.log(`${logPrefix} ✅ E-posta başarıyla gönderildi! MessageId:`, info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (error: any) {
-    return { success: false, error: error.message || "Mail gönderimi başarısız oldu." };
+    console.error(`${logPrefix} ❌ Gönderim Hatası:`, error?.message || error);
+    return { success: false, error: error?.message || "Mail gönderimi başarısız oldu." };
   }
 });
 
@@ -729,13 +766,22 @@ safeHandle("backup-database", () => {
  * → SMTP ayarlıysa e-posta gönderilir → sonuç renderer'a döner.
  */
 safeHandle("quit-with-backup", async (_event, options: any) => {
+  const logPrefix = "[QUIT-WITH-BACKUP]";
+  console.log(`${logPrefix} 🚪 Çıkış ve yedekleme talebi alındı...`);
+  console.log(`${logPrefix} ⚙️ Seçenekler:`, {
+    backupLocal: options?.backupLocal,
+    sendEmail: options?.sendEmail,
+    backupEmail: options?.backupEmail,
+  });
+
   const currentPath = getCurrentDbPath();
   if (!currentPath || !fs.existsSync(currentPath)) {
+    console.error(`${logPrefix} ❌ Aktif veritabanı yolu bulunamadı:`, currentPath);
     return { localBackup: false, emailSent: false, error: "Veritabanı dosyası bulunamadı." };
   }
 
   const shouldBackupLocal = options?.backupLocal !== false;
-  const shouldSendEmail = options?.sendEmail !== false;
+  const shouldSendEmail = options?.sendEmail === true;
   const smtpSettings = options?.smtpSettings || options;
   const targetEmail = options?.backupEmail || smtpSettings?.backupEmail;
 
@@ -743,6 +789,7 @@ safeHandle("quit-with-backup", async (_event, options: any) => {
   let backupPath: string | null = null;
   if (shouldBackupLocal || shouldSendEmail) {
     backupPath = makeLocalBackup(currentPath);
+    console.log(`${logPrefix} 💾 Yerel yedek dosyası oluşturuldu:`, backupPath);
   }
 
   // 2. SMTP ayarlıysa e-posta gönder
@@ -757,6 +804,7 @@ safeHandle("quit-with-backup", async (_event, options: any) => {
     targetEmail &&
     backupPath
   ) {
+    console.log(`${logPrefix} ✉️ Yedek e-postası gönderiliyor ->`, targetEmail);
     const result = await sendBackupEmail(
       smtpSettings,
       targetEmail,
@@ -768,6 +816,14 @@ safeHandle("quit-with-backup", async (_event, options: any) => {
     );
     emailSent = result.success;
     emailError = result.error;
+    if (emailSent) {
+      console.log(`${logPrefix} ✅ Yedek e-postası başarıyla iletildi.`);
+    } else {
+      console.error(`${logPrefix} ❌ Yedek e-postası gönderilemedi:`, emailError);
+    }
+  } else if (shouldSendEmail) {
+    emailError = "SMTP yapılandırması eksik (Host, Kullanıcı veya Şifre boş).";
+    console.warn(`${logPrefix} ⚠️ E-posta gönderimi atlandı:`, emailError);
   }
 
   return {
