@@ -68,24 +68,38 @@ export function saveEmailTemplateSettings(config: EmailTemplateConfig): void {
 
 export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string {
   const savedConfig = getEmailTemplateSettings();
+
+  // Pull institution identity directly from settingsStore localStorage keys as primary source,
+  // falling back to email-template-settings overrides and then hardcoded defaults.
+  const ls = typeof window !== "undefined" ? window.localStorage : null;
+  const settingsPhone   = ls?.getItem("institution_phone")       || "";
+  const settingsEmail   = ls?.getItem("institution_email")       || "";
+  const settingsWebsite = ls?.getItem("institution_website")     || "";
+  const settingsKep     = ls?.getItem("institution_kep_address") || "";
+  const settingsAddress = ls?.getItem("institution_address")     || "";
+  const settingsLogo    = ls?.getItem("institution_logo")        || "";
+  const settingsName    = ls?.getItem("institution_name")        || "";
+  const settingsSub     = ls?.getItem("institution_subheader")   || "";
+
   const config: EmailTemplateOptions = { ...savedConfig, ...options };
 
   const remaining = config.price - config.paid;
 
-  // Safe Logo Base64 / URL validation
-  const hasValidLogo = config.institutionLogo && (
-    config.institutionLogo.startsWith("data:image/") ||
-    config.institutionLogo.startsWith("http://") ||
-    config.institutionLogo.startsWith("https://")
+  // Logo: prefer institution_logo (base64 from Identity tab), then email-template override
+  const rawLogo = settingsLogo || config.institutionLogo || "";
+  const hasValidLogo = rawLogo && (
+    rawLogo.startsWith("data:image/") ||
+    rawLogo.startsWith("http://") ||
+    rawLogo.startsWith("https://")
   );
 
-  const instName = config.institutionName || "T.C. KURUM / BELEDİYE BAŞKANLIĞI";
-  const instSub = config.institutionSubHeader || "Emlak, Tahsilat & Tesis İşletme Müdürlüğü";
-  const phone = config.phone || "0850 000 00 00";
-  const email = config.email || "info@kurum.bel.tr";
-  const website = config.website || "www.kurum.bel.tr";
-  const kepAddress = config.kepAddress || "kurumbelediyesi@hs01.kep.tr";
-  const address = config.address || "Belediye Hizmet Binası, Merkez";
+  const instName = settingsName || config.institutionName || "T.C. KURUM / BELEDİYE BAŞKANLIĞI";
+  const instSub  = settingsSub  || config.institutionSubHeader || "Emlak, Tahsilat & Tesis İşletme Müdürlüğü";
+  const phone      = settingsPhone   || config.phone      || "0850 000 00 00";
+  const email      = settingsEmail   || config.email      || "info@kurum.bel.tr";
+  const website    = settingsWebsite || config.website    || "www.kurum.bel.tr";
+  const kepAddress = settingsKep     || config.kepAddress || "kurumbelediyesi@hs01.kep.tr";
+  const address    = settingsAddress || config.address    || "Belediye Hizmet Binası, Merkez";
 
   // Color Gradients based on headerThemeColor setting
   const colorGradients: Record<string, string> = {
@@ -98,7 +112,7 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
   const headerBg = colorGradients[config.headerThemeColor || "navy"] || colorGradients.navy;
 
   const logoHtml = hasValidLogo
-    ? `<img src="${config.institutionLogo}" alt="${instName}" style="height: 56px; max-width: 200px; object-fit: contain; margin-bottom: 12px; border: 0;" />`
+    ? `<img src="${rawLogo}" alt="${instName}" style="height: 56px; max-width: 200px; object-fit: contain; margin-bottom: 12px; border: 0;" />`
     : `<div style="display: inline-block; background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #0f172a; font-weight: 900; font-size: 15px; padding: 10px 22px; border-radius: 10px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; border: 2px solid #fef3c7; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">🏛️ ${instName}</div>`;
 
   const docRefNo = `EVK-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;

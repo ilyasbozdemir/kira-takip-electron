@@ -87,15 +87,19 @@ export function ReservationDrawer({
   }`;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div
-        className={`w-full max-w-lg h-full overflow-y-auto p-6 shadow-2xl flex flex-col justify-between border-l transition-colors ${
+        className={`relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col border transition-colors animate-in zoom-in-95 duration-200 ${
           theme === "dark"
             ? "bg-slate-900 border-slate-800 text-slate-100"
             : "bg-white border-slate-200 text-slate-900"
         }`}
       >
-        <div className="space-y-5">
+
+        <div className="p-6 space-y-5">
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
             <div className="flex items-center gap-2.5">
