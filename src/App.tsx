@@ -158,7 +158,7 @@ export function App(): React.JSX.Element {
     backupLocal: boolean;
     sendEmail: boolean;
     backupEmail: string;
-  }) => {
+  }): Promise<{ success: boolean; localBackup?: boolean; emailSent?: boolean; error?: string }> => {
     setIsClosing(true);
     try {
       const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
@@ -177,6 +177,8 @@ export function App(): React.JSX.Element {
         senderName: smtpSettings.senderName,
       });
 
+      console.log("[EXIT] quitWithBackup çağrılıyor...", { options, smtpConfigured: !!(smtpSettings.host && smtpSettings.user) });
+
       const res = await (window.electronAPI as any)?.quitWithBackup?.({
         backupLocal: options.backupLocal,
         sendEmail: options.sendEmail,
@@ -187,21 +189,30 @@ export function App(): React.JSX.Element {
         mailText: text,
       });
 
-      if (options.sendEmail) {
-        if (res?.emailSent) {
-          toast.success("✅ Veritabanı yedeği e-posta adresinize gönderildi.");
-          await new Promise((r) => setTimeout(r, 800));
-        } else if (res?.emailError) {
-          toast.error(`❌ E-posta yedeği gönderilemedi: ${res.emailError}`);
-          await new Promise((r) => setTimeout(r, 2000));
-        }
+      console.log("[EXIT] quitWithBackup yanıtı:", res);
+
+      if (options.sendEmail && res && !res.emailSent) {
+        return {
+          success: false,
+          localBackup: res.localBackup,
+          emailSent: false,
+          error: res.emailError || "E-posta sunucusu yanıt vermedi.",
+        };
       }
+
+      return {
+        success: true,
+        localBackup: res?.localBackup ?? true,
+        emailSent: res?.emailSent ?? false,
+      };
     } catch (err: any) {
-      toast.error(`Yedekleme hatası: ${err?.message || err}`);
-      await new Promise((r) => setTimeout(r, 1500));
+      console.error("[EXIT] Hata:", err);
+      return {
+        success: false,
+        error: err?.message || "Bilinmeyen bir hata oluştu.",
+      };
     } finally {
       setIsClosing(false);
-      (window.electronAPI as any)?.closeWindow?.();
     }
   };
 

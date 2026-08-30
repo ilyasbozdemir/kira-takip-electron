@@ -25,6 +25,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+export interface ExitBackupResult {
+  success: boolean;
+  localBackup?: boolean;
+  emailSent?: boolean;
+  error?: string;
+}
+
 interface ExitBackupModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,7 +42,7 @@ interface ExitBackupModalProps {
     backupLocal: boolean;
     sendEmail: boolean;
     backupEmail: string;
-  }) => Promise<void>;
+  }) => Promise<ExitBackupResult>;
   onDirectExit: () => void;
 }
 
@@ -54,9 +61,14 @@ export function ExitBackupModal({
   const [sendEmail, setSendEmail] = useState(false);
   const [backupEmail, setBackupEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [statusStep, setStatusStep] = useState<"idle" | "processing" | "success" | "error">("idle");
+  const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
     if (open) {
+      setIsProcessing(false);
+      setStatusStep("idle");
+      setStatusMessage("");
       // Load saved backup email and smtp settings
       const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
       if (smtpRaw) {
@@ -64,6 +76,9 @@ export function ExitBackupModal({
           const parsed = JSON.parse(smtpRaw);
           if (parsed.backupEmail) {
             setBackupEmail(parsed.backupEmail);
+            setSendEmail(true);
+          } else if (parsed.user) {
+            setBackupEmail(parsed.user);
             setSendEmail(true);
           }
         } catch {}
@@ -90,8 +105,14 @@ export function ExitBackupModal({
     }
 
     setIsProcessing(true);
+    setStatusStep("processing");
+    setStatusMessage(
+      sendEmail
+        ? "Yerel yedek alınıyor ve e-posta sunucusuna bağlanılıyor..."
+        : "Yerel .vke yedeği alınıyor..."
+    );
+
     try {
-      // Persist the backup email to smtp settings in localStorage so user doesn't have to retype it
       if (backupEmail) {
         try {
           const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
@@ -104,13 +125,35 @@ export function ExitBackupModal({
         } catch {}
       }
 
-      await onConfirmExit({
+      const result = await onConfirmExit({
         backupLocal,
         sendEmail,
         backupEmail,
       });
+
+      if (result.success) {
+        setStatusStep("success");
+        setStatusMessage(
+          sendEmail && result.emailSent
+            ? "✅ Yerel yedek alındı ve e-posta başarıyla iletildi! Kapatılıyor..."
+            : "✅ Yerel .vke yedeği başarıyla alındı! Kapatılıyor..."
+        );
+        toast.success(
+          sendEmail && result.emailSent
+            ? "Yedek e-posta ile iletildi!"
+            : "Yerel yedek alındı."
+        );
+        setTimeout(() => {
+          (window.electronAPI as any)?.closeWindow?.();
+        }, 800);
+      } else {
+        setStatusStep("error");
+        setStatusMessage(result.error || "Yedekleme veya e-posta gönderimi başarısız oldu.");
+        setIsProcessing(false);
+      }
     } catch (err: any) {
-      toast.error(`Yedekleme hatası: ${err?.message || err}`);
+      setStatusStep("error");
+      setStatusMessage(err?.message || "Bilinmeyen bir hata oluştu.");
       setIsProcessing(false);
     }
   };
@@ -262,6 +305,36 @@ export function ExitBackupModal({
               </div>
             )}
           </div>
+
+          {/* Live Status & Diagnostic Result Banner */}
+          {statusStep !== "idle" && (
+            <div
+              className={`p-3 rounded-xl border flex items-center gap-2.5 text-xs animate-in fade-in duration-200 ${
+                statusStep === "processing"
+                  ? isDark
+                    ? "bg-indigo-950/40 border-indigo-500/40 text-indigo-300"
+                    : "bg-indigo-50 border-indigo-200 text-indigo-800"
+                  : statusStep === "success"
+                  ? isDark
+                    ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-300"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                  : isDark
+                  ? "bg-rose-950/40 border-rose-500/40 text-rose-300"
+                  : "bg-rose-50 border-rose-200 text-rose-800"
+              }`}
+            >
+              {statusStep === "processing" && (
+                <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent inline-block" />
+              )}
+              {statusStep === "success" && (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              )}
+              {statusStep === "error" && (
+                <X className="h-4 w-4 shrink-0 text-rose-500" />
+              )}
+              <span className="font-semibold leading-tight">{statusMessage}</span>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer Actions */}
