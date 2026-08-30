@@ -730,6 +730,7 @@ export function App(): React.JSX.Element {
     return (
       <WelcomeStartScreen
         theme={theme}
+        onToggleTheme={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
         recentFiles={recentFiles}
         onOpenRecent={(p) => openFile(p)}
         onRemoveRecent={(p) => removeRecentFile(p)}

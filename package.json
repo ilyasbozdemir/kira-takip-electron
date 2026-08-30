@@ -1,6 +1,6 @@
 {
   "name": "isletme-kira-takibi-app",
-  "version": "1.0.0-beta.45",
+  "version": "1.0.0-beta.46",
   "description": "Profesyonel Mekan, Tesis, Salon Kiralama, Takvim, Raporlama ve Evrak Yönetim Sistemi",
   "main": "dist-electron/main.js",
   "author": "İlyas Bozdemir",

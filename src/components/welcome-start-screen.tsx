@@ -9,9 +9,11 @@ import {
   Database,
   HardDrive,
   ChevronRight,
-  Sparkles,
-  ShieldCheck,
-  Building2,
+  Minus,
+  Square,
+  X,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { RecentFileItem } from "./launcher-modal";
 
@@ -23,6 +25,7 @@ interface WelcomeStartScreenProps {
   onOpenDialog: () => void;
   onClearRecent: () => void;
   theme: "dark" | "light";
+  onToggleTheme?: () => void;
 }
 
 export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
@@ -33,13 +36,91 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
   onOpenDialog,
   onClearRecent,
   theme,
+  onToggleTheme,
 }) => {
   const isDark = theme === "dark";
 
   return (
-    <div className={`min-h-screen w-full flex flex-col items-center justify-center p-6 transition-colors duration-200 select-none ${
+    <div className={`h-screen w-full flex flex-col overflow-hidden transition-colors duration-200 select-none ${
       isDark ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
     }`}>
+      {/* Top Window Titlebar & Form Controls */}
+      <div
+        className={`w-full h-10 flex items-center justify-between px-3 border-b shrink-0 select-none ${
+          isDark
+            ? "bg-slate-950/90 border-slate-800/80 text-slate-300"
+            : "bg-white/90 border-slate-200 text-slate-700"
+        } backdrop-blur-md sticky top-0 z-50`}
+        style={{ WebkitAppRegion: "drag" } as any}
+      >
+        <div className="flex items-center gap-2">
+          <img src="/app-logo.png" alt="Logo" className="h-5 w-5 rounded object-cover shadow-xs" />
+          <span className="text-xs font-bold tracking-tight opacity-90">İşletmeTakipAppPro</span>
+        </div>
+
+        <div
+          className="flex items-center gap-1"
+          style={{ WebkitAppRegion: "no-drag" } as any}
+        >
+          {onToggleTheme && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleTheme}
+              className={`h-7 w-7 rounded-md transition-colors ${
+                isDark ? "text-slate-400 hover:text-slate-100 hover:bg-slate-800/80" : "text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+              }`}
+              title={isDark ? "Açık Temaya Geç" : "Koyu Temaya Geç"}
+            >
+              {isDark ? (
+                <Sun className="h-3.5 w-3.5 text-amber-400" />
+              ) : (
+                <Moon className="h-3.5 w-3.5 text-indigo-600" />
+              )}
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => (window.electronAPI as any)?.minimizeWindow?.()}
+            className={`h-7 w-7 rounded-md transition-colors ${
+              isDark ? "text-slate-400 hover:text-slate-100 hover:bg-slate-800/80" : "text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+            }`}
+            title="Simge Durumuna Küçült"
+          >
+            <Minus className="h-3.5 w-3.5" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => (window.electronAPI as any)?.maximizeWindow?.()}
+            className={`h-7 w-7 rounded-md transition-colors ${
+              isDark ? "text-slate-400 hover:text-slate-100 hover:bg-slate-800/80" : "text-slate-500 hover:text-slate-900 hover:bg-slate-200"
+            }`}
+            title="Ekranı Kapla / Normal Boyut"
+          >
+            <Square className="h-3 w-3" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => (window.electronAPI as any)?.closeWindow?.()}
+            className={`h-7 w-7 rounded-md transition-colors ${
+              isDark ? "text-slate-400 hover:text-rose-300 hover:bg-rose-600/30" : "text-slate-500 hover:text-rose-600 hover:bg-rose-100"
+            }`}
+            title="Kapat"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Body */}
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-6">
+
       <div className="max-w-2xl w-full space-y-6">
 
         {/* Branding Header */}
@@ -198,6 +279,8 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
         </div>
 
       </div>
+      </div>
     </div>
   );
 };
+
