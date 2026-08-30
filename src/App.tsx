@@ -838,187 +838,190 @@ export function App(): React.JSX.Element {
           institutionLogo={institutionLogo}
         />
 
-        {/* Main Content View Screens */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-y-auto">
-          <div className="p-6 max-w-7xl w-full mx-auto space-y-6 flex-1">
-            {activeSection === "dashboard" && (
-              <DashboardScreen
-                theme={theme}
-                store={store}
-                monthStats={monthStats}
-                hallById={hallById}
-                onNavigateToCalendar={() => setActiveSection("calendar")}
-              />
-            )}
+        {/* Main Content View Screens & Docked Footer */}
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+          {/* Scrollable Viewport Container */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="p-6 max-w-7xl w-full mx-auto space-y-6">
+              {activeSection === "dashboard" && (
+                <DashboardScreen
+                  theme={theme}
+                  store={store}
+                  monthStats={monthStats}
+                  hallById={hallById}
+                  onNavigateToCalendar={() => setActiveSection("calendar")}
+                />
+              )}
 
-            {activeSection === "calendar" && (
-              <CalendarScreen
-                theme={theme}
-                cursor={cursor}
-                setCursor={setCursor}
-                selectedDay={selectedDay}
-                setSelectedDay={setSelectedDay}
-                calendarViewMode={calendarViewMode}
-                setCalendarViewMode={setCalendarViewMode}
-                calendarVenueFilter={calendarVenueFilter}
-                setCalendarVenueFilter={setCalendarVenueFilter}
-                store={store}
-                grid={grid}
-                byDate={byDate}
-                filteredReservations={filteredReservations}
-                hallById={hallById}
-                getEventTypeColor={getEventTypeColor}
-                today={today}
-                onOpenNewReservationModal={() => {
-                  if (store.venues.length === 0) {
-                    toast.error("Önce bir mekan ekleyin.");
-                    return;
-                  }
-                  const firstV = store.venues[0];
-                  setResVenueId(firstV.id);
-                  if (firstV.halls.length > 0) {
-                    setResHallId(firstV.halls[0].id);
-                  }
-                  setResModalOpen(true);
-                }}
-                onSelectReservation={(r) => setSelectedReservation(r)}
-                onPromptDeleteReservation={(id, title) =>
-                  promptDelete("reservation", id, title)}
-                onPrintOfficialDoc={(r) => {
-                  setSelectedPrintReservation(r);
-                  setPrintModalOpen(true);
-                }}
-                onCopySMS={handleCopySMS}
-                onQuickMail={handleQuickMail}
-                onNavigateToCustomer={(custName) => {
-                  setSearchTerm(custName);
-                  setActiveSection("customers");
-                }}
-              />
-            )}
+              {activeSection === "calendar" && (
+                <CalendarScreen
+                  theme={theme}
+                  cursor={cursor}
+                  setCursor={setCursor}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
+                  calendarViewMode={calendarViewMode}
+                  setCalendarViewMode={setCalendarViewMode}
+                  calendarVenueFilter={calendarVenueFilter}
+                  setCalendarVenueFilter={setCalendarVenueFilter}
+                  store={store}
+                  grid={grid}
+                  byDate={byDate}
+                  filteredReservations={filteredReservations}
+                  hallById={hallById}
+                  getEventTypeColor={getEventTypeColor}
+                  today={today}
+                  onOpenNewReservationModal={() => {
+                    if (store.venues.length === 0) {
+                      toast.error("Önce bir mekan ekleyin.");
+                      return;
+                    }
+                    const firstV = store.venues[0];
+                    setResVenueId(firstV.id);
+                    if (firstV.halls.length > 0) {
+                      setResHallId(firstV.halls[0].id);
+                    }
+                    setResModalOpen(true);
+                  }}
+                  onSelectReservation={(r) => setSelectedReservation(r)}
+                  onPromptDeleteReservation={(id, title) =>
+                    promptDelete("reservation", id, title)}
+                  onPrintOfficialDoc={(r) => {
+                    setSelectedPrintReservation(r);
+                    setPrintModalOpen(true);
+                  }}
+                  onCopySMS={handleCopySMS}
+                  onQuickMail={handleQuickMail}
+                  onNavigateToCustomer={(custName) => {
+                    setSearchTerm(custName);
+                    setActiveSection("customers");
+                  }}
+                />
+              )}
 
-            {activeSection === "venues" && (
-              <VenuesScreen
-                theme={theme}
-                store={store}
-                onOpenVenueModal={() => setVenueModalOpen(true)}
-                onOpenHallModal={(vId) => {
-                  setTargetVenueId(vId);
-                  setHallModalOpen(true);
-                }}
-                onPromptDelete={promptDelete}
-              />
-            )}
+              {activeSection === "venues" && (
+                <VenuesScreen
+                  theme={theme}
+                  store={store}
+                  onOpenVenueModal={() => setVenueModalOpen(true)}
+                  onOpenHallModal={(vId) => {
+                    setTargetVenueId(vId);
+                    setHallModalOpen(true);
+                  }}
+                  onPromptDelete={promptDelete}
+                />
+              )}
 
-            {activeSection === "events" && (
-              <EventsScreen
-                theme={theme}
-                eventTypeFilter={eventTypeFilter}
-                setEventTypeFilter={setEventTypeFilter}
-                allEventTypes={mergedEventTypes}
-                filteredReservations={filteredReservations}
-                store={store}
-                hallById={hallById}
-                onPromptDelete={(type, id, title) =>
-                  promptDelete(type, id, title)}
-                onPrintOfficialDoc={(r) => {
-                  setSelectedPrintReservation(r);
-                  setPrintModalOpen(true);
-                }}
-                onQuickMail={handleQuickMail}
-                onQuickStaffMail={handleQuickStaffMail}
-                onNavigateToCustomer={(custName) => {
-                  setSearchTerm(custName);
-                  setActiveSection("customers");
-                }}
-              />
-            )}
+              {activeSection === "events" && (
+                <EventsScreen
+                  theme={theme}
+                  eventTypeFilter={eventTypeFilter}
+                  setEventTypeFilter={setEventTypeFilter}
+                  allEventTypes={mergedEventTypes}
+                  filteredReservations={filteredReservations}
+                  store={store}
+                  hallById={hallById}
+                  onPromptDelete={(type, id, title) =>
+                    promptDelete(type, id, title)}
+                  onPrintOfficialDoc={(r) => {
+                    setSelectedPrintReservation(r);
+                    setPrintModalOpen(true);
+                  }}
+                  onQuickMail={handleQuickMail}
+                  onQuickStaffMail={handleQuickStaffMail}
+                  onNavigateToCustomer={(custName) => {
+                    setSearchTerm(custName);
+                    setActiveSection("customers");
+                  }}
+                />
+              )}
 
-            {activeSection === "personnel" && (
-              <PersonnelScreen
-                theme={theme}
-                store={store}
-                personnelName={personnelName}
-                setPersonnelName={setPersonnelName}
-                personnelTitle={personnelTitle}
-                setPersonnelTitle={setPersonnelTitle}
-                personnelPhone={personnelPhone}
-                setPersonnelPhone={setPersonnelPhone}
-                personnelEmail={personnelEmail}
-                setPersonnelEmail={setPersonnelEmail}
-                personnelNotes={personnelNotes}
-                setPersonnelNotes={setPersonnelNotes}
-                handleCreatePersonnel={handleCreatePersonnel}
-                removePersonnel={removePersonnel}
-                onOpenPersonnelModal={() => setPersonnelModalOpen(true)}
-              />
-            )}
+              {activeSection === "personnel" && (
+                <PersonnelScreen
+                  theme={theme}
+                  store={store}
+                  personnelName={personnelName}
+                  setPersonnelName={setPersonnelName}
+                  personnelTitle={personnelTitle}
+                  setPersonnelTitle={setPersonnelTitle}
+                  personnelPhone={personnelPhone}
+                  setPersonnelPhone={setPersonnelPhone}
+                  personnelEmail={personnelEmail}
+                  setPersonnelEmail={setPersonnelEmail}
+                  personnelNotes={personnelNotes}
+                  setPersonnelNotes={setPersonnelNotes}
+                  handleCreatePersonnel={handleCreatePersonnel}
+                  removePersonnel={removePersonnel}
+                  onOpenPersonnelModal={() => setPersonnelModalOpen(true)}
+                />
+              )}
 
-            {activeSection === "customers" && (
-              <CustomersScreen
-                theme={theme}
-                store={store}
-                onAddCustomer={async (c) => {
-                  await sqliteStore.addCustomer(c);
-                }}
-                onUpdateCustomer={async (c) => {
-                  await sqliteStore.updateCustomer(c);
-                }}
-                onRemoveCustomer={async (id) => {
-                  await sqliteStore.deleteCustomer(id);
-                }}
-                onOpenMailModal={() => {
-                  setMailModalOpen(true);
-                }}
-              />
-            )}
+              {activeSection === "customers" && (
+                <CustomersScreen
+                  theme={theme}
+                  store={store}
+                  onAddCustomer={async (c) => {
+                    await sqliteStore.addCustomer(c);
+                  }}
+                  onUpdateCustomer={async (c) => {
+                    await sqliteStore.updateCustomer(c);
+                  }}
+                  onRemoveCustomer={async (id) => {
+                    await sqliteStore.deleteCustomer(id);
+                  }}
+                  onOpenMailModal={() => {
+                    setMailModalOpen(true);
+                  }}
+                />
+              )}
 
-            {activeSection === "reports" && (
-              <ReportsScreen
-                theme={theme}
-                monthStats={monthStats}
-                store={store}
-              />
-            )}
+              {activeSection === "reports" && (
+                <ReportsScreen
+                  theme={theme}
+                  monthStats={monthStats}
+                  store={store}
+                />
+              )}
 
-            {activeSection === "settings" && (
-              <SettingsScreen
-                theme={theme}
-                store={store}
-                setMailModalOpen={setMailModalOpen}
-                newEventTypeInput={newEventTypeInput}
-                setNewEventTypeInput={setNewEventTypeInput}
-                handleAddCustomEventType={handleAddCustomEventType}
-                handleResetEventTypes={handleResetEventTypes}
-                handleRemoveEventType={handleRemoveEventType}
-                allEventTypes={mergedEventTypes}
-                getEventTypeColor={getEventTypeColor}
-                gdriveToken={gdriveToken}
-                setGdriveToken={setGdriveToken}
-                gdriveFolderId={gdriveFolderId}
-                setGdriveFolderId={setGdriveFolderId}
-                draftAppName={draftAppName}
-                setDraftAppName={setDraftAppName}
-                draftInstitutionName={draftInstitutionName}
-                setDraftInstitutionName={setDraftInstitutionName}
-                draftInstitutionSubHeader={draftInstitutionSubHeader}
-                setDraftInstitutionSubHeader={setDraftInstitutionSubHeader}
-                draftInstitutionLogo={draftInstitutionLogo}
-                handleDraftLogoUpload={handleDraftLogoUpload}
-                handleRemoveDraftLogo={handleRemoveDraftLogo}
-                handleCancelInstitutionSettings={handleCancelInstitutionSettings}
-                handleSaveInstitutionSettings={handleSaveInstitutionSettings}
-                draftTariffBasis={draftTariffBasis}
-                setDraftTariffBasis={setDraftTariffBasis}
-                handleCancelTariffSettings={handleCancelTariffSettings}
-                handleSaveTariffSettings={handleSaveTariffSettings}
-              />
-            )}
+              {activeSection === "settings" && (
+                <SettingsScreen
+                  theme={theme}
+                  store={store}
+                  setMailModalOpen={setMailModalOpen}
+                  newEventTypeInput={newEventTypeInput}
+                  setNewEventTypeInput={setNewEventTypeInput}
+                  handleAddCustomEventType={handleAddCustomEventType}
+                  handleResetEventTypes={handleResetEventTypes}
+                  handleRemoveEventType={handleRemoveEventType}
+                  allEventTypes={mergedEventTypes}
+                  getEventTypeColor={getEventTypeColor}
+                  gdriveToken={gdriveToken}
+                  setGdriveToken={setGdriveToken}
+                  gdriveFolderId={gdriveFolderId}
+                  setGdriveFolderId={setGdriveFolderId}
+                  draftAppName={draftAppName}
+                  setDraftAppName={setDraftAppName}
+                  draftInstitutionName={draftInstitutionName}
+                  setDraftInstitutionName={setDraftInstitutionName}
+                  draftInstitutionSubHeader={draftInstitutionSubHeader}
+                  setDraftInstitutionSubHeader={setDraftInstitutionSubHeader}
+                  draftInstitutionLogo={draftInstitutionLogo}
+                  handleDraftLogoUpload={handleDraftLogoUpload}
+                  handleRemoveDraftLogo={handleRemoveDraftLogo}
+                  handleCancelInstitutionSettings={handleCancelInstitutionSettings}
+                  handleSaveInstitutionSettings={handleSaveInstitutionSettings}
+                  draftTariffBasis={draftTariffBasis}
+                  setDraftTariffBasis={setDraftTariffBasis}
+                  handleCancelTariffSettings={handleCancelTariffSettings}
+                  handleSaveTariffSettings={handleSaveTariffSettings}
+                />
+              )}
 
-            {activeSection === "help" && <HelpScreen theme={theme} />}
+              {activeSection === "help" && <HelpScreen theme={theme} />}
+            </div>
           </div>
 
-          {/* Global Application Footer */}
+          {/* Global Application Footer (Permanently Docked at the Bottom) */}
           <Footer
             currentFilePath={currentFilePath}
             fileName={fileName}
