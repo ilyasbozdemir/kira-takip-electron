@@ -155,31 +155,31 @@ export function Footer(
                 : "bg-white border-slate-200 text-slate-900"
             }`}
           >
-            <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex justify-between items-start">
+            <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex justify-between items-start">
               <div>
-                <h4 className="font-bold text-sm text-indigo-400">
+                <h4 className="font-extrabold text-sm text-indigo-600 dark:text-indigo-400">
                   İşletmeTakipAppPro
                 </h4>
-                <p className="text-[10px] text-slate-400">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                   Sürüm {appVersion} • Profesyonel Kiralama & Takvim Sistemi
                 </p>
               </div>
-              <span className="bg-emerald-500/10 text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+              <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
                 Kararlı Sürüm
               </span>
             </div>
 
-            <div className="p-3 text-[11px] leading-relaxed space-y-2.5 border-b border-slate-200 dark:border-slate-800">
-              <p className="text-slate-300">
+            <div className="p-3.5 text-[11px] leading-relaxed space-y-2.5 border-b border-slate-200 dark:border-slate-800">
+              <p className="text-slate-700 dark:text-slate-300 font-normal">
                 Bu uygulama, kamu kurumları ve özel işletmelerin salon, tesis ve
                 mekan kiralama süreçlerini standartlaştırmak, resmi tarife ve
                 tahsis evraklarını hatasız yönetmek amacıyla geliştirilmiş{" "}
-                <strong>
+                <strong className="text-slate-900 dark:text-white font-bold">
                   yerel SQLite tabanlı kurumsal masaüstü sistemdir.
                 </strong>
               </p>
-              <div className="bg-indigo-500/10 border border-indigo-500/20 p-2.5 rounded-xl">
-                <p className="font-bold text-indigo-300 mb-1 flex items-center gap-1.5 text-xs">
+              <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 p-2.5 rounded-xl">
+                <p className="font-extrabold text-indigo-700 dark:text-indigo-300 mb-1 flex items-center gap-1.5 text-xs">
                   <span className="flex h-2 w-2 relative">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75">
                     </span>
@@ -188,7 +188,7 @@ export function Footer(
                   </span>
                   İleri Seviye Kurumsal Çözümler
                 </p>
-                <p className="text-[10px] text-slate-300 leading-relaxed font-medium">
+                <p className="text-[10.5px] text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                   Merkezi ağ üzerinde ortak veri havuzu, bulut e-fatura / makbuz
                   entegrasyonu, rol bazlı yetkilendirme (RBAC) ve Google Drive
                   yedekleme çözümleri için geliştiriciyle iletişime
@@ -197,17 +197,17 @@ export function Footer(
               </div>
             </div>
 
-            <div className="p-1.5 flex flex-col gap-0.5 bg-slate-50/50 dark:bg-slate-950/40">
+            <div className="p-2 flex flex-col gap-1 bg-slate-50/70 dark:bg-slate-950/40">
               <button
                 type="button"
                 onClick={() =>
                   openExternal(
                     "https://github.com/ilyasbozdemir/kira-takip-electron",
                   )}
-                className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all font-semibold cursor-pointer group"
+                className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition-all font-semibold cursor-pointer group"
               >
-                <Star className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="flex-1 text-left text-[11px] font-bold text-slate-200">
+                <Star className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform shrink-0" />
+                <span className="flex-1 text-left text-[11px] font-extrabold text-slate-800 dark:text-slate-200">
                   Projeyi beğendin mi? GitHub'da Yıldızla! ⭐
                 </span>
                 <ExternalLink className="w-3 h-3 text-slate-400" />
@@ -216,10 +216,10 @@ export function Footer(
               <button
                 type="button"
                 onClick={() => openExternal("https://ilyasbozdemir.dev")}
-                className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
               >
-                <Info className="w-4 h-4 text-sky-400 shrink-0" />
-                <span className="flex-1 text-left text-[11px] font-medium">
+                <Info className="w-4 h-4 text-sky-500 shrink-0" />
+                <span className="flex-1 text-left text-[11px] font-bold text-slate-700 dark:text-slate-300">
                   Geliştirici İle İletişime Geç
                 </span>
                 <ExternalLink className="w-3 h-3 text-slate-400" />
@@ -231,10 +231,10 @@ export function Footer(
                   openExternal(
                     "https://github.com/ilyasbozdemir/kira-takip-electron/issues",
                   )}
-                className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-200/70 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
               >
-                <Bug className="w-4 h-4 text-rose-400 shrink-0" />
-                <span className="flex-1 text-left text-[11px] font-medium">
+                <Bug className="w-4 h-4 text-rose-500 shrink-0" />
+                <span className="flex-1 text-left text-[11px] font-bold text-slate-700 dark:text-slate-300">
                   Hata Bildir / Destek Talebi
                 </span>
                 <ExternalLink className="w-3 h-3 text-slate-400" />

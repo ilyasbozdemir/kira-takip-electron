@@ -60,34 +60,34 @@ export const VenueStatsHeader: React.FC<VenueStatsHeaderProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
           <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-xs font-semibold text-slate-400">Toplam Mekan / Tesis</CardTitle>
+            <CardTitle className={`text-xs font-bold ${isDark ? "text-slate-400" : "text-slate-600"}`}>Toplam Mekan / Tesis</CardTitle>
             <Building2 className="h-4 w-4 text-indigo-500" />
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <div className="text-2xl font-extrabold text-indigo-400">{totalVenues}</div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Sistemde tanımlı tesis sayısı</p>
+            <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{totalVenues}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Sistemde tanımlı tesis sayısı</p>
           </CardContent>
         </Card>
 
         <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
           <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-xs font-semibold text-slate-400">Toplam Kiralanabilir Salon</CardTitle>
+            <CardTitle className={`text-xs font-bold ${isDark ? "text-slate-400" : "text-slate-600"}`}>Toplam Kiralanabilir Salon</CardTitle>
             <Layers className="h-4 w-4 text-sky-500" />
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <div className="text-2xl font-extrabold text-sky-400">{totalHalls}</div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Aktif kullanımda olan salon & saha</p>
+            <div className="text-2xl font-black text-sky-600 dark:text-sky-400">{totalHalls}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Aktif kullanımda olan salon & saha</p>
           </CardContent>
         </Card>
 
         <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
           <CardHeader className="py-3 px-4 flex flex-row items-center justify-between space-y-0 pb-1">
-            <CardTitle className="text-xs font-semibold text-slate-400">Farklı İlçe & Konum</CardTitle>
+            <CardTitle className={`text-xs font-bold ${isDark ? "text-slate-400" : "text-slate-600"}`}>Farklı İlçe & Konum</CardTitle>
             <Compass className="h-4 w-4 text-emerald-500" />
           </CardHeader>
           <CardContent className="px-4 pb-3">
-            <div className="text-2xl font-extrabold text-emerald-400">{totalDistricts}</div>
-            <p className="text-[10px] text-slate-500 mt-0.5">Tesislerin yer aldığı bölgeler</p>
+            <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{totalDistricts}</div>
+            <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Tesislerin yer aldığı bölgeler</p>
           </CardContent>
         </Card>
       </div>
