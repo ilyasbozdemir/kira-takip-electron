@@ -151,20 +151,13 @@ if (!gotTheLock) {
   });
 
   app.whenReady().then(() => {
-    // Initial DB init
+    // Initial DB init only if passed via CLI argument (e.g. double-clicked in Explorer)
     const initialFilePath = extractFilePathFromArgs(process.argv);
     if (initialFilePath) {
       openedFilePath = initialFilePath;
       initDatabase(initialFilePath);
     } else {
-      const defaultDbPath = path.join(app.getPath("userData"), "venuekeeper-default.vke");
-      if (!fs.existsSync(defaultDbPath)) {
-        try {
-          workspaceManager.create(defaultDbPath, "Mekan & Tesis Yönetimi");
-        } catch {}
-      }
-      openedFilePath = defaultDbPath;
-      initDatabase(defaultDbPath);
+      openedFilePath = null;
     }
 
     createWindow();

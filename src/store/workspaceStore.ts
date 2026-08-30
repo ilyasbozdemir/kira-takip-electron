@@ -10,12 +10,10 @@ export interface RecentFileItem {
 }
 
 export function useWorkspaceStore() {
-  const [activeDosyaId, setActiveDosyaId] = useState<string | null>(() => {
-    return localStorage.getItem("active_dosya_id") || "default";
-  });
-  const [fileName, setFileName] = useState<string>("İşletme Takip Veritabanı (.vke)");
+  const [activeDosyaId, setActiveDosyaId] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string>("");
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
-  const [isStartingFile, setIsStartingFile] = useState<boolean>(false);
+  const [isStartingFile, setIsStartingFile] = useState<boolean>(true);
   const [recentFiles, setRecentFiles] = useState<RecentFileItem[]>([]);
 
   const fetchRecentFiles = useCallback(async () => {
@@ -46,16 +44,23 @@ export function useWorkspaceStore() {
   useEffect(() => {
     fetchRecentFiles();
 
-    // Check opened file path on mount
+    // Check opened file path on mount (e.g. file double-clicked from Explorer)
     if (window.electronAPI?.getOpenedFilePath) {
       window.electronAPI.getOpenedFilePath().then((p: string | null) => {
         if (p) {
           setCurrentFilePath(p);
           const name = p.split(/[\\/]/).pop() || "Veritabanı (.vke)";
           setFileName(name);
+          setActiveDosyaId(p);
           addRecentFile(p, name);
+          sqliteStore.loadFromDb();
+          setIsStartingFile(false);
+        } else {
+          setIsStartingFile(true);
         }
       });
+    } else {
+      setIsStartingFile(true);
     }
   }, [fetchRecentFiles, addRecentFile]);
 

@@ -47,10 +47,10 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
-              VenueKeeper <Badge className="bg-indigo-600 text-white text-xs px-2 py-0.5">PRO v2.4</Badge>
+              İşletme & Salon Kira Takip <Badge className="bg-indigo-600 text-white text-xs px-2 py-0.5">PRO</Badge>
             </h1>
             <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
-              Mekan, Salon & Rezervasyon Yönetim Sistemi — Yerel SQLite Veritabanı & DTM Paket Motoru
+              Mekan, Salon & Rezervasyon Yönetim Sistemi — SQLite Veritabanı & .vke Çalışma Dosyası
             </p>
           </div>
         </div>
