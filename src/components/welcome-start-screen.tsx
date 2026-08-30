@@ -16,6 +16,7 @@ import {
   Moon,
 } from "lucide-react";
 import { RecentFileItem } from "./launcher-modal";
+import appLogo from "@/assets/app-logo.png";
 
 interface WelcomeStartScreenProps {
   recentFiles: RecentFileItem[];
@@ -54,7 +55,7 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
         style={{ WebkitAppRegion: "drag" } as any}
       >
         <div className="flex items-center gap-2">
-          <img src="/app-logo.png" alt="Logo" className="h-5 w-5 rounded object-cover shadow-xs" />
+          <img src={appLogo} alt="Logo" className="h-5 w-5 rounded object-cover shadow-xs" />
           <span className="text-xs font-bold tracking-tight opacity-90">İşletmeTakipAppPro</span>
         </div>
 
@@ -126,7 +127,7 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
         {/* Branding Header */}
         <div className="text-center space-y-3">
           <div className="mx-auto h-20 w-20 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl flex items-center justify-center overflow-hidden">
-            <img src="/app-logo.png" alt="VenueKeeper Logo" className="h-full w-full object-cover" />
+            <img src={appLogo} alt="VenueKeeper Logo" className="h-full w-full object-cover" />
           </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
