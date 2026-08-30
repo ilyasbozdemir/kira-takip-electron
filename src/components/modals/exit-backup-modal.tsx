@@ -61,7 +61,9 @@ export function ExitBackupModal({
   const [sendEmail, setSendEmail] = useState(false);
   const [backupEmail, setBackupEmail] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [statusStep, setStatusStep] = useState<"idle" | "processing" | "success" | "error">("idle");
+  const [statusStep, setStatusStep] = useState<
+    "idle" | "processing" | "success" | "error"
+  >("idle");
   const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
@@ -109,7 +111,7 @@ export function ExitBackupModal({
     setStatusMessage(
       sendEmail
         ? "Yerel yedek alınıyor ve e-posta sunucusuna bağlanılıyor..."
-        : "Yerel .vke yedeği alınıyor..."
+        : "Yerel .vke yedeği alınıyor...",
     );
 
     try {
@@ -136,19 +138,21 @@ export function ExitBackupModal({
         setStatusMessage(
           sendEmail && result.emailSent
             ? "✅ Yerel yedek alındı ve e-posta başarıyla iletildi! Kapatılıyor..."
-            : "✅ Yerel .vke yedeği başarıyla alındı! Kapatılıyor..."
+            : "✅ Yerel .vke yedeği başarıyla alındı! Kapatılıyor...",
         );
         toast.success(
           sendEmail && result.emailSent
             ? "Yedek e-posta ile iletildi!"
-            : "Yerel yedek alındı."
+            : "Yerel yedek alındı.",
         );
         setTimeout(() => {
           (window.electronAPI as any)?.closeWindow?.();
         }, 800);
       } else {
         setStatusStep("error");
-        setStatusMessage(result.error || "Yedekleme veya e-posta gönderimi başarısız oldu.");
+        setStatusMessage(
+          result.error || "Yedekleme veya e-posta gönderimi başarısız oldu.",
+        );
         setIsProcessing(false);
       }
     } catch (err: any) {
@@ -332,7 +336,9 @@ export function ExitBackupModal({
               {statusStep === "error" && (
                 <X className="h-4 w-4 shrink-0 text-rose-500" />
               )}
-              <span className="font-semibold leading-tight">{statusMessage}</span>
+              <span className="font-semibold leading-tight">
+                {statusMessage}
+              </span>
             </div>
           )}
         </div>
