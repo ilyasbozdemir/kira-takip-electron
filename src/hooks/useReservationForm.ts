@@ -157,6 +157,31 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
           const venueMapUrl = venue?.mapUrl;
           const venueDistrict = venue?.district;
 
+          // Determine recipient first — if there is no valid email, skip auto-send.
+          // Müşteri adı e-posta değilse (@ içermiyorsa) otomatik göndermiyoruz;
+          // kullanıcı etkinlik listesinden manuel olarak gönderebilir.
+          const customerHasEmail = resCustomer.includes("@");
+          const backupEmail = smtpSettings.backupEmail || "";
+
+          let recipientEmail = "";
+          if (autoSettings.target === "backup" && backupEmail) {
+            // Yalnızca backup modunda → backup adresine gönder
+            recipientEmail = backupEmail;
+          } else if (autoSettings.target === "both" && backupEmail) {
+            // Both modunda da sadece backup'a gönder (müşteri e-postası yoksa)
+            recipientEmail = customerHasEmail ? resCustomer : backupEmail;
+          } else if (customerHasEmail) {
+            // Sadece müşteriye gönder — e-posta adresi olan müşteriler
+            recipientEmail = resCustomer;
+          }
+
+          // Hiç geçerli alıcı yoksa otomatik gönderimi atla — form sıfırlama devam eder
+          const shouldSendEmail = !!recipientEmail;
+          if (!shouldSendEmail) {
+            // Müşterinin e-posta adresi yok → etkinlik kaydedildi, mail gönderilmeyecek.
+            // Kullanıcı etkinlik listesinden "E-posta" butonuyla manuel gönderebilir.
+          } else {
+
           const emailHtml = generateEmailHTMLTemplate({
             customer: resCustomer,
             venueName,
@@ -188,12 +213,6 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
               })
             : undefined;
 
-          // Determine recipients
-          let recipientEmail = resCustomer.includes("@") ? resCustomer : (smtpSettings.backupEmail || smtpSettings.user);
-          if (autoSettings.target === "backup" && smtpSettings.backupEmail) {
-            recipientEmail = smtpSettings.backupEmail;
-          }
-
           const attachments = icsContent
             ? [
                 {
@@ -221,8 +240,9 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
                 attachments,
               },
             });
-            toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi müşteriye gönderildi!");
+            toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi gönderildi!");
           }
+          } // end else (shouldSendEmail)
         }
       } catch (e) {
         console.error("Otomatik e-posta gönderim hatası:", e);
