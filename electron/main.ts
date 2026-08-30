@@ -50,6 +50,7 @@ const MAX_LOCAL_BACKUPS = 7;
 /** Yerel yedek alır, eski yedekleri siler (max 7 tutar). Yedek yolunu döner. */
 function makeLocalBackup(currentPath: string): string | null {
   try {
+    try { workspaceManager.save(); } catch {}
     if (!currentPath || !fs.existsSync(currentPath)) return null;
     const backupDir = path.join(app.getPath("userData"), "backups");
     if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
@@ -80,7 +81,7 @@ function makeLocalBackup(currentPath: string): string | null {
 
 /** SMTP ayarları varsa .vke dosyasını e-posta eki olarak gönderir. */
 async function sendBackupEmail(
-  smtpConfig: { host: string; port: string | number; secure: boolean; user: string; pass: string; senderName?: string },
+  smtpConfig: { host: string; port: string | number; secure?: boolean; user: string; pass: string; senderName?: string },
   backupEmail: string,
   attachmentPath: string,
   dbFileName: string,
@@ -90,7 +91,7 @@ async function sendBackupEmail(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const portNum = Number(smtpConfig.port) || 587;
-    const isSecure = portNum === 465;
+    const isSecure = smtpConfig.secure !== undefined ? Boolean(smtpConfig.secure) : (portNum === 465);
     const transporter = nodemailer.createTransport({
       host: smtpConfig.host,
       port: portNum,

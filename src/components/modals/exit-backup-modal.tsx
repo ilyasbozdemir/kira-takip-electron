@@ -72,11 +72,21 @@ export function ExitBackupModal({
   }, [open]);
 
   const handleBackupAndExit = async () => {
-    if (sendEmail && !backupEmail) {
-      toast.error(
-        "Lütfen geçerli bir yedek e-posta adresi girin veya e-posta seçeneğini kapatın.",
-      );
-      return;
+    if (sendEmail) {
+      if (!backupEmail || !backupEmail.trim()) {
+        toast.error(
+          "Lütfen geçerli bir yedek e-posta adresi girin veya e-posta seçeneğini kapatın.",
+        );
+        return;
+      }
+      const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
+      const smtp = smtpRaw ? JSON.parse(smtpRaw) : null;
+      if (!smtp || !smtp.host || !smtp.user || !smtp.pass) {
+        toast.error(
+          "SMTP sunucu ayarlarınız eksik! Lütfen önce Ayarlar → E-posta sekmesinden SMTP bilgilerinizi kaydedin.",
+        );
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -87,7 +97,10 @@ export function ExitBackupModal({
           const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
           const parsed = smtpRaw ? JSON.parse(smtpRaw) : {};
           parsed.backupEmail = backupEmail.trim();
-          localStorage.setItem("venue-keeper-smtp-settings", JSON.stringify(parsed));
+          localStorage.setItem(
+            "venue-keeper-smtp-settings",
+            JSON.stringify(parsed),
+          );
         } catch {}
       }
 

@@ -168,13 +168,16 @@ export function App(): React.JSX.Element {
       }
 
       const { subject, html, text } = generateBackupEmailContent({
-        dbFileName: fileName || (currentFilePath ? currentFilePath.split(/[\\/]/).pop() : "venuekeeper-default.vke") || "veritabani.vke",
+        dbFileName:
+          fileName ||
+          (currentFilePath ? currentFilePath.split(/[\\/]/).pop() : "venuekeeper-default.vke") ||
+          "veritabani.vke",
         institutionName,
         appName,
         senderName: smtpSettings.senderName,
       });
 
-      await (window.electronAPI as any)?.quitWithBackup?.({
+      const res = await (window.electronAPI as any)?.quitWithBackup?.({
         backupLocal: options.backupLocal,
         sendEmail: options.sendEmail,
         backupEmail: options.backupEmail,
@@ -183,8 +186,19 @@ export function App(): React.JSX.Element {
         mailHtml: html,
         mailText: text,
       });
-    } catch {
-      // yedek başarısız olsa bile kapat
+
+      if (options.sendEmail) {
+        if (res?.emailSent) {
+          toast.success("✅ Veritabanı yedeği e-posta adresinize gönderildi.");
+          await new Promise((r) => setTimeout(r, 800));
+        } else if (res?.emailError) {
+          toast.error(`❌ E-posta yedeği gönderilemedi: ${res.emailError}`);
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+    } catch (err: any) {
+      toast.error(`Yedekleme hatası: ${err?.message || err}`);
+      await new Promise((r) => setTimeout(r, 1500));
     } finally {
       setIsClosing(false);
       (window.electronAPI as any)?.closeWindow?.();
