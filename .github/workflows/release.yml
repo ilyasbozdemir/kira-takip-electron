@@ -35,7 +35,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $files = Get-ChildItem -Path release -Recurse -Include *.exe,*.blockmap,latest.yml | Select-Object -ExpandProperty FullName
+          $files = Get-ChildItem -Path release -Recurse -Include *.exe,*.blockmap,latest.yml,*.zip | Where-Object { $_.FullName -notmatch "win-unpacked" -and $_.FullName -notmatch "__uninstaller" -and $_.Name -ne "elevate.exe" -and $_.Name -ne "IsletmeTakipAppPro.exe" } | Select-Object -ExpandProperty FullName
           if (gh release view ${{ github.ref_name }} 2>$null) {
             gh release upload ${{ github.ref_name }} $files --clobber
             gh release edit ${{ github.ref_name }} --draft=false --prerelease=false --latest
