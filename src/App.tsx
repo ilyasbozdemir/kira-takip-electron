@@ -35,7 +35,7 @@ import { ReportsScreen } from "@/screens/reports.screen";
 import { SettingsScreen } from "@/screens/settings.screen";
 import { CustomersScreen } from "@/screens/customers.screen";
 import { HelpScreen } from "@/screens/help.screen";
-import { generateEmailHTMLTemplate } from "@/lib/email-template";
+import { generateEmailHTMLTemplate, generateBackupEmailContent } from "@/lib/email-template";
 import { ExitBackupModal } from "@/components/modals/exit-backup-modal";
 
 export function App(): React.JSX.Element {
@@ -164,11 +164,22 @@ export function App(): React.JSX.Element {
       if (options.backupEmail) {
         smtpSettings.backupEmail = options.backupEmail;
       }
+
+      const { subject, html, text } = generateBackupEmailContent({
+        dbFileName: fileName || (currentFilePath ? currentFilePath.split(/[\\/]/).pop() : "venuekeeper-default.vke") || "veritabani.vke",
+        institutionName,
+        appName,
+        senderName: smtpSettings.senderName,
+      });
+
       await (window.electronAPI as any)?.quitWithBackup?.({
         backupLocal: options.backupLocal,
         sendEmail: options.sendEmail,
         backupEmail: options.backupEmail,
         smtpSettings,
+        mailSubject: subject,
+        mailHtml: html,
+        mailText: text,
       });
     } catch {
       // yedek başarısız olsa bile kapat

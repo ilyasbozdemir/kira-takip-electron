@@ -202,7 +202,7 @@ export function Footer(
                 type="button"
                 onClick={() =>
                   openExternal(
-                    "https://github.com/ilyasbozdemir/isletme-kira-takip-electron",
+                    "https://github.com/ilyasbozdemir/kira-takip-electron",
                   )}
                 className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-all font-semibold cursor-pointer group"
               >
@@ -229,7 +229,7 @@ export function Footer(
                 type="button"
                 onClick={() =>
                   openExternal(
-                    "https://github.com/ilyasbozdemir/isletme-kira-takip-electron/issues",
+                    "https://github.com/ilyasbozdemir/kira-takip-electron/issues",
                   )}
                 className="flex items-center gap-2 w-full p-2 text-xs hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
               >

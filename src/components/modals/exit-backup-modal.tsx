@@ -81,6 +81,16 @@ export function ExitBackupModal({
 
     setIsProcessing(true);
     try {
+      // Persist the backup email to smtp settings in localStorage so user doesn't have to retype it
+      if (backupEmail) {
+        try {
+          const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
+          const parsed = smtpRaw ? JSON.parse(smtpRaw) : {};
+          parsed.backupEmail = backupEmail.trim();
+          localStorage.setItem("venue-keeper-smtp-settings", JSON.stringify(parsed));
+        } catch {}
+      }
+
       await onConfirmExit({
         backupLocal,
         sendEmail,

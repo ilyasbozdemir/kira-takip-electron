@@ -287,3 +287,196 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
 </html>
   `;
 }
+
+/* ========================================================================== */
+/* BACKUP EMAIL TEMPLATE ENGINE                                               */
+/* ========================================================================== */
+
+export const BACKUP_EMAIL_TEMPLATE_STORAGE_KEY = "venue-keeper-backup-email-template-settings";
+
+export interface BackupEmailTemplateConfig {
+  subject?: string;
+  bodyTitle?: string;
+  bodyMessage?: string;
+  footerNote?: string;
+  headerThemeColor?: "navy" | "indigo" | "emerald" | "burgundy" | "slate";
+}
+
+export interface BackupEmailOptions extends BackupEmailTemplateConfig {
+  dbFileName: string;
+  attachmentPath?: string;
+  fileSize?: string;
+  date?: string;
+  time?: string;
+  institutionName?: string;
+  appName?: string;
+  version?: string;
+  senderName?: string;
+}
+
+export function getBackupEmailTemplateSettings(): BackupEmailTemplateConfig {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      const saved = localStorage.getItem(BACKUP_EMAIL_TEMPLATE_STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    }
+  } catch {}
+  return {
+    subject: "[{UYGULAMA_ADI} Otomatik Yedek] {DOSYA_ADI} — {TARIH} {SAAT}",
+    bodyTitle: "🔒 {KURUM_ADI} — Veritabanı Yedeği",
+    bodyMessage: "Uygulama oturumu başarıyla sonlandırılmış olup güncel SQLite çalışma veritabanı ({DOSYA_ADI}) güvenliğiniz için ekte arşivlenmiştir.",
+    footerNote: "Bu e-posta {UYGULAMA_ADI} ({VERSIYON}) tarafından otomatik arşivleme amacıyla üretilmiştir. Bu dosyayı uygulamadaki 'Dosya Aç' menüsüyle doğrudan yükleyebilirsiniz.",
+    headerThemeColor: "indigo",
+  };
+}
+
+export function saveBackupEmailTemplateSettings(config: BackupEmailTemplateConfig): void {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      localStorage.setItem(BACKUP_EMAIL_TEMPLATE_STORAGE_KEY, JSON.stringify(config));
+    }
+  } catch (e) {
+    console.error("Failed to save backup email template settings:", e);
+  }
+}
+
+export function generateBackupEmailContent(options: BackupEmailOptions): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const savedConfig = getBackupEmailTemplateSettings();
+  const config: BackupEmailOptions = { ...savedConfig, ...options };
+
+  const now = new Date();
+  const dateStr = config.date || now.toLocaleDateString("tr-TR");
+  const timeStr = config.time || now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  const appName = config.appName || "İşletmeTakipAppPro";
+  const instName = config.institutionName || "Mekan & Tesis Yönetimi";
+  const dbFileName = config.dbFileName || "veritabani.vke";
+  const version = config.version || "v1.0.0";
+  const fileSize = config.fileSize || "Bilinmiyor";
+
+  // Replacement helper for all template fields
+  const replacePlaceholders = (template: string) => {
+    return template
+      .replace(/{DOSYA_ADI}/g, dbFileName)
+      .replace(/{TARIH}/g, dateStr)
+      .replace(/{SAAT}/g, timeStr)
+      .replace(/{KURUM_ADI}/g, instName)
+      .replace(/{UYGULAMA_ADI}/g, appName)
+      .replace(/{VERSIYON}/g, version)
+      .replace(/{DOSYA_BOYUTU}/g, fileSize);
+  };
+
+  const subject = replacePlaceholders(config.subject || "[{UYGULAMA_ADI} Otomatik Yedek] {DOSYA_ADI} — {TARIH} {SAAT}");
+  const title = replacePlaceholders(config.bodyTitle || "🔒 {KURUM_ADI} — Veritabanı Yedeği");
+  const message = replacePlaceholders(config.bodyMessage || "Uygulama oturumu başarıyla sonlandırılmış olup güncel SQLite çalışma veritabanı ({DOSYA_ADI}) güvenliğiniz için ekte arşivlenmiştir.");
+  const footer = replacePlaceholders(config.footerNote || "Bu e-posta {UYGULAMA_ADI} ({VERSIYON}) tarafından otomatik arşivleme amacıyla üretilmiştir.");
+
+  const colorGradients: Record<string, string> = {
+    navy: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)",
+    indigo: "linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #4f46e5 100%)",
+    emerald: "linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%)",
+    burgundy: "linear-gradient(135deg, #4c0519 0%, #881337 50%, #9f1239 100%)",
+    slate: "linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%)",
+  };
+  const headerBg = colorGradients[config.headerThemeColor || "indigo"] || colorGradients.indigo;
+
+  const text = `${title}\n\n${message}\n\nDosya Adı: ${dbFileName}\nTarih & Saat: ${dateStr} ${timeStr}\nKurum: ${instName}\nSürüm: ${version}\n\n${footer}`;
+
+  const html = `
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0f172a; padding: 32px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #334155;">
+          
+          <!-- Header Banner -->
+          <tr>
+            <td style="background: ${headerBg}; padding: 32px 28px; text-align: center; color: #ffffff;">
+              <div style="font-size: 32px; margin-bottom: 8px;">🛡️</div>
+              <h1 style="margin: 0; font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #ffffff;">
+                ${title}
+              </h1>
+              <p style="margin: 6px 0 0 0; font-size: 12px; color: #cbd5e1; font-weight: 500;">
+                ${instName} • Güvenli Arşiv Bildirimi
+              </p>
+            </td>
+          </tr>
+
+          <!-- Message Body -->
+          <tr>
+            <td style="padding: 28px 30px 16px 30px;">
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #334155; font-weight: 500;">
+                ${message}
+              </p>
+
+              <!-- Backup File Meta Box -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 12px; padding: 18px; border: 1px solid #e2e8f0;">
+                <tr>
+                  <td style="padding-bottom: 10px; font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;">
+                    📁 Ekli Veritabanı Dosya Bilgileri:
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="font-size: 13px; color: #1e293b;">
+                      <tr>
+                        <td style="padding: 4px 0; width: 130px; color: #64748b; font-weight: 600;">Dosya Adı:</td>
+                        <td style="padding: 4px 0; font-family: monospace; font-weight: 800; color: #4f46e5;">${dbFileName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Yedek Tarihi:</td>
+                        <td style="padding: 4px 0; font-family: monospace; font-weight: 700;">📅 ${dateStr} • ⏰ ${timeStr}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Uygulama Sürümü:</td>
+                        <td style="padding: 4px 0; font-weight: 700; color: #0284c7;">${version}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 4px 0; color: #64748b; font-weight: 600;">Yedek Durumu:</td>
+                        <td style="padding: 4px 0; font-weight: 800; color: #16a34a;">✅ Bütünlük Doğrulandı (SQLite .vke)</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Restore Instructions -->
+          <tr>
+            <td style="padding: 0 30px 24px 30px;">
+              <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 6px; font-size: 12px; color: #1e40af; line-height: 1.5;">
+                💡 <strong>Geri Yükleme İpucu:</strong> Bu veritabanını başka bir bilgisayarda açmak veya geri yüklemek için <strong>${appName}</strong> uygulamasını açıp <em>"Dosya Seç (.vke)"</em> butonundan bu ekli dosyayı seçmeniz yeterlidir.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0f172a; padding: 20px 30px; text-align: center; color: #64748b; font-size: 11px; line-height: 1.5; border-top: 1px solid #1e293b;">
+              <p style="margin: 0 0 4px 0; color: #94a3b8; font-weight: 600;">${instName} • ${appName}</p>
+              <p style="margin: 0;">${footer}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  return { subject, html, text };
+}
+

@@ -84,6 +84,9 @@ async function sendBackupEmail(
   backupEmail: string,
   attachmentPath: string,
   dbFileName: string,
+  customSubject?: string,
+  customHtml?: string,
+  customText?: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const portNum = Number(smtpConfig.port) || 587;
@@ -96,12 +99,17 @@ async function sendBackupEmail(
       tls: { rejectUnauthorized: false },
     });
     const now = new Date().toLocaleString("tr-TR");
+
+    const subject = customSubject || `[İŞLETME KİRA TAKİP Yedek] ${dbFileName} — ${now}`;
+    const text = customText || `İşletme Kira Takip otomatik yedek\n\nDosya: ${dbFileName}\nTarih: ${now}\n\nBu e-posta uygulama kapatılırken otomatik oluşturulmuştur.`;
+    const html = customHtml || `<p><b>İşletme Kira Takip — Otomatik Yedek</b></p><p>Dosya: <code>${dbFileName}</code><br>Tarih: ${now}</p><p>Bu e-posta uygulama kapatılırken otomatik oluşturulmuştur.</p>`;
+
     await transporter.sendMail({
       from: `"${smtpConfig.senderName || "VenueKeeper Pro"}" <${smtpConfig.user}>`,
       to: backupEmail,
-      subject: `[VenueKeeper Yedek] ${dbFileName} — ${now}`,
-      text: `VenueKeeper Pro otomatik yedek\n\nDosya: ${dbFileName}\nTarih: ${now}\n\nBu e-posta uygulama kapatılırken otomatik oluşturulmuştur.`,
-      html: `<p><b>VenueKeeper Pro — Otomatik Yedek</b></p><p>Dosya: <code>${dbFileName}</code><br>Tarih: ${now}</p><p>Bu e-posta uygulama kapatılırken otomatik oluşturulmuştur.</p>`,
+      subject,
+      text,
+      html,
       attachments: [
         { filename: path.basename(attachmentPath), path: attachmentPath },
       ],
@@ -686,6 +694,9 @@ safeHandle("quit-with-backup", async (_event, options: any) => {
       targetEmail,
       backupPath,
       path.basename(currentPath),
+      options?.mailSubject,
+      options?.mailHtml,
+      options?.mailText,
     );
     emailSent = result.success;
     emailError = result.error;

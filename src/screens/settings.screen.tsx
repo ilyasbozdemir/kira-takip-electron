@@ -8,6 +8,7 @@ import {
   Copy,
   Download,
   FileJson,
+  HardDrive,
   Mail,
   MapPin,
   PartyPopper,
@@ -26,6 +27,10 @@ import {
   generateEmailHTMLTemplate,
   getEmailTemplateSettings,
   saveEmailTemplateSettings,
+  getBackupEmailTemplateSettings,
+  saveBackupEmailTemplateSettings,
+  generateBackupEmailContent,
+  type BackupEmailTemplateConfig,
 } from "@/lib/email-template";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -319,10 +324,19 @@ export function SettingsScreen({
           setTplShowMapButtons(tplConfig.showMapButtons);
         }
       }
+
+      const backupTpl = getBackupEmailTemplateSettings();
+      if (backupTpl) {
+        if (backupTpl.subject) setBackupTplSubject(backupTpl.subject);
+        if (backupTpl.bodyTitle) setBackupTplTitle(backupTpl.bodyTitle);
+        if (backupTpl.bodyMessage) setBackupTplMessage(backupTpl.bodyMessage);
+        if (backupTpl.footerNote) setBackupTplFooter(backupTpl.footerNote);
+        if (backupTpl.headerThemeColor) setBackupTplThemeColor(backupTpl.headerThemeColor);
+      }
     } catch {}
   }, []);
 
-  // Dynamic Email Template State
+  // Dynamic Email Template State (Customer Confirmations)
   const [tplGreetingText, setTplGreetingText] = useState(
     "Sayın {CUSTOMER_NAME},",
   );
@@ -345,6 +359,51 @@ export function SettingsScreen({
     "Belediye Hizmet Binası, Merkez",
   );
   const [tplShowMapButtons, setTplShowMapButtons] = useState(true);
+
+  // Dynamic Backup Email Template State
+  const [backupTplSubject, setBackupTplSubject] = useState(
+    "[{UYGULAMA_ADI} Otomatik Yedek] {DOSYA_ADI} — {TARIH} {SAAT}",
+  );
+  const [backupTplTitle, setBackupTplTitle] = useState(
+    "🔒 {KURUM_ADI} — Veritabanı Yedeği",
+  );
+  const [backupTplMessage, setBackupTplMessage] = useState(
+    "Uygulama oturumu başarıyla sonlandırılmış olup güncel SQLite çalışma veritabanı ({DOSYA_ADI}) güvenliğiniz için ekte arşivlenmiştir.",
+  );
+  const [backupTplFooter, setBackupTplFooter] = useState(
+    "Bu e-posta {UYGULAMA_ADI} ({VERSIYON}) tarafından otomatik arşivleme amacıyla üretilmiştir. Bu dosyayı uygulamadaki 'Dosya Aç' menüsüyle doğrudan yükleyebilirsiniz.",
+  );
+  const [backupTplThemeColor, setBackupTplThemeColor] = useState<
+    "navy" | "indigo" | "emerald" | "burgundy" | "slate"
+  >("indigo");
+  const [showBackupTplPreview, setShowBackupTplPreview] = useState(false);
+
+  const handleSaveBackupTemplateCustomization = () => {
+    saveBackupEmailTemplateSettings({
+      subject: backupTplSubject,
+      bodyTitle: backupTplTitle,
+      bodyMessage: backupTplMessage,
+      footerNote: backupTplFooter,
+      headerThemeColor: backupTplThemeColor,
+    });
+    toast.success("Yedekleme e-posta şablonu başarıyla kaydedildi!");
+  };
+
+  const handleResetBackupTemplateCustomization = () => {
+    setBackupTplSubject("[{UYGULAMA_ADI} Otomatik Yedek] {DOSYA_ADI} — {TARIH} {SAAT}");
+    setBackupTplTitle("🔒 {KURUM_ADI} — Veritabanı Yedeği");
+    setBackupTplMessage("Uygulama oturumu başarıyla sonlandırılmış olup güncel SQLite çalışma veritabanı ({DOSYA_ADI}) güvenliğiniz için ekte arşivlenmiştir.");
+    setBackupTplFooter("Bu e-posta {UYGULAMA_ADI} ({VERSIYON}) tarafından otomatik arşivleme amacıyla üretilmiştir. Bu dosyayı uygulamadaki 'Dosya Aç' menüsüyle doğrudan yükleyebilirsiniz.");
+    setBackupTplThemeColor("indigo");
+    saveBackupEmailTemplateSettings({
+      subject: "[{UYGULAMA_ADI} Otomatik Yedek] {DOSYA_ADI} — {TARIH} {SAAT}",
+      bodyTitle: "🔒 {KURUM_ADI} — Veritabanı Yedeği",
+      bodyMessage: "Uygulama oturumu başarıyla sonlandırılmış olup güncel SQLite çalışma veritabanı ({DOSYA_ADI}) güvenliğiniz için ekte arşivlenmiştir.",
+      footerNote: "Bu e-posta {UYGULAMA_ADI} ({VERSIYON}) tarafından otomatik arşivleme amacıyla üretilmiştir. Bu dosyayı uygulamadaki 'Dosya Aç' menüsüyle doğrudan yükleyebilirsiniz.",
+      headerThemeColor: "indigo",
+    });
+    toast.info("Yedek e-posta şablonu varsayılan değerlere sıfırlandı.");
+  };
 
   const handleSaveEmailTemplateCustomization = () => {
     saveEmailTemplateSettings({
@@ -1319,16 +1378,22 @@ export function SettingsScreen({
                           <span
                             className={`text-[10px] block font-semibold ${
                               theme === "dark"
-                                ? "text-slate-400"
-                                : "text-slate-500"
+                                ? "text-emerald-400"
+                                : "text-emerald-600"
                             }`}
                           >
-                            Güvenli Bağlantı (SSL)
+                            🔒 Çıkış Yedeği Alıcı E-postası
                           </span>
-                          <span className="font-bold text-indigo-500">
-                            {smtpSecure
-                              ? "🔒 SSL/TLS (465)"
-                              : "🔓 STARTTLS (587)"}
+                          <span
+                            className={`font-bold font-mono text-xs truncate block ${
+                              smtpBackupEmail
+                                ? "text-emerald-500"
+                                : theme === "dark"
+                                ? "text-slate-500 italic"
+                                : "text-slate-400 italic"
+                            }`}
+                          >
+                            {smtpBackupEmail || "Tanımlanmadı (Yalnızca yerel yedek)"}
                           </span>
                         </div>
                       </div>
@@ -1339,6 +1404,19 @@ export function SettingsScreen({
                           className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex-1 h-9 shadow-xs"
                         >
                           <Mail className="h-4 w-4 mr-1.5" /> Test Maili Gönder
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => (window.electronAPI as any)?.openBackupFolder?.()}
+                          className={`text-xs h-9 font-semibold ${
+                            theme === "dark"
+                              ? "border-emerald-800/60 text-emerald-400 hover:bg-emerald-950/30"
+                              : "border-emerald-300 text-emerald-700 bg-white hover:bg-emerald-50 shadow-2xs"
+                          }`}
+                          title="Yerel .vke yedeklerinin saklandığı klasörü aç"
+                        >
+                          <HardDrive className="h-3.5 w-3.5 mr-1 text-emerald-500" /> Yerel Yedek Klasörünü Aç
                         </Button>
                         <Button
                           variant="outline"
@@ -1548,6 +1626,231 @@ export function SettingsScreen({
                       </div>
                     </>
                   )}
+              </CardContent>
+            </Card>
+
+            {/* Otomatik Çıkış Yedeği E-Posta Şablonu & Yer Tutucular Card */}
+            <Card
+              className={theme === "dark"
+                ? "bg-slate-900/80 border-slate-800"
+                : "bg-white border-slate-200 shadow-sm"}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle
+                    className={`text-base font-bold flex items-center gap-2 ${
+                      theme === "dark" ? "text-slate-100" : "text-slate-900"
+                    }`}
+                  >
+                    <ShieldCheck className="h-5 w-5 text-emerald-500" />{" "}
+                    Otomatik Çıkış Yedeği E-Posta Şablonu & Yer Tutucular
+                  </CardTitle>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowBackupTplPreview(!showBackupTplPreview)}
+                    className="text-xs h-7 text-indigo-400 hover:text-indigo-300 font-semibold"
+                  >
+                    {showBackupTplPreview ? "👁️ Önizlemeyi Kapat" : "👁️ Canlı Önizleme"}
+                  </Button>
+                </div>
+                <CardDescription
+                  className={`text-xs ${
+                    theme === "dark" ? "text-slate-400" : "text-slate-600"
+                  }`}
+                >
+                  Uygulama kapatılırken gönderilen .vke veritabanı yedeği e-posta konu başlığını, gövdesini ve dinamik değişkenlerini özelleştirin.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Theme Colors */}
+                <div>
+                  <Label
+                    className={`text-xs font-semibold block mb-1.5 ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Yedek E-Postası Başlık Şablon Teması
+                  </Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {[
+                      { id: "navy", name: "Lacivert", bg: "bg-slate-900 border-slate-700" },
+                      { id: "indigo", name: "Kraliyet Mavisi", bg: "bg-indigo-900 border-indigo-400" },
+                      { id: "emerald", name: "Zümrüt Yeşil", bg: "bg-emerald-900 border-emerald-400" },
+                      { id: "burgundy", name: "Resmi Bordo", bg: "bg-rose-950 border-rose-400" },
+                      { id: "slate", name: "Kurumsal Gri", bg: "bg-slate-800 border-slate-400" },
+                    ].map((color) => (
+                      <button
+                        key={color.id}
+                        type="button"
+                        onClick={() => setBackupTplThemeColor(color.id as any)}
+                        className={`p-2 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                          backupTplThemeColor === color.id
+                            ? `${color.bg} text-white ring-2 ring-emerald-500 shadow-md`
+                            : theme === "dark"
+                            ? "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
+                            : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                        }`}
+                      >
+                        <span className="text-[11px] font-bold truncate">{color.name}</span>
+                        {backupTplThemeColor === color.id && <Check className="h-3 w-3 shrink-0" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Subject & Title */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div>
+                    <Label
+                      className={`text-xs font-semibold ${
+                        theme === "dark" ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      E-Posta Konu Başlığı (Subject) *
+                    </Label>
+                    <Input
+                      value={backupTplSubject}
+                      onChange={(e) => setBackupTplSubject(e.target.value)}
+                      placeholder="[{UYGULAMA_ADI} Otomatik Yedek] {DOSYA_ADI} — {TARIH} {SAAT}"
+                      className="text-xs mt-1 font-mono"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      Konu satırında görünen başlık.
+                    </span>
+                  </div>
+
+                  <div>
+                    <Label
+                      className={`text-xs font-semibold ${
+                        theme === "dark" ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      E-Posta İçi Ana Başlık (Banner Title) *
+                    </Label>
+                    <Input
+                      value={backupTplTitle}
+                      onChange={(e) => setBackupTplTitle(e.target.value)}
+                      placeholder="🔒 {KURUM_ADI} — Veritabanı Yedeği"
+                      className="text-xs mt-1 font-mono"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      HTML e-postanın en üstünde büyük görünen başlık.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Message Body & Placeholders */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <Label
+                      className={`text-xs font-semibold ${
+                        theme === "dark" ? "text-slate-300" : "text-slate-700"
+                      }`}
+                    >
+                      Açıklama / Mesaj Gövdesi
+                    </Label>
+                    <div className="flex gap-1 flex-wrap">
+                      {[
+                        "{DOSYA_ADI}",
+                        "{TARIH}",
+                        "{SAAT}",
+                        "{KURUM_ADI}",
+                        "{UYGULAMA_ADI}",
+                        "{VERSIYON}",
+                        "{DOSYA_BOYUTU}",
+                      ].map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          onClick={() => setBackupTplMessage((prev) => prev + " " + tag)}
+                          className="text-[9px] cursor-pointer hover:bg-emerald-500/20 font-mono text-emerald-400 transition-colors"
+                          title={`Mesaj metnine ${tag} yer tutucusunu ekle`}
+                        >
+                          +{tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <Textarea
+                    rows={3}
+                    value={backupTplMessage}
+                    onChange={(e) => setBackupTplMessage(e.target.value)}
+                    className="text-xs font-mono leading-relaxed"
+                    placeholder="Uygulama oturumu başarıyla sonlandırılmış olup güncel SQLite çalışma veritabanı ({DOSYA_ADI}) güvenliğiniz için ekte arşivlenmiştir."
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    💡 Yukarıdaki yeşil etiketlere tıklayarak metne otomatik yer tutucu değişkenleri ekleyebilirsiniz.
+                  </p>
+                </div>
+
+                {/* Footer Note */}
+                <div>
+                  <Label
+                    className={`text-xs font-semibold ${
+                      theme === "dark" ? "text-slate-300" : "text-slate-700"
+                    }`}
+                  >
+                    Alt Dipnot & Yasal Açıklama (Footer Note)
+                  </Label>
+                  <Input
+                    value={backupTplFooter}
+                    onChange={(e) => setBackupTplFooter(e.target.value)}
+                    placeholder="Bu e-posta {UYGULAMA_ADI} ({VERSIYON}) tarafından otomatik arşivleme amacıyla üretilmiştir."
+                    className="text-xs mt-1 font-mono"
+                  />
+                </div>
+
+                {/* Live Preview Box */}
+                {showBackupTplPreview && (
+                  <div className="p-4 rounded-xl border border-indigo-500/30 bg-slate-950 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <span className="text-xs font-bold text-indigo-400">
+                        📧 Canlı E-Posta Şablon Önizlemesi:
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Konu: {backupTplSubject.replace(/{UYGULAMA_ADI}/g, "İşletmeTakipAppPro").replace(/{DOSYA_ADI}/g, "venuekeeper-default.vke").replace(/{TARIH}/g, new Date().toLocaleDateString("tr-TR")).replace(/{SAAT}/g, new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }))}
+                      </span>
+                    </div>
+                    <div className="bg-slate-900 rounded-lg p-3 text-xs text-slate-200 space-y-2 border border-slate-800">
+                      <div className="font-bold text-sm text-white">
+                        {backupTplTitle.replace(/{KURUM_ADI}/g, draftInstitutionName || "Mekan & Tesis İşletmesi")}
+                      </div>
+                      <p className="text-slate-300 text-xs">
+                        {backupTplMessage.replace(/{DOSYA_ADI}/g, "venuekeeper-default.vke").replace(/{KURUM_ADI}/g, draftInstitutionName || "Mekan & Tesis İşletmesi")}
+                      </p>
+                      <div className="p-2 rounded bg-slate-950 border border-slate-800 text-[11px] font-mono text-indigo-300">
+                        📎 Ek: venuekeeper-default.vke (SQLite Veritabanı Yedeği)
+                      </div>
+                      <div className="text-[10px] text-slate-500 pt-1 border-t border-slate-800/80">
+                        {backupTplFooter.replace(/{UYGULAMA_ADI}/g, "İşletmeTakipAppPro").replace(/{VERSIYON}/g, "v1.0.0-beta.38")}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+                  <Button
+                    onClick={handleSaveBackupTemplateCustomization}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold h-9 flex-1 shadow-xs"
+                  >
+                    <Check className="h-4 w-4 mr-1.5" /> Yedek E-Posta Şablonunu Kaydet
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleResetBackupTemplateCustomization}
+                    className={`text-xs h-9 font-semibold ${
+                      theme === "dark"
+                        ? "border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                        : "border-slate-300 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    Varsayılana Sıfırla
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
