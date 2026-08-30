@@ -45,3 +45,17 @@ jobs:
           } else {
             gh release create ${{ github.ref_name }} $files --title "${{ github.ref_name }}" --draft=false --prerelease=false --latest --generate-notes
           }
+
+      - name: Retain Only Latest 5 Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $allReleases = (gh release list -L 100 | ForEach-Object { ($_ -split "`t")[0] })
+          if ($allReleases.Count -gt 5) {
+            $toDelete = $allReleases | Select-Object -Skip 5
+            foreach ($rel in $toDelete) {
+              Write-Host "Auto-cleaning old release beyond top 5: $rel"
+              gh release delete $rel -y --cleanup-tag 2>$null
+            }
+          }
+
