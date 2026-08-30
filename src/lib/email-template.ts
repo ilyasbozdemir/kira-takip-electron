@@ -1,4 +1,5 @@
 import { money } from "@/lib/rental-store";
+import { APP_LOGO_BASE64 } from "@/assets/app-logo-b64";
 
 export const EMAIL_TEMPLATE_STORAGE_KEY = "venue-keeper-email-template-settings";
 
@@ -85,8 +86,11 @@ export function generateEmailHTMLTemplate(options: EmailTemplateOptions): string
 
   const remaining = config.price - config.paid;
 
-  // Logo: prefer institution_logo (base64 from Identity tab), then email-template override
-  const rawLogo = settingsLogo || config.institutionLogo || "";
+  // Logo öncelik sırası:
+  // 1. Ayarlar → Kimlik tabından yüklenen kurum logosu (base64)
+  // 2. email-template-settings içindeki override
+  // 3. Uygulama varsayılan logosu (APP_LOGO_BASE64 — her zaman mevcut)
+  const rawLogo = settingsLogo || config.institutionLogo || APP_LOGO_BASE64;
   const hasValidLogo = rawLogo && (
     rawLogo.startsWith("data:image/") ||
     rawLogo.startsWith("http://") ||
