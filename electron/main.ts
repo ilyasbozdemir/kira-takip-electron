@@ -211,6 +211,12 @@ function extractFilePathFromArgs(args: string[]): string | null {
   return null;
 }
 
+// Performance & Rendering Switches
+app.commandLine.appendSwitch("disable-features", "OutOfProcessRasterization");
+app.commandLine.appendSwitch("disable-background-timer-throttling");
+app.commandLine.appendSwitch("disable-renderer-backgrounding");
+app.commandLine.appendSwitch("enable-smooth-scrolling");
+
 function createWindow() {
   win = new BrowserWindow({
     title: "İşletme & Salon Kira Takip PRO",
@@ -220,17 +226,33 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 680,
     frame: false,
-    show: true,
+    show: false, // Performance: render first, display seamlessly without white flash
+    backgroundColor: "#020617",
     webPreferences: {
       preload: path.join(_dirname, "preload.js"),
       nodeIntegration: false,
       contextIsolation: true,
       devTools: true,
+      backgroundThrottling: false,
     },
   });
 
   win.center();
-  win.focus();
+
+  win.once("ready-to-show", () => {
+    if (win && !win.isDestroyed()) {
+      win.show();
+      win.focus();
+    }
+  });
+
+  // Safety fallback if ready-to-show is delayed
+  setTimeout(() => {
+    if (win && !win.isDestroyed() && !win.isVisible()) {
+      win.show();
+      win.focus();
+    }
+  }, 400);
 
   win.webContents.on("before-input-event", (event, input) => {
     if ((input.key === "F12" || (input.control && input.shift && input.key.toLowerCase() === "i")) && input.type === "keyDown") {

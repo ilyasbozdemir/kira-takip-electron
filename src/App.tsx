@@ -103,6 +103,7 @@ export function App(): React.JSX.Element {
   const [store, setStore] = useState(sqliteStore.getSnapshot());
 
   useEffect(() => {
+    if (isStartingFile) return;
     sqliteStore.loadFromDb().then(() => setStore(sqliteStore.getSnapshot()));
     const unsubscribe = sqliteStore.subscribe(() =>
       setStore(sqliteStore.getSnapshot())
@@ -110,7 +111,7 @@ export function App(): React.JSX.Element {
     return () => {
       unsubscribe();
     };
-  }, [activeDosyaId]);
+  }, [activeDosyaId, isStartingFile]);
 
   // Navigation Section State
   const [activeSection, setActiveSection] = useState<NavSection>("dashboard");
