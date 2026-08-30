@@ -177,8 +177,6 @@ export function App(): React.JSX.Element {
         senderName: smtpSettings.senderName,
       });
 
-      console.log("[EXIT] quitWithBackup çağrılıyor...", { options, smtpConfigured: !!(smtpSettings.host && smtpSettings.user) });
-
       const res = await (window.electronAPI as any)?.quitWithBackup?.({
         backupLocal: options.backupLocal,
         sendEmail: options.sendEmail,
@@ -188,8 +186,6 @@ export function App(): React.JSX.Element {
         mailHtml: html,
         mailText: text,
       });
-
-      console.log("[EXIT] quitWithBackup yanıtı:", res);
 
       if (options.sendEmail && res && !res.emailSent) {
         return {
