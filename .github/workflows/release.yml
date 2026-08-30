@@ -28,6 +28,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Rebuild Native Modules for Electron
+        run: pnpm run rebuild
+
       - name: Build Desktop Executable
         run: pnpm run build:vite && npx electron-builder --win --config electron/electron-builder.yml --publish never
 
