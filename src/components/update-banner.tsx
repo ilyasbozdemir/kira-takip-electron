@@ -19,11 +19,11 @@ export function UpdateBanner() {
 
       if (data.status === "available") {
         setVersion(data.version || "");
-        toast.info(`Yeni bir sürüm mevcut (${data.version})! İndirmek için tıklayın.`);
+        toast.info(`Yeni bir sürüm mevcut (v${data.version})! Arka planda indiriliyor...`);
       } else if (data.status === "downloading") {
         setPercent(Math.round(data.percent || 0));
       } else if (data.status === "downloaded") {
-        toast.success("Güncelleme başarıyla indirildi. Yeniden başlatmaya hazır!");
+        toast.success("Güncelleme indirildi! Uygulama yeniden başlatılarak otomatik güncellenecek.");
       } else if (data.status === "error") {
         setErrorMessage(data.error || "Güncelleme kontrolü başarısız.");
       }

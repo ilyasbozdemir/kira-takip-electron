@@ -806,7 +806,7 @@ safeHandle("list-backups", () => {
 /* ========================================================================== */
 
 function initAutoUpdater() {
-  autoUpdater.autoDownload = false;
+  autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.allowPrerelease = true;
   autoUpdater.allowDowngrade = false;
@@ -857,7 +857,8 @@ function initAutoUpdater() {
   });
 
   safeHandle("quit-and-install", () => {
-    autoUpdater.quitAndInstall();
+    // isSilent: false, isForceRunAfter: true - runs silent update and immediately relaunches
+    autoUpdater.quitAndInstall(false, true);
   });
 
   // Check for updates automatically 5s after app startup in production mode
