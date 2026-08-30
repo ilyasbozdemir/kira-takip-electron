@@ -1,5 +1,5 @@
 import React from "react";
-import { Filter, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { PaginationControls } from "@/components/ui/pagination-controls";
@@ -83,9 +83,13 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
       <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-sm">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
-            <tr className={`border-b text-[10px] uppercase font-black tracking-wider ${
-              isDark ? "bg-slate-950 text-slate-300 border-slate-800" : "bg-slate-100 text-slate-900 border-slate-300"
-            }`}>
+            <tr
+              className={`border-b text-[10px] uppercase font-black tracking-wider ${
+                isDark
+                  ? "bg-slate-950 text-slate-300 border-slate-800"
+                  : "bg-slate-100 text-slate-900 border-slate-300"
+              }`}
+            >
               <th className="p-3">Tarih / Saat</th>
               <th className="p-3">Müşteri / Kurum</th>
               <th className="p-3">Mekan & Salon</th>
@@ -96,10 +100,14 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
               <th className="p-3 text-center">Durum</th>
             </tr>
           </thead>
-          <tbody className={`divide-y ${isDark ? "divide-slate-800/70" : "divide-slate-200"}`}>
+          <tbody
+            className={`divide-y ${
+              isDark ? "divide-slate-800/70" : "divide-slate-200"
+            }`}
+          >
             {filteredPayments.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-slate-500">
+                <td colSpan={8} className="p-8 text-center text-slate-400">
                   Arama kriterlerine uygun ödeme kaydı bulunamadı.
                 </td>
               </tr>
@@ -114,35 +122,85 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
                   const rem = price - paid;
 
                   return (
-                    <tr key={r.id} className={`transition-colors ${isDark ? "hover:bg-slate-800/40" : "hover:bg-indigo-50/50"}`}>
+                    <tr
+                      key={r.id}
+                      className={`transition-colors ${
+                        isDark
+                          ? "hover:bg-slate-800/40"
+                          : "hover:bg-indigo-50/50"
+                      }`}
+                    >
                       <td className="p-3 font-mono">
-                        <div className="font-bold">{r.date}</div>
-                        <div className="text-[10px] text-slate-400">{r.start}-{r.end}</div>
+                        <div
+                          className={`font-black ${
+                            isDark ? "text-slate-100" : "text-slate-900"
+                          }`}
+                        >
+                          {r.date}
+                        </div>
+                        <div
+                          className={`text-[10px] ${
+                            isDark ? "text-slate-400" : "text-slate-500 font-medium"
+                          }`}
+                        >
+                          {r.start}-{r.end}
+                        </div>
                       </td>
                       <td className="p-3">
-                        <div className="font-black text-slate-100">{r.customer}</div>
-                        <div className="text-[10px] font-mono text-slate-400">{r.phone}</div>
+                        <div
+                          className={`font-extrabold ${
+                            isDark ? "text-slate-100" : "text-slate-900"
+                          }`}
+                        >
+                          {r.customer}
+                        </div>
+                        <div
+                          className={`text-[10px] font-mono ${
+                            isDark ? "text-slate-400" : "text-slate-500 font-medium"
+                          }`}
+                        >
+                          {r.phone}
+                        </div>
                       </td>
                       <td className="p-3">
-                        <div className="font-semibold text-slate-200">{v?.name}</div>
-                        <div className="text-[10px] text-indigo-400 font-bold">{h?.name}</div>
+                        <div
+                          className={`font-bold ${
+                            isDark ? "text-slate-200" : "text-slate-800"
+                          }`}
+                        >
+                          {v?.name}
+                        </div>
+                        <div className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold">
+                          {h?.name}
+                        </div>
                       </td>
-                      <td className="p-3 font-mono text-slate-400">
+                      <td className="p-3 font-mono">
                         {r.receiptNo ? (
-                          <Badge variant="outline" className="text-[9px] border-slate-700 text-slate-300">
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] font-bold ${
+                              isDark
+                                ? "border-slate-700 text-slate-300 bg-slate-950/40"
+                                : "border-slate-200 text-slate-700 bg-slate-50"
+                            }`}
+                          >
                             🧾 {r.receiptNo}
                           </Badge>
                         ) : (
-                          "—"
+                          <span className="text-slate-400">—</span>
                         )}
                       </td>
-                      <td className="p-3 text-right font-mono font-bold text-slate-200">
+                      <td
+                        className={`p-3 text-right font-mono font-bold ${
+                          isDark ? "text-slate-200" : "text-slate-900"
+                        }`}
+                      >
                         {money(price)}
                       </td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-400">
+                      <td className="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
                         {money(paid)}
                       </td>
-                      <td className="p-3 text-right font-mono font-bold text-amber-400">
+                      <td className="p-3 text-right font-mono font-bold text-amber-600 dark:text-amber-400">
                         {rem > 0 ? money(rem) : "0 ₺"}
                       </td>
                       <td className="p-3 text-center">

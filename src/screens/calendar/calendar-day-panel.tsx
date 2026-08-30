@@ -68,32 +68,34 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
   onQuickMail,
   onNavigateToCustomer,
 }) => {
+  const isDark = theme === "dark";
+
   return (
     <Card
-      className={`lg:col-span-4 flex flex-col ${
-        theme === "dark"
-          ? "bg-slate-900/80 border-slate-800"
-          : "bg-white border-slate-200 shadow-sm"
+      className={`lg:col-span-4 flex flex-col rounded-2xl shadow-xs ${
+        isDark
+          ? "bg-slate-900/90 border-slate-800 text-slate-100"
+          : "bg-white border-slate-200 text-slate-900 shadow-sm"
       }`}
     >
       <CardHeader
         className={`pb-3 border-b space-y-3 ${
-          theme === "dark" ? "border-slate-800" : "border-slate-200"
+          isDark ? "border-slate-800/80" : "border-slate-100"
         }`}
       >
         <div className="flex items-center justify-between">
           <div>
             <CardTitle
-              className={`text-sm font-bold flex items-center gap-1.5 ${
-                theme === "dark" ? "text-slate-100" : "text-slate-900"
+              className={`text-sm font-extrabold flex items-center gap-1.5 ${
+                isDark ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              <CalendarIcon className="h-4 w-4 text-indigo-500" />{" "}
+              <CalendarIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />{" "}
               {selectedDay}
             </CardTitle>
             <CardDescription
-              className={`text-[11px] mt-0.5 ${
-                theme === "dark" ? "text-slate-400" : "text-slate-600"
+              className={`text-[11px] mt-0.5 font-medium ${
+                isDark ? "text-slate-400" : "text-slate-500"
               }`}
             >
               {dayReservations.length} Kayıtlı Etkinlik
@@ -105,7 +107,11 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
               size="sm"
               variant="outline"
               onClick={onOpenExpandedModal}
-              className="h-7 px-2 text-[10px] font-bold border-indigo-500/40 text-indigo-400 hover:bg-indigo-500/10 shadow-2xs cursor-pointer"
+              className={`h-7 px-2 text-[10px] font-bold border-indigo-500/40 cursor-pointer ${
+                isDark
+                  ? "text-indigo-400 hover:bg-indigo-500/10"
+                  : "text-indigo-700 bg-indigo-50 hover:bg-indigo-100"
+              }`}
               title="Tüm Günü Geniş Ekranda / Ajanda Formatında Gör"
             >
               <Maximize2 className="h-3 w-3 mr-1" /> Tam Ekran
@@ -113,7 +119,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
             <Button
               size="sm"
               onClick={onOpenNewReservationModal}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] h-7 px-2.5 font-semibold shadow-xs"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] h-7 px-2.5 font-bold shadow-xs"
             >
               <Plus className="h-3 w-3 mr-1" /> Yeni Kayıt
             </Button>
@@ -123,60 +129,37 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
         {/* View Mode Selector Tabs */}
         <div className="flex items-center justify-between pt-1">
           <div
-            className={`flex p-0.5 rounded-lg border w-full justify-between gap-0.5 ${
-              theme === "dark"
+            className={`flex p-0.5 rounded-xl border w-full justify-between gap-0.5 ${
+              isDark
                 ? "bg-slate-950 border-slate-800"
                 : "bg-slate-100 border-slate-200"
             }`}
           >
-            <button
-              type="button"
-              onClick={() => setRightPanelViewMode("list")}
-              className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                rightPanelViewMode === "list"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Özet Liste Görünümü"
-            >
-              <List className="h-3 w-3" /> Özet
-            </button>
-            <button
-              type="button"
-              onClick={() => setRightPanelViewMode("timeline")}
-              className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                rightPanelViewMode === "timeline"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Zaman Çizelgesi"
-            >
-              <Clock className="h-3 w-3" /> Çizelge
-            </button>
-            <button
-              type="button"
-              onClick={() => setRightPanelViewMode("table")}
-              className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                rightPanelViewMode === "table"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Veri Tablosu Görünümü"
-            >
-              <TableIcon className="h-3 w-3" /> Tablo
-            </button>
-            <button
-              type="button"
-              onClick={() => setRightPanelViewMode("cards")}
-              className={`flex-1 py-1 text-[10px] font-bold rounded-md transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                rightPanelViewMode === "cards"
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              title="Detaylı Kart Görünümü"
-            >
-              <LayoutGrid className="h-3 w-3" /> Kartlar
-            </button>
+            {[
+              { id: "list", label: "Özet", icon: List },
+              { id: "timeline", label: "Çizelge", icon: Clock },
+              { id: "table", label: "Tablo", icon: TableIcon },
+              { id: "cards", label: "Kartlar", icon: LayoutGrid },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const active = rightPanelViewMode === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setRightPanelViewMode(tab.id as any)}
+                  className={`flex-1 py-1 text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                    active
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : isDark
+                      ? "text-slate-400 hover:text-slate-200"
+                      : "text-slate-600 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon className="h-3 w-3" /> {tab.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </CardHeader>
@@ -185,17 +168,17 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
         {dayReservations.length === 0 ? (
           <div
             className={`text-center py-12 space-y-2 ${
-              theme === "dark" ? "text-slate-500" : "text-slate-400"
+              isDark ? "text-slate-500" : "text-slate-400"
             }`}
           >
             <CalendarIcon className="h-8 w-8 mx-auto opacity-30 text-indigo-500" />
-            <p className="text-xs">
-              Bu tarih için henüz bir etkinlik tanımı bulunmuyor.
+            <p className="text-xs font-medium">
+              Bu tarih için henüz bir etkinlik kaydı bulunmuyor.
             </p>
             <Button
               size="sm"
               onClick={onOpenNewReservationModal}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 px-3.5 font-semibold shadow-xs"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 px-3.5 font-bold shadow-xs"
             >
               <Plus className="h-3.5 w-3.5 mr-1" /> Etkinlik Oluştur
             </Button>
@@ -213,9 +196,9 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                   key={r.id}
                   onClick={() => onSelectReservation(r)}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer space-y-2.5 group ${
-                    theme === "dark"
+                    isDark
                       ? "bg-slate-950/90 border-slate-800/90 hover:border-indigo-500/60 hover:bg-slate-900/70 text-slate-200 shadow-sm"
-                      : "bg-white border-slate-200 hover:border-indigo-500/60 hover:bg-indigo-50/40 text-slate-900 shadow-xs"
+                      : "bg-slate-50/80 border-slate-200 hover:border-indigo-400 hover:bg-white text-slate-900 shadow-2xs"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -229,9 +212,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                       />
                       <h4
                         className={`font-black text-sm tracking-tight truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${
-                          theme === "dark"
-                            ? "text-slate-100"
-                            : "text-slate-900"
+                          isDark ? "text-slate-100" : "text-slate-900"
                         }`}
                         title={r.customer}
                       >
@@ -257,17 +238,15 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
 
                   <div
                     className={`grid grid-cols-2 gap-2 text-[11px] p-2.5 rounded-xl border ${
-                      theme === "dark"
+                      isDark
                         ? "bg-slate-900/60 border-slate-800/80"
-                        : "bg-slate-50 border-slate-200"
+                        : "bg-white border-slate-200/90 shadow-2xs"
                     }`}
                   >
                     <div className="space-y-1">
                       <div
                         className={`font-mono font-bold text-xs flex items-center gap-1 ${
-                          theme === "dark"
-                            ? "text-slate-200"
-                            : "text-slate-900"
+                          isDark ? "text-slate-200" : "text-slate-900"
                         }`}
                       >
                         ⏰ {r.start} - {r.end}
@@ -281,11 +260,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     </div>
                     <div className="space-y-1 text-right">
                       <div
-                        className={`font-bold truncate text-[11px] ${
-                          theme === "dark"
-                            ? "text-indigo-400"
-                            : "text-indigo-600"
-                        }`}
+                        className="font-bold truncate text-[11px] text-indigo-600 dark:text-indigo-400"
                         title={`${v?.name} (${h?.name})`}
                       >
                         🏛️ {v?.name || "Mekan"}
@@ -297,7 +272,9 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                   </div>
 
                   <div
-                    className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-200 dark:border-slate-800/60"
+                    className={`flex items-center justify-between gap-1.5 pt-1 border-t ${
+                      isDark ? "border-slate-800/60" : "border-slate-200/80"
+                    }`}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center gap-1">
@@ -306,7 +283,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                           size="sm"
                           variant="ghost"
                           onClick={() => onNavigateToCustomer(r.customer)}
-                          className="h-7 px-2 text-[11px] text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-500/10 font-bold"
+                          className="h-7 px-2 text-[11px] text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 font-bold"
                           title="Müşteri Profili & Geçmiş Kayıtlara Git"
                         >
                           <User className="h-3.5 w-3.5 mr-1 text-indigo-500" />
@@ -317,7 +294,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                         size="icon"
                         variant="ghost"
                         onClick={() => onPrintOfficialDoc(r)}
-                        className="h-7 w-7 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-500/10"
+                        className="h-7 w-7 text-slate-500 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
                         title="Resmi Tahsis Belgesi Yazdır"
                       >
                         <Printer className="h-3.5 w-3.5" />
@@ -326,7 +303,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                         size="icon"
                         variant="ghost"
                         onClick={() => onQuickMail(r)}
-                        className="h-7 w-7 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-500/10"
+                        className="h-7 w-7 text-slate-500 hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-500/10"
                         title="E-posta & .ics Takvim Daveti Gönder"
                       >
                         <Mail className="h-3.5 w-3.5" />
@@ -364,7 +341,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
               return (
                 <div
                   key={hourStr}
-                  className="relative min-h-[42px] border-t border-slate-200 dark:border-slate-800/50 flex items-start"
+                  className="relative min-h-10.5 border-t border-slate-200 dark:border-slate-800/50 flex items-start"
                 >
                   <span className="absolute -left-12 -top-2.5 text-[10px] text-slate-500 font-bold">
                     {hourStr}
@@ -383,18 +360,16 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                           <div
                             key={r.id}
                             onClick={() => onSelectReservation(r)}
-                            className={`p-2.5 rounded-xl border cursor-pointer shadow-sm transition-all space-y-1 animate-in fade-in ${
-                              theme === "dark"
-                                ? "bg-gradient-to-r from-indigo-950/80 to-slate-900 border-indigo-500/50 hover:border-indigo-400"
-                                : "bg-indigo-50/80 border-indigo-300 hover:border-indigo-500 shadow-2xs"
+                            className={`p-2.5 rounded-xl border cursor-pointer shadow-sm transition-all space-y-1 ${
+                              isDark
+                                ? "bg-slate-900 border-indigo-500/50 hover:border-indigo-400 text-slate-200"
+                                : "bg-indigo-50/80 border-indigo-200 hover:border-indigo-400 text-slate-900 shadow-2xs"
                             }`}
                           >
                             <div className="flex items-center justify-between text-xs">
                               <span
                                 className={`font-black flex items-center gap-1.5 ${
-                                  theme === "dark"
-                                    ? "text-slate-100"
-                                    : "text-slate-900"
+                                  isDark ? "text-slate-100" : "text-slate-900"
                                 }`}
                               >
                                 <Clock className="h-3 w-3 text-indigo-500" />
@@ -406,7 +381,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                             </div>
                             <div
                               className={`text-[10px] font-sans flex items-center justify-between ${
-                                theme === "dark"
+                                isDark
                                   ? "text-slate-300"
                                   : "text-slate-700 font-medium"
                               }`}
@@ -432,7 +407,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
               <thead>
                 <tr
                   className={`border-b text-[10px] uppercase tracking-wider font-bold ${
-                    theme === "dark"
+                    isDark
                       ? "bg-slate-950 border-slate-800 text-slate-300"
                       : "bg-slate-100 border-slate-200 text-slate-800"
                   }`}
@@ -447,9 +422,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
               </thead>
               <tbody
                 className={`divide-y ${
-                  theme === "dark"
-                    ? "divide-slate-800/60"
-                    : "divide-slate-200"
+                  isDark ? "divide-slate-800/60" : "divide-slate-200"
                 }`}
               >
                 {dayReservations.map((r) => {
@@ -460,7 +433,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                       key={r.id}
                       onClick={() => onSelectReservation(r)}
                       className={`cursor-pointer transition-colors ${
-                        theme === "dark"
+                        isDark
                           ? "hover:bg-slate-800/40"
                           : "hover:bg-indigo-50/50"
                       }`}
@@ -479,9 +452,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                       <td className="p-2.5">
                         <div
                           className={`font-black ${
-                            theme === "dark"
-                              ? "text-slate-100"
-                              : "text-slate-900"
+                            isDark ? "text-slate-100" : "text-slate-900"
                           }`}
                         >
                           {r.customer}
@@ -502,9 +473,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                       <td className="p-2.5 font-medium">
                         <div
                           className={`font-semibold ${
-                            theme === "dark"
-                              ? "text-slate-200"
-                              : "text-slate-800"
+                            isDark ? "text-slate-200" : "text-slate-800"
                           }`}
                         >
                           {v?.name}
@@ -551,9 +520,9 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                 key={r.id}
                 onClick={() => onSelectReservation(r)}
                 className={`p-4 rounded-xl border space-y-3 cursor-pointer transition-all ${
-                  theme === "dark"
+                  isDark
                     ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
-                    : "bg-white border-slate-200 hover:bg-indigo-50/40 shadow-xs"
+                    : "bg-slate-50 border-slate-200 hover:bg-white shadow-2xs"
                 }`}
               >
                 <div className="flex items-start justify-between">
@@ -561,9 +530,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     <div className="flex items-center gap-2">
                       <h4
                         className={`text-sm font-black ${
-                          theme === "dark"
-                            ? "text-slate-100"
-                            : "text-slate-900"
+                          isDark ? "text-slate-100" : "text-slate-900"
                         }`}
                       >
                         {r.customer}
@@ -593,9 +560,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                       </Badge>
                       <span
                         className={`text-[11px] font-mono font-semibold ${
-                          theme === "dark"
-                            ? "text-slate-400"
-                            : "text-slate-600"
+                          isDark ? "text-slate-400" : "text-slate-600"
                         }`}
                       >
                         📞 {r.phone}
@@ -620,17 +585,15 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
 
                 <div
                   className={`p-2.5 rounded-lg border text-xs space-y-1.5 ${
-                    theme === "dark"
+                    isDark
                       ? "bg-slate-900/80 border-slate-800"
-                      : "bg-slate-50 border-slate-200"
+                      : "bg-white border-slate-200/90 shadow-2xs"
                   }`}
                 >
                   <div className="flex justify-between items-center">
                     <span
                       className={`font-bold ${
-                        theme === "dark"
-                          ? "text-slate-200"
-                          : "text-slate-800"
+                        isDark ? "text-slate-200" : "text-slate-800"
                       }`}
                     >
                       {v?.name}
@@ -641,9 +604,9 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                   </div>
                   <div
                     className={`text-[11px] flex justify-between items-center border-t pt-1 ${
-                      theme === "dark"
+                      isDark
                         ? "border-slate-800 text-slate-400"
-                        : "border-slate-200 text-slate-600 font-medium"
+                        : "border-slate-100 text-slate-600 font-medium"
                     }`}
                   >
                     <span>Saat Aralığı:</span>
@@ -652,11 +615,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-[11px] pt-0.5">
-                    <span
-                      className={theme === "dark"
-                        ? "text-slate-400"
-                        : "text-slate-600 font-medium"}
-                    >
+                    <span className={isDark ? "text-slate-400" : "text-slate-600 font-medium"}>
                       Finansal Durum:
                     </span>
                     <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono">
@@ -680,7 +639,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     variant="outline"
                     onClick={() => onPrintOfficialDoc(r)}
                     className={`flex-1 text-xs h-7.5 px-2 font-bold ${
-                      theme === "dark"
+                      isDark
                         ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
                         : "bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs"
                     }`}
@@ -693,7 +652,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     variant="outline"
                     onClick={() => onCopySMS(r)}
                     className={`flex-1 text-xs h-7.5 px-2 font-bold ${
-                      theme === "dark"
+                      isDark
                         ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
                         : "bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs"
                     }`}
@@ -705,7 +664,7 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
                     variant="outline"
                     onClick={() => onQuickMail(r)}
                     className={`flex-1 text-xs h-7.5 px-2 font-bold ${
-                      theme === "dark"
+                      isDark
                         ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white"
                         : "bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-2xs"
                     }`}
