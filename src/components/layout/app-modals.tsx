@@ -60,7 +60,7 @@ interface AppModalsProps {
   customerSuggestions: string[];
   phoneSuggestions: string[];
   decisionSuggestions: string[];
-  handleCreateReservation: (e: React.FormEvent) => void;
+  handleCreateReservation: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
 
   // New Venue Props
   venueModalOpen: boolean;
@@ -85,7 +85,7 @@ interface AppModalsProps {
   setNewVenueManagerPhone: (v: string) => void;
   newVenueColor: string;
   setNewVenueColor: (v: string) => void;
-  handleCreateVenue: (e: React.FormEvent) => void;
+  handleCreateVenue: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
 
   // New Hall Props
   hallModalOpen: boolean;
@@ -100,7 +100,7 @@ interface AppModalsProps {
   setNewHallHourlyPrice: (v: number) => void;
   newHallColor: string;
   setNewHallColor: (v: string) => void;
-  handleCreateHall: (e: React.FormEvent) => void;
+  handleCreateHall: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
 
   // Personnel Props
   personnelModalOpen: boolean;

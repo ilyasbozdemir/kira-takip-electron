@@ -74,7 +74,7 @@ interface NewReservationModalProps {
   phoneSuggestions: string[];
   decisionSuggestions: string[];
   timeSlots: string[];
-  handleCreateReservation: (e: React.FormEvent) => void;
+  handleCreateReservation: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
 }
 
 export function NewReservationModal({
@@ -128,6 +128,13 @@ export function NewReservationModal({
   const currentVenue = store.venues.find((x) => x.id === resVenueId);
   const currentHall = currentVenue?.halls.find((x) => x.id === resHallId);
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleCreateReservation(e, () => {
+      onOpenChange(false);
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -155,7 +162,7 @@ export function NewReservationModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleCreateReservation} className="space-y-3 py-1">
+        <form onSubmit={handleSubmit} className="space-y-3 py-1">
           {/* Date, Venue & Hall Select (3-Column Grid) */}
           <div className="grid grid-cols-3 gap-3">
             <div>

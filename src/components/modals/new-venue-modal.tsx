@@ -36,7 +36,7 @@ interface NewVenueModalProps {
     venues: Venue[];
     personnel?: Array<{ id: string; name: string; title?: string; phone?: string }>;
   };
-  handleCreateVenue: (e: React.FormEvent) => void;
+  handleCreateVenue: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
 }
 
 export function NewVenueModal({
@@ -66,6 +66,13 @@ export function NewVenueModal({
   store,
   handleCreateVenue,
 }: NewVenueModalProps): React.JSX.Element {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleCreateVenue(e, () => {
+      onOpenChange(false);
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -83,7 +90,7 @@ export function NewVenueModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleCreateVenue} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
             <Label
               className={`text-xs font-medium ${

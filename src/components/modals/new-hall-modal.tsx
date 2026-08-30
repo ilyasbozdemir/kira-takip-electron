@@ -1,5 +1,11 @@
 import React from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +24,10 @@ interface NewHallModalProps {
   setNewHallHourlyPrice: (v: number) => void;
   newHallColor: string;
   setNewHallColor: (v: string) => void;
-  handleCreateHall: (e: React.FormEvent) => void;
+  handleCreateHall: (
+    e: React.FormEvent,
+    onSuccess?: () => void,
+  ) => Promise<void> | void;
 }
 
 export function NewHallModal({
@@ -37,6 +46,13 @@ export function NewHallModal({
   setNewHallColor,
   handleCreateHall,
 }: NewHallModalProps): React.JSX.Element {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleCreateHall(e, () => {
+      onOpenChange(false);
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -54,7 +70,7 @@ export function NewHallModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleCreateHall} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
           <div>
             <Label
               className={`text-xs font-medium ${
