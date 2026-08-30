@@ -47,15 +47,18 @@ jobs:
 
 
       - name: Retain Only Latest 5 Releases
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $allReleases = (gh release list -L 100 | ForEach-Object { ($_ -split "`t")[0] })
-          if ($allReleases.Count -gt 5) {
-            $toDelete = $allReleases | Select-Object -Skip 5
-            foreach ($rel in $toDelete) {
-              Write-Host "Auto-cleaning old release beyond top 5: $rel"
-              gh release delete $rel -y --cleanup-tag 2>$null
+          $allTags = @(gh release list -L 100 --json tagName -q '.[].tagName')
+          if ($allTags.Count -gt 5) {
+            $toDelete = $allTags | Select-Object -Skip 5
+            foreach ($tag in $toDelete) {
+              if ($tag) {
+                Write-Host "Auto-cleaning old release beyond top 5: $tag"
+                gh release delete $tag -y --cleanup-tag 2>$null
+              }
             }
           }
 
