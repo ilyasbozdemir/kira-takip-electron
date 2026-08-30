@@ -64,6 +64,18 @@ export function useWorkspaceStore() {
     }
   }, [fetchRecentFiles, addRecentFile]);
 
+  const removeRecentFile = useCallback((fPath: string) => {
+    try {
+      const saved = localStorage.getItem("recent_vke_files");
+      if (saved) {
+        const list: RecentFileItem[] = JSON.parse(saved);
+        const filtered = list.filter((x) => x.path !== fPath);
+        localStorage.setItem("recent_vke_files", JSON.stringify(filtered));
+        setRecentFiles(filtered);
+      }
+    } catch {}
+  }, []);
+
   const openFile = async (filePath?: string) => {
     try {
       let targetPath: string | null = null;
@@ -77,7 +89,8 @@ export function useWorkspaceStore() {
             targetPath = res.path || filePath;
             targetName = (targetPath ? targetPath.split(/[\\/]/).pop() : undefined) || "Veritabanı (.vke)";
           } else {
-            toast.error(res?.error || "Dosya açılamadı.");
+            removeRecentFile(filePath);
+            toast.error(res?.error || "Dosya açılamadı veya diskte bulunamadı.");
             return;
           }
         }
@@ -177,6 +190,7 @@ export function useWorkspaceStore() {
     createFile,
     saveFileAs,
     closeFile,
+    removeRecentFile,
     fetchRecentFiles,
   };
 }

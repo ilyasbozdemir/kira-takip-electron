@@ -18,6 +18,7 @@ import { RecentFileItem } from "./launcher-modal";
 interface WelcomeStartScreenProps {
   recentFiles: RecentFileItem[];
   onOpenRecent: (filePath: string) => void;
+  onRemoveRecent?: (filePath: string) => void;
   onCreateNew: () => void;
   onOpenDialog: () => void;
   onClearRecent: () => void;
@@ -27,6 +28,7 @@ interface WelcomeStartScreenProps {
 export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
   recentFiles,
   onOpenRecent,
+  onRemoveRecent,
   onCreateNew,
   onOpenDialog,
   onClearRecent,
@@ -162,6 +164,23 @@ export const WelcomeStartScreen: React.FC<WelcomeStartScreenProps> = ({
                       <span className={`text-[10px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
                         {item.lastOpened}
                       </span>
+                      {onRemoveRecent && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemoveRecent(item.path);
+                          }}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            isDark
+                              ? "hover:bg-rose-950/60 text-slate-500 hover:text-rose-400"
+                              : "hover:bg-rose-100 text-slate-400 hover:text-rose-600"
+                          }`}
+                          title="Listeden Kaldır"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <ChevronRight className={`h-4 w-4 ${isDark ? "text-slate-600" : "text-slate-400"}`} />
                     </div>
                   </div>

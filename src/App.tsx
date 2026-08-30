@@ -90,6 +90,7 @@ export function App(): React.JSX.Element {
     openFile,
     createFile,
     saveFileAs,
+    removeRecentFile,
     fetchRecentFiles,
   } = useWorkspaceStore();
 
@@ -731,6 +732,7 @@ export function App(): React.JSX.Element {
         theme={theme}
         recentFiles={recentFiles}
         onOpenRecent={(p) => openFile(p)}
+        onRemoveRecent={(p) => removeRecentFile(p)}
         onCreateNew={() => createFile()}
         onOpenDialog={() => openFile()}
         onClearRecent={() => {

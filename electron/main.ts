@@ -539,7 +539,16 @@ safeHandle("db:get-all-settings", () => {
 });
 
 safeHandle("db:switch-path", (_event, filePath: string) => {
-  if (filePath && fs.existsSync(filePath)) {
+  if (filePath) {
+    if (!fs.existsSync(filePath)) {
+      try {
+        const dir = path.dirname(filePath);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        workspaceManager.create(filePath, "Mekan & Tesis Yönetimi");
+      } catch (err: any) {
+        return { success: false, error: "Seçilen dosya diskte bulunamadı (silinmiş veya taşınmış olabilir)." };
+      }
+    }
     initDatabase(filePath);
     openedFilePath = filePath;
     if (win) {
@@ -549,7 +558,7 @@ safeHandle("db:switch-path", (_event, filePath: string) => {
     }
     return { success: true, path: filePath, store: getStoreData() };
   }
-  return { success: false, error: "Dosya bulunamadı veya veritabanı açılamadı." };
+  return { success: false, error: "Geçersiz dosya yolu." };
 });
 
 safeHandle("get-opened-file-path", () => {
