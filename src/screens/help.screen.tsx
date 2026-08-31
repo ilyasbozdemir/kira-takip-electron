@@ -433,6 +433,62 @@ export function HelpScreen({ theme }: HelpScreenProps): React.JSX.Element {
           </Card>
         </div>
       </div>
+
+      {/* SECTION 4: ACCOUNTING & CASHFLOW MODULE (MUHASEBE & KASA YÖNETİMİ) */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-emerald-500" />
+          <h3 className={`text-base font-black tracking-tight ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            Muhasebe, Kasa & Gelir-Gider Modülü Kullanımı
+          </h3>
+        </div>
+
+        <Card
+          className={isDark
+            ? "bg-slate-900/80 border-slate-800"
+            : "bg-white border-slate-200 shadow-sm"}
+        >
+          <CardHeader className="pb-3 border-b border-slate-200 dark:border-slate-800">
+            <CardTitle className={`text-sm font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+              <BadgeCheck className="h-4 w-4 text-indigo-500" />
+              İsteğe Bağlı Modül Aktivasyonu & Finansal Takip
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Ayarlar üzerinden tek tıkla aktif veya pasif edilebilen esnek işletme kasası.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-xs pt-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className={`p-3 rounded-xl border ${isDark ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                <strong className="block font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  1. Ayarlardan Açma / Kapatma:
+                </strong>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <strong>Ayarlar & İletişim &gt; E-posta & Modüller</strong> sekmesinden <em>"Muhasebe & Gelir-Gider Modülü"</em> kutucuğu işaretlendiğinde sol menüye <strong>Muhasebe & Kasa</strong> sekmesi otomatik eklenir.
+                </p>
+              </div>
+
+              <div className={`p-3 rounded-xl border ${isDark ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                <strong className="block font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  2. Otomatik Gelir & Manuel Giriş:
+                </strong>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Rezervasyonlardan tahsil edilen peşinat ve ödemeler kasaya otomatik gelir olarak işlenir. Ayrıca depozito, ikram veya ek hizmetler için manuel ek gelir kaydı açılabilir.
+                </p>
+              </div>
+
+              <div className={`p-3 rounded-xl border ${isDark ? "bg-slate-950/60 border-slate-800" : "bg-slate-50 border-slate-200"}`}>
+                <strong className="block font-bold text-slate-900 dark:text-slate-100 mb-1">
+                  3. İşletme Giderleri & Rapor:
+                </strong>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Elektrik/su, personel maaşı, sarf malzeme ve tadilat harcamaları fatura no ile kaydedilir; net kâr/zarar, ödeme kanalları (Nakit, Banka, POS) ve kategori grafikleri anlık izlenir.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

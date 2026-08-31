@@ -62,13 +62,19 @@ interface AppModalsProps {
   customerSuggestions: string[];
   phoneSuggestions: string[];
   decisionSuggestions: string[];
-  handleCreateReservation: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
+  handleCreateReservation: (
+    e: React.FormEvent,
+    onSuccess?: () => void,
+  ) => Promise<void> | void;
+  resetReservationForm?: () => void;
 
   // New Venue Props
   venueModalOpen: boolean;
   setVenueModalOpen: (open: boolean) => void;
   newVenueName: string;
   setNewVenueName: (v: string) => void;
+  newVenueCity?: string;
+  setNewVenueCity?: (v: string) => void;
   newVenueDistrict: string;
   setNewVenueDistrict: (v: string) => void;
   newVenueAddress: string;
@@ -87,7 +93,11 @@ interface AppModalsProps {
   setNewVenueManagerPhone: (v: string) => void;
   newVenueColor: string;
   setNewVenueColor: (v: string) => void;
-  handleCreateVenue: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
+  handleCreateVenue: (
+    e: React.FormEvent,
+    onSuccess?: () => void,
+  ) => Promise<void> | void;
+  resetVenueForm?: () => void;
 
   // New Hall Props
   hallModalOpen: boolean;
@@ -100,9 +110,15 @@ interface AppModalsProps {
   setNewHallCapacity: (v: number) => void;
   newHallHourlyPrice: number;
   setNewHallHourlyPrice: (v: number) => void;
+  newHallPricingType?: any;
+  setNewHallPricingType?: (v: any) => void;
   newHallColor: string;
   setNewHallColor: (v: string) => void;
-  handleCreateHall: (e: React.FormEvent, onSuccess?: () => void) => Promise<void> | void;
+  handleCreateHall: (
+    e: React.FormEvent,
+    onSuccess?: () => void,
+  ) => Promise<void> | void;
+  resetHallForm?: () => void;
 
   // Personnel Props
   personnelModalOpen: boolean;
@@ -117,6 +133,7 @@ interface AppModalsProps {
   setPersonnelEmail: (v: string) => void;
   handleCreatePersonnel: (e: React.FormEvent) => void;
   removePersonnel: (id: string) => void;
+  resetPersonnelForm?: () => void;
 
   // Mail Modal Props
   mailModalOpen: boolean;
@@ -247,10 +264,13 @@ export function AppModals({
   phoneSuggestions,
   decisionSuggestions,
   handleCreateReservation,
+  resetReservationForm,
   venueModalOpen,
   setVenueModalOpen,
   newVenueName,
   setNewVenueName,
+  newVenueCity,
+  setNewVenueCity,
   newVenueDistrict,
   setNewVenueDistrict,
   newVenueAddress,
@@ -270,6 +290,7 @@ export function AppModals({
   newVenueColor,
   setNewVenueColor,
   handleCreateVenue,
+  resetVenueForm,
   hallModalOpen,
   setHallModalOpen,
   newHallName,
@@ -280,9 +301,12 @@ export function AppModals({
   setNewHallCapacity,
   newHallHourlyPrice,
   setNewHallHourlyPrice,
+  newHallPricingType,
+  setNewHallPricingType,
   newHallColor,
   setNewHallColor,
   handleCreateHall,
+  resetHallForm,
   personnelModalOpen,
   setPersonnelModalOpen,
   personnelName,
@@ -295,6 +319,7 @@ export function AppModals({
   setPersonnelEmail,
   handleCreatePersonnel,
   removePersonnel,
+  resetPersonnelForm,
   mailModalOpen,
   setMailModalOpen,
   mailPreset,
@@ -345,7 +370,12 @@ export function AppModals({
     <>
       <NewReservationModal
         open={resModalOpen}
-        onOpenChange={setResModalOpen}
+        onOpenChange={(open) => {
+          setResModalOpen(open);
+          if (!open && resetReservationForm) {
+            resetReservationForm();
+          }
+        }}
         theme={theme}
         selectedDay={selectedDay}
         setSelectedDay={setSelectedDay}
@@ -396,10 +426,17 @@ export function AppModals({
 
       <NewVenueModal
         open={venueModalOpen}
-        onOpenChange={setVenueModalOpen}
+        onOpenChange={(open) => {
+          setVenueModalOpen(open);
+          if (!open && resetVenueForm) {
+            resetVenueForm();
+          }
+        }}
         theme={theme}
         newVenueName={newVenueName}
         setNewVenueName={setNewVenueName}
+        newVenueCity={newVenueCity}
+        setNewVenueCity={setNewVenueCity}
         newVenueDistrict={newVenueDistrict}
         setNewVenueDistrict={setNewVenueDistrict}
         newVenueAddress={newVenueAddress}
@@ -424,7 +461,12 @@ export function AppModals({
 
       <NewHallModal
         open={hallModalOpen}
-        onOpenChange={setHallModalOpen}
+        onOpenChange={(open) => {
+          setHallModalOpen(open);
+          if (!open && resetHallForm) {
+            resetHallForm();
+          }
+        }}
         theme={theme}
         newHallName={newHallName}
         setNewHallName={setNewHallName}
@@ -434,6 +476,8 @@ export function AppModals({
         setNewHallCapacity={setNewHallCapacity}
         newHallHourlyPrice={newHallHourlyPrice}
         setNewHallHourlyPrice={setNewHallHourlyPrice}
+        newHallPricingType={newHallPricingType}
+        setNewHallPricingType={setNewHallPricingType}
         newHallColor={newHallColor}
         setNewHallColor={setNewHallColor}
         handleCreateHall={handleCreateHall}
@@ -441,7 +485,12 @@ export function AppModals({
 
       <PersonnelModal
         open={personnelModalOpen}
-        onOpenChange={setPersonnelModalOpen}
+        onOpenChange={(open) => {
+          setPersonnelModalOpen(open);
+          if (!open && resetPersonnelForm) {
+            resetPersonnelForm();
+          }
+        }}
         theme={theme}
         personnelName={personnelName}
         setPersonnelName={setPersonnelName}
@@ -476,15 +525,18 @@ export function AppModals({
               venueName:
                 store.venues.find((x) => x.id === selectedReservation.venueId)
                   ?.name || "Tesis",
-              venueAddress:
-                store.venues.find((x) => x.id === selectedReservation.venueId)
-                  ?.address,
-              venueMapUrl:
-                store.venues.find((x) => x.id === selectedReservation.venueId)
-                  ?.mapUrl,
-              venueDistrict:
-                store.venues.find((x) => x.id === selectedReservation.venueId)
-                  ?.district,
+              venueAddress: store.venues.find((x) =>
+                x.id === selectedReservation.venueId
+              )
+                ?.address,
+              venueMapUrl: store.venues.find((x) =>
+                x.id === selectedReservation.venueId
+              )
+                ?.mapUrl,
+              venueDistrict: store.venues.find((x) =>
+                x.id === selectedReservation.venueId
+              )
+                ?.district,
               hallName:
                 store.venues.flatMap((x) => x.halls).find((x) =>
                   x.id === selectedReservation.hallId

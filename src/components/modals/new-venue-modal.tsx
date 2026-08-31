@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import type { Venue } from "@/lib/rental-store";
 import { normalizeTRPhoneInput } from "@/lib/phone-utils";
+import { TURKISH_CITIES, getDistrictsForCity } from "@/lib/turkey-locations";
 
 interface NewVenueModalProps {
   open: boolean;
@@ -14,6 +16,8 @@ interface NewVenueModalProps {
   theme: "dark" | "light";
   newVenueName: string;
   setNewVenueName: (v: string) => void;
+  newVenueCity?: string;
+  setNewVenueCity?: (v: string) => void;
   newVenueDistrict: string;
   setNewVenueDistrict: (v: string) => void;
   newVenueAddress: string;
@@ -45,6 +49,8 @@ export function NewVenueModal({
   theme,
   newVenueName,
   setNewVenueName,
+  newVenueCity = "Ankara",
+  setNewVenueCity,
   newVenueDistrict,
   setNewVenueDistrict,
   newVenueAddress,
@@ -73,12 +79,14 @@ export function NewVenueModal({
     });
   };
 
+  const availableDistricts = getDistrictsForCity(newVenueCity || "Ankara");
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={theme === "dark"
-          ? "sm:max-w-105 bg-slate-900 border-slate-800 text-slate-100"
-          : "sm:max-w-105 bg-white border-slate-200 text-slate-900 shadow-2xl"}
+          ? "sm:max-w-115 bg-slate-900 border-slate-800 text-slate-100"
+          : "sm:max-w-115 bg-white border-slate-200 text-slate-900 shadow-2xl"}
       >
         <DialogHeader>
           <DialogTitle
@@ -90,14 +98,14 @@ export function NewVenueModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-3.5 py-1 text-xs">
           <div>
             <Label
               className={`text-xs font-medium ${
                 theme === "dark" ? "text-slate-300" : "text-slate-700"
               }`}
             >
-              Mekan / İşletme Adı
+              Mekan / İşletme Adı *
             </Label>
             <Input
               required
@@ -111,160 +119,87 @@ export function NewVenueModal({
               }`}
             />
           </div>
-          <div>
-            <Label
-              className={`text-xs font-medium ${
-                theme === "dark" ? "text-slate-300" : "text-slate-700"
-              }`}
-            >
-              Konum / İlçe *
-            </Label>
-            <Input
-              required
-              placeholder="örn: Kadıköy / Çankaya"
-              value={newVenueDistrict}
-              onChange={(e) => setNewVenueDistrict(e.target.value)}
-              className={`mt-1 text-xs ${
-                theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
-              }`}
-            />
-          </div>
 
-          <div>
-            <Label
-              className={`text-xs font-medium ${
-                theme === "dark" ? "text-slate-300" : "text-slate-700"
-              }`}
-            >
-              Açık Adres Açıklaması (İsteğe Bağlı)
-            </Label>
-            <Textarea
-              rows={2}
-              placeholder="örn: Atatürk Mah. Cumhuriyet Cad. No:142 Kadıköy / İstanbul"
-              value={newVenueAddress}
-              onChange={(e) => setNewVenueAddress(e.target.value)}
-              className={`mt-1 text-xs ${
-                theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
-              }`}
-            />
-          </div>
-
-          <div>
-            <Label
-              className={`text-xs font-medium ${
-                theme === "dark" ? "text-slate-300" : "text-slate-700"
-              }`}
-            >
-              Google Maps / Konum Linki (İsteğe Bağlı)
-            </Label>
-            <Input
-              type="url"
-              placeholder="https://maps.google.com/..."
-              value={newVenueMapUrl}
-              onChange={(e) => setNewVenueMapUrl(e.target.value)}
-              className={`mt-1 text-xs ${
-                theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
-              }`}
-            />
-          </div>
-
-          {store.personnel && store.personnel.length > 0 && (
+          {/* City & District Select Dropdowns (Önden Dizili) */}
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label
                 className={`text-xs font-medium ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Kayıtlı Personel Kadrosundan Seç
+                İl (Şehir) *
               </Label>
               <Select
-                onValueChange={(pId) => {
-                  if (setNewVenueManagerPersonnelId) setNewVenueManagerPersonnelId(pId);
-                  const p = store.personnel?.find((x) => x.id === pId);
-                  if (p) {
-                    setNewVenueManagerName(p.name);
-                    setNewVenueManagerTitle(p.title || "Tesis Sorumlusu");
-                    setNewVenueManagerPhone(p.phone || "");
+                value={newVenueCity}
+                onValueChange={(city) => {
+                  if (setNewVenueCity) setNewVenueCity(city);
+                  const dists = getDistrictsForCity(city);
+                  if (dists.length > 0) {
+                    setNewVenueDistrict(dists[0]);
                   }
                 }}
               >
                 <SelectTrigger
-                  className={`mt-1 text-xs ${
+                  className={`mt-1 text-xs h-8 ${
                     theme === "dark"
                       ? "bg-slate-950 border-slate-800 text-slate-200"
                       : "bg-slate-50 border-slate-300 text-slate-900"
                   }`}
                 >
-                  <SelectValue placeholder="Kadro dışı / Manuel Gir" />
+                  <SelectValue placeholder="İl Seçin" />
                 </SelectTrigger>
                 <SelectContent
-                  className={theme === "dark"
-                    ? "bg-slate-900 border-slate-800 text-slate-200"
-                    : "bg-white border-slate-200 text-slate-900"}
+                  className={`max-h-60 ${
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }`}
                 >
-                  {store.personnel.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      👤 {p.name} ({p.title || "Personel"}) - 📞 {p.phone || "Tel Yok"}
+                  {TURKISH_CITIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
 
-          <div className="pt-2 border-t border-slate-800/40 space-y-3">
-            <p className="text-[11px] font-bold text-indigo-400">
-              🏢 Tesis / İşletme Sorumlusu İletişim Bilgileri
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-[11px]">Sorumlu Adı Soyadı</Label>
-                <Input
-                  placeholder="örn: Ahmet Yılmaz"
-                  value={newVenueManagerName}
-                  onChange={(e) => setNewVenueManagerName(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-              <div>
-                <Label className="text-[11px]">Görevi / Unvanı</Label>
-                <Input
-                  placeholder="örn: Tesis Sorumlusu"
-                  value={newVenueManagerTitle}
-                  onChange={(e) => setNewVenueManagerTitle(e.target.value)}
-                  className={`mt-1 text-xs ${
-                    theme === "dark"
-                      ? "bg-slate-950 border-slate-800 text-slate-100"
-                      : "bg-slate-50 border-slate-300 text-slate-900"
-                  }`}
-                />
-              </div>
-            </div>
             <div>
-              <Label className="text-[11px] flex items-center justify-between">
-                <span>Sorumlu İletişim Telefonu</span>
-                <span className="text-[9px] text-slate-400 font-mono">🇹🇷 +90</span>
-              </Label>
-              <Input
-                placeholder="05XX XXX XX XX"
-                value={newVenueManagerPhone}
-                onChange={(e) => setNewVenueManagerPhone(normalizeTRPhoneInput(e.target.value))}
-                className={`mt-1 text-xs font-mono ${
-                  theme === "dark"
-                    ? "bg-slate-950 border-slate-800 text-slate-100"
-                    : "bg-slate-50 border-slate-300 text-slate-900"
+              <Label
+                className={`text-xs font-medium ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
-              />
+              >
+                İlçe / Bölge *
+              </Label>
+              <Select
+                value={newVenueDistrict}
+                onValueChange={setNewVenueDistrict}
+              >
+                <SelectTrigger
+                  className={`mt-1 text-xs h-8 ${
+                    theme === "dark"
+                      ? "bg-slate-950 border-slate-800 text-slate-200"
+                      : "bg-slate-50 border-slate-300 text-slate-900"
+                  }`}
+                >
+                  <SelectValue placeholder="İlçe Seçin" />
+                </SelectTrigger>
+                <SelectContent
+                  className={`max-h-60 ${
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-200"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }`}
+                >
+                  {availableDistricts.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -281,7 +216,7 @@ export function NewVenueModal({
               onValueChange={setNewVenueCategory}
             >
               <SelectTrigger
-                className={`mt-1 text-xs ${
+                className={`mt-1 text-xs h-8 ${
                   theme === "dark"
                     ? "bg-slate-950 border-slate-800 text-slate-200"
                     : "bg-slate-50 border-slate-300 text-slate-900"
@@ -302,6 +237,170 @@ export function NewVenueModal({
                 <SelectItem value="Toplantı Alanı">Toplantı & Seminer Alanı</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div>
+            <Label
+              className={`text-xs font-medium ${
+                theme === "dark" ? "text-slate-300" : "text-slate-700"
+              }`}
+            >
+              Açık Adres Açıklaması (İsteğe Bağlı)
+            </Label>
+            <Textarea
+              rows={2}
+              placeholder="örn: Atatürk Mah. Cumhuriyet Cad. No:142"
+              value={newVenueAddress}
+              onChange={(e) => setNewVenueAddress(e.target.value)}
+              className={`mt-1 text-xs ${
+                theme === "dark"
+                  ? "bg-slate-950 border-slate-800 text-slate-100"
+                  : "bg-slate-50 border-slate-300 text-slate-900"
+              }`}
+            />
+          </div>
+
+          <div>
+            <Label
+              className={`text-xs font-medium ${
+                theme === "dark" ? "text-slate-300" : "text-slate-700"
+              }`}
+            >
+              Google Maps / Yol Tarifi Linki (İsteğe Bağlı)
+            </Label>
+            <Input
+              type="url"
+              placeholder="https://maps.google.com/..."
+              value={newVenueMapUrl}
+              onChange={(e) => setNewVenueMapUrl(e.target.value)}
+              className={`mt-1 text-xs font-mono ${
+                theme === "dark"
+                  ? "bg-slate-950 border-slate-800 text-slate-100"
+                  : "bg-slate-50 border-slate-300 text-slate-900"
+              }`}
+            />
+          </div>
+
+          {/* Tesis / İşletme Sorumlusu Seçimi */}
+          <div className="pt-2 border-t border-slate-800/40 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs font-semibold text-indigo-400">
+                🏢 Tesis / İşletme Sorumlusu
+              </Label>
+              <span className="text-[10px] text-slate-400">Personel Rehberinden</span>
+            </div>
+
+            {store.personnel && store.personnel.length > 0 ? (
+              <div className="space-y-2">
+                <Select
+                  value={newVenueManagerPersonnelId || (newVenueManagerName ? "custom" : "none")}
+                  onValueChange={(val) => {
+                    if (val === "none") {
+                      if (setNewVenueManagerPersonnelId) setNewVenueManagerPersonnelId("");
+                      setNewVenueManagerName("");
+                      setNewVenueManagerTitle("");
+                      setNewVenueManagerPhone("");
+                    } else if (val === "custom") {
+                      if (setNewVenueManagerPersonnelId) setNewVenueManagerPersonnelId("");
+                    } else {
+                      if (setNewVenueManagerPersonnelId) setNewVenueManagerPersonnelId(val);
+                      const p = store.personnel?.find((x) => x.id === val);
+                      if (p) {
+                        setNewVenueManagerName(p.name);
+                        setNewVenueManagerTitle(p.title || "Tesis Sorumlusu");
+                        setNewVenueManagerPhone(p.phone || "");
+                      }
+                    }
+                  }}
+                >
+                  <SelectTrigger
+                    className={`text-xs h-8.5 font-medium ${
+                      theme === "dark"
+                        ? "bg-slate-950 border-slate-800 text-slate-200"
+                        : "bg-slate-50 border-slate-300 text-slate-900"
+                    }`}
+                  >
+                    <SelectValue placeholder="Sorumlu Personel Seçin..." />
+                  </SelectTrigger>
+                  <SelectContent
+                    className={
+                      theme === "dark"
+                        ? "bg-slate-900 border-slate-800 text-slate-200"
+                        : "bg-white border-slate-200 text-slate-900"
+                    }
+                  >
+                    <SelectItem value="none" className="text-slate-400">
+                      ❌ Sorumlu Atanmasın (Boş Bırak)
+                    </SelectItem>
+                    {store.personnel.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        👤 {p.name} — {p.title || "Personel"} {p.phone ? `(📞 ${p.phone})` : ""}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom" className="text-indigo-400 font-bold">
+                      ✏️ Kadro Dışı Özel Yetkili (Manuel Gir)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Selected Personnel Details Card */}
+                {newVenueManagerPersonnelId && newVenueManagerName && (
+                  <div
+                    className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+                      theme === "dark"
+                        ? "bg-indigo-950/20 border-indigo-500/30 text-indigo-200"
+                        : "bg-indigo-50 border-indigo-200 text-indigo-900"
+                    }`}
+                  >
+                    <div>
+                      <span className="font-bold block text-xs">👤 {newVenueManagerName}</span>
+                      <span className="text-[10px] opacity-80 block">
+                        {newVenueManagerTitle || "Tesis Sorumlusu"} • 📞 {newVenueManagerPhone || "Telefon Belirtilmedi"}
+                      </span>
+                    </div>
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px]">
+                      Atandı
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {/* Manual textboxes only if custom mode or no registered personnel */}
+            {(!store.personnel || store.personnel.length === 0 || (!newVenueManagerPersonnelId && newVenueManagerName !== "")) && (
+              <div className="p-3 rounded-xl border border-slate-700/50 bg-slate-950/40 space-y-2.5 animate-in fade-in duration-150">
+                <p className="text-[10px] text-slate-400 font-medium">Manuel Sorumlu Bilgileri:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-[10px]">Sorumlu Adı Soyadı</Label>
+                    <Input
+                      placeholder="örn: Ahmet Yılmaz"
+                      value={newVenueManagerName}
+                      onChange={(e) => setNewVenueManagerName(e.target.value)}
+                      className="mt-0.5 text-xs h-7.5"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Görevi / Unvanı</Label>
+                    <Input
+                      placeholder="örn: Tesis Sorumlusu"
+                      value={newVenueManagerTitle}
+                      onChange={(e) => setNewVenueManagerTitle(e.target.value)}
+                      className="mt-0.5 text-xs h-7.5"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-[10px]">Sorumlu İletişim Telefonu</Label>
+                  <Input
+                    placeholder="05XX XXX XX XX"
+                    value={newVenueManagerPhone}
+                    onChange={(e) => setNewVenueManagerPhone(normalizeTRPhoneInput(e.target.value))}
+                    className="mt-0.5 text-xs font-mono h-7.5"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -347,7 +446,7 @@ export function NewVenueModal({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-3">
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"

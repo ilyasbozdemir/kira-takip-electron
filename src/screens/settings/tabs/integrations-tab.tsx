@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Calendar,
   Check,
@@ -47,10 +47,10 @@ function generateICSContent(reservations: Reservation[], venues: Venue[]) {
   reservations.forEach((r) => {
     const venue = venues.find((v) => v.id === r.venueId);
     const hall = venue?.halls?.find((h) => h.id === r.hallId);
-    const dtStart =
-      r.date.replace(/-/g, "") + "T" + (r.start || "09:00").replace(":", "") + "00";
-    const dtEnd =
-      r.date.replace(/-/g, "") + "T" + (r.end || "17:00").replace(":", "") + "00";
+    const dtStart = r.date.replace(/-/g, "") + "T" +
+      (r.start || "09:00").replace(":", "") + "00";
+    const dtEnd = r.date.replace(/-/g, "") + "T" +
+      (r.end || "17:00").replace(":", "") + "00";
 
     lines.push(
       "BEGIN:VEVENT",
@@ -60,7 +60,9 @@ function generateICSContent(reservations: Reservation[], venues: Venue[]) {
       `DTEND:${dtEnd}`,
       `SUMMARY:${r.eventType || "Etkinlik"}: ${r.customer}`,
       `LOCATION:${venue?.name || ""} - ${hall?.name || ""}`,
-      `DESCRIPTION:Müşteri: ${r.customer} | Tel: ${r.phone} | Not: ${r.note || "-"}`,
+      `DESCRIPTION:Müşteri: ${r.customer} | Tel: ${r.phone} | Not: ${
+        r.note || "-"
+      }`,
       `STATUS:${r.status === "option" ? "TENTATIVE" : "CONFIRMED"}`,
       "END:VEVENT",
     );
@@ -73,11 +75,15 @@ function generateICSContent(reservations: Reservation[], venues: Venue[]) {
 interface IntegrationsTabProps {
   theme: "dark" | "light";
   store: Store;
+  accountingModuleEnabled?: boolean;
+  setAccountingModuleEnabled?: (enabled: boolean) => void;
 }
 
 export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   theme,
   store,
+  accountingModuleEnabled = true,
+  setAccountingModuleEnabled,
 }) => {
   const isDark = theme === "dark";
 
@@ -86,13 +92,17 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
   const [smtpSecure, setSmtpSecure] = useState(false);
   const [smtpUser, setSmtpUser] = useState("");
   const [smtpPass, setSmtpPass] = useState("");
-  const [smtpSenderName, setSmtpSenderName] = useState("Mekan & Tesis Yönetimi");
+  const [smtpSenderName, setSmtpSenderName] = useState(
+    "Mekan & Tesis Yönetimi",
+  );
   const [smtpBackupEmail, setSmtpBackupEmail] = useState("");
 
   // Auto-Email Dispatch Settings (Default is DISABLED / FALSE)
   const [autoEmailEnabled, setAutoEmailEnabled] = useState(false);
   const [autoEmailAttachIcs, setAutoEmailAttachIcs] = useState(true);
-  const [autoEmailTarget, setAutoEmailTarget] = useState<"customer" | "backup" | "both">("both");
+  const [autoEmailTarget, setAutoEmailTarget] = useState<
+    "customer" | "backup" | "both"
+  >("both");
 
   useEffect(() => {
     try {
@@ -108,39 +118,43 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         if (parsed.backupEmail) setSmtpBackupEmail(parsed.backupEmail);
       }
 
-      const autoSaved = localStorage.getItem("venue-keeper-auto-email-settings");
+      const autoSaved = localStorage.getItem(
+        "venue-keeper-auto-email-settings",
+      );
       if (autoSaved) {
-        const autoParsed = JSON.parse(autoSaved);
-        setAutoEmailEnabled(autoParsed.mode === "instant" || autoParsed.enabled === true);
-        if (autoParsed.attachIcs !== undefined) setAutoEmailAttachIcs(autoParsed.attachIcs);
-        if (autoParsed.target) setAutoEmailTarget(autoParsed.target);
-      } else {
-        setAutoEmailEnabled(false);
+        const parsed = JSON.parse(autoSaved);
+        if (parsed.enabled !== undefined) setAutoEmailEnabled(parsed.enabled);
+        if (parsed.attachIcs !== undefined) {
+          setAutoEmailAttachIcs(parsed.attachIcs);
+        }
+        if (parsed.target) setAutoEmailTarget(parsed.target);
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("Failed to load settings from storage:", e);
     }
   }, []);
 
   const handleSaveSmtp = () => {
     const config = {
-      host: smtpHost,
-      port: smtpPort,
+      host: smtpHost.trim(),
+      port: smtpPort.trim(),
       secure: smtpSecure,
-      user: smtpUser,
-      pass: smtpPass,
-      senderName: smtpSenderName,
-      backupEmail: smtpBackupEmail,
+      user: smtpUser.trim(),
+      pass: smtpPass.trim(),
+      senderName: smtpSenderName.trim(),
+      backupEmail: smtpBackupEmail.trim(),
     };
     localStorage.setItem(SMTP_STORAGE_KEY, JSON.stringify(config));
 
     const autoConfig = {
-      mode: autoEmailEnabled ? "instant" : "manual",
       enabled: autoEmailEnabled,
       attachIcs: autoEmailAttachIcs,
       target: autoEmailTarget,
     };
-    localStorage.setItem("venue-keeper-auto-email-settings", JSON.stringify(autoConfig));
+    localStorage.setItem(
+      "venue-keeper-auto-email-settings",
+      JSON.stringify(autoConfig),
+    );
 
     toast.success("SMTP ve otomatik bildirim ayarları kaydedildi!");
   };
@@ -155,24 +169,103 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `Salon_Etkinlik_Takvimi_${new Date().toISOString().split("T")[0]}.ics`;
+    link.download = `Salon_Etkinlik_Takvimi_${
+      new Date().toISOString().split("T")[0]
+    }.ics`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Tüm etkinlikler Outlook / Google Takvim (.ics) formatında indirildi!");
+    toast.success(
+      "Tüm etkinlikler Outlook / Google Takvim (.ics) formatında indirildi!",
+    );
   };
 
   return (
     <div className="space-y-6 pt-1">
+      {/* 1. Optional Modules: Accounting & Cashflow Module */}
+      <Card
+        className={isDark
+          ? "bg-slate-900/80 border-slate-800"
+          : "bg-white border-slate-200 shadow-sm"}
+      >
+        <CardHeader>
+          <CardTitle
+            className={`text-base font-bold flex items-center gap-2 ${
+              isDark ? "text-slate-100" : "text-slate-900"
+            }`}
+          >
+            <span className="text-lg">💼</span>{" "}
+            İsteğe Bağlı Modüller & Muhasebe / Kasa Yapılandırması
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-400">
+            İşletmenizin ihtiyacına göre gelir/gider, personel maaşı, fatura ve
+            kasa nakit akışı modülünü açıp kapatabilirsiniz.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-3 text-xs">
+          <div
+            className={`p-3.5 rounded-xl border flex items-start gap-3 transition-colors ${
+              accountingModuleEnabled
+                ? isDark
+                  ? "bg-slate-950/60 border-slate-800"
+                  : "bg-slate-50 border-slate-200"
+                : isDark
+                ? "bg-slate-950/30 border-slate-800/60"
+                : "bg-slate-100 border-slate-200"
+            }`}
+          >
+            <Checkbox
+              id="accountingModuleToggle"
+              checked={accountingModuleEnabled}
+              onCheckedChange={(checked) => {
+                if (setAccountingModuleEnabled) {
+                  setAccountingModuleEnabled(!!checked);
+                  toast.success(
+                    checked
+                      ? "Muhasebe & Kasa Modülü etkinleştirildi. Sol menüye eklendi."
+                      : "Muhasebe & Kasa Modülü gizlendi.",
+                  );
+                }
+              }}
+              className="mt-0.5"
+            />
+            <div className="space-y-1">
+              <label
+                htmlFor="accountingModuleToggle"
+                className="text-xs font-bold cursor-pointer block text-slate-900 dark:text-slate-100"
+              >
+                📊 Muhasebe, Kasa & Gelir-Gider Modülünü Etkinleştir
+              </label>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                {accountingModuleEnabled
+                  ? "Aktif: Sol menüde 'Muhasebe & Kasa' sekmesi görüntülenir. Kira tahsilatları, personel maaşları, elektrik/su faturaları, sarf malzeme harcamaları ve nakit akışı raporlanabilir."
+                  : "Devre Dışı: Muhasebe menüsü gizlenir. Sistem sadece salon tahsis ve rezervasyon takvimine odaklanır."}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* SMTP Email Server Settings Card */}
-      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+      <Card
+        className={isDark
+          ? "bg-slate-900/80 border-slate-800"
+          : "bg-white border-slate-200 shadow-sm"}
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-                <Mail className="h-5 w-5 text-indigo-500" /> Kurumsal SMTP E-posta Gönderim Sunucusu
+              <CardTitle
+                className={`text-base font-bold flex items-center gap-2 ${
+                  isDark ? "text-slate-100" : "text-slate-900"
+                }`}
+              >
+                <Mail className="h-5 w-5 text-indigo-500" />{" "}
+                Kurumsal SMTP E-posta Gönderim Sunucusu
               </CardTitle>
               <CardDescription className="text-xs text-slate-400">
-                Müşterilere rezervasyon onayları, tahsis belgeleri ve hatırlatmaları göndermek için SMTP ayarlarını yapılandırın.
+                Müşterilere rezervasyon onayları, tahsis belgeleri ve
+                hatırlatmaları göndermek için SMTP ayarlarını yapılandırın.
               </CardDescription>
             </div>
           </div>
@@ -181,7 +274,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
         <CardContent className="space-y-4 text-xs">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="md:col-span-2">
-              <Label className="text-xs font-semibold">SMTP Sunucu Adresi (Host)</Label>
+              <Label className="text-xs font-semibold">
+                SMTP Sunucu Adresi (Host)
+              </Label>
               <Input
                 value={smtpHost}
                 onChange={(e) => setSmtpHost(e.target.value)}
@@ -202,7 +297,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-semibold">Gönderici E-posta Adresi (Kullanıcı Adı)</Label>
+              <Label className="text-xs font-semibold">
+                Gönderici E-posta Adresi (Kullanıcı Adı)
+              </Label>
               <Input
                 value={smtpUser}
                 onChange={(e) => setSmtpUser(e.target.value)}
@@ -211,7 +308,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold">SMTP Parolası / Uygulama Şifresi</Label>
+              <Label className="text-xs font-semibold">
+                SMTP Parolası / Uygulama Şifresi
+              </Label>
               <Input
                 type="password"
                 value={smtpPass}
@@ -224,7 +323,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-semibold">Gönderen Başlığı / Unvanı</Label>
+              <Label className="text-xs font-semibold">
+                Gönderen Başlığı / Unvanı
+              </Label>
               <Input
                 value={smtpSenderName}
                 onChange={(e) => setSmtpSenderName(e.target.value)}
@@ -233,7 +334,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
               />
             </div>
             <div>
-              <Label className="text-xs font-semibold">Yedek / Bilgi E-posta Adresi (İsteğe Bağlı)</Label>
+              <Label className="text-xs font-semibold">
+                Yedek / Bilgi E-posta Adresi (İsteğe Bağlı)
+              </Label>
               <Input
                 value={smtpBackupEmail}
                 onChange={(e) => setSmtpBackupEmail(e.target.value)}
@@ -251,7 +354,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
             />
             <label
               htmlFor="smtpSecure"
-              className={`text-xs font-medium cursor-pointer ${isDark ? "text-slate-300" : "text-slate-700"}`}
+              className={`text-xs font-medium cursor-pointer ${
+                isDark ? "text-slate-300" : "text-slate-700"
+              }`}
             >
               SSL / TLS Güvenli Bağlantı Kullan (Port 465 için önerilir)
             </label>
@@ -271,22 +376,38 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
       </Card>
 
       {/* Automatic Email & Calendar Dispatch Toggle Card (Default: False) */}
-      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+      <Card
+        className={isDark
+          ? "bg-slate-900/80 border-slate-800"
+          : "bg-white border-slate-200 shadow-sm"}
+      >
         <CardHeader>
-          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-            <Mail className="h-5 w-5 text-emerald-500" /> Otomatik E-posta & Takvim Davetiyesi Bildirimi
+          <CardTitle
+            className={`text-base font-bold flex items-center gap-2 ${
+              isDark ? "text-slate-100" : "text-slate-900"
+            }`}
+          >
+            <Mail className="h-5 w-5 text-emerald-500" />{" "}
+            Otomatik E-posta & Takvim Davetiyesi Bildirimi
           </CardTitle>
           <CardDescription className="text-xs text-slate-400">
-            Yeni bir etkinlik/salon tahsisi kaydedildiğinde arka planda otomatik e-posta gönderilsin mi? (Varsayılan: Kapalı)
+            Yeni bir etkinlik/salon tahsisi kaydedildiğinde arka planda otomatik
+            e-posta gönderilsin mi? (Varsayılan: Kapalı)
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4 text-xs">
-          <div className={`p-3.5 rounded-xl border flex items-start gap-3 transition-colors ${
-            autoEmailEnabled
-              ? isDark ? "bg-emerald-950/30 border-emerald-800/60" : "bg-emerald-50 border-emerald-200"
-              : isDark ? "bg-slate-950/40 border-slate-800" : "bg-slate-50 border-slate-200"
-          }`}>
+          <div
+            className={`p-3.5 rounded-xl border flex items-start gap-3 transition-colors ${
+              autoEmailEnabled
+                ? isDark
+                  ? "bg-emerald-950/30 border-emerald-800/60"
+                  : "bg-emerald-50 border-emerald-200"
+                : isDark
+                ? "bg-slate-950/40 border-slate-800"
+                : "bg-slate-50 border-slate-200"
+            }`}
+          >
             <Checkbox
               id="autoEmailEnabled"
               checked={autoEmailEnabled}
@@ -299,7 +420,9 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
                 className={`text-xs font-bold cursor-pointer block ${
                   autoEmailEnabled
                     ? isDark ? "text-emerald-300" : "text-emerald-800"
-                    : isDark ? "text-slate-200" : "text-slate-800"
+                    : isDark
+                    ? "text-slate-200"
+                    : "text-slate-800"
                 }`}
               >
                 ⚡ Yeni Etkinlik Kaydedildiğinde Otomatik E-posta Gönder
@@ -318,18 +441,24 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
                 <Checkbox
                   id="autoEmailAttachIcs"
                   checked={autoEmailAttachIcs}
-                  onCheckedChange={(checked) => setAutoEmailAttachIcs(!!checked)}
+                  onCheckedChange={(checked) =>
+                    setAutoEmailAttachIcs(!!checked)}
                 />
                 <label
                   htmlFor="autoEmailAttachIcs"
-                  className={`text-xs font-medium cursor-pointer ${isDark ? "text-slate-300" : "text-slate-700"}`}
+                  className={`text-xs font-medium cursor-pointer ${
+                    isDark ? "text-slate-300" : "text-slate-700"
+                  }`}
                 >
-                  📅 E-postaya .ics Takvim Davetiye Dosyasını Ekle (Google / Outlook / Apple Takvim uyumlu)
+                  📅 E-postaya .ics Takvim Davetiye Dosyasını Ekle (Google /
+                  Outlook / Apple Takvim uyumlu)
                 </label>
               </div>
 
               <div>
-                <Label className="text-xs font-semibold block mb-1.5">Otomatik Gönderim Hedefi</Label>
+                <Label className="text-xs font-semibold block mb-1.5">
+                  Otomatik Gönderim Hedefi
+                </Label>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                     <input
@@ -373,26 +502,41 @@ export const IntegrationsTab: React.FC<IntegrationsTabProps> = ({
               onClick={handleSaveSmtp}
               className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs h-8 font-semibold shadow-xs"
             >
-              <Check className="h-3.5 w-3.5 mr-1" /> Bildirim Tercihlerini Kaydet
+              <Check className="h-3.5 w-3.5 mr-1" />{" "}
+              Bildirim Tercihlerini Kaydet
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Calendar & ICS Export Card */}
-      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+      <Card
+        className={isDark
+          ? "bg-slate-900/80 border-slate-800"
+          : "bg-white border-slate-200 shadow-sm"}
+      >
         <CardHeader>
-          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
-            <Calendar className="h-5 w-5 text-sky-500" /> Takvim Dışa Aktarma (.ics / Google & Outlook)
+          <CardTitle
+            className={`text-base font-bold flex items-center gap-2 ${
+              isDark ? "text-slate-100" : "text-slate-900"
+            }`}
+          >
+            <Calendar className="h-5 w-5 text-sky-500" />{" "}
+            Takvim Dışa Aktarma (.ics / Google & Outlook)
           </CardTitle>
           <CardDescription className="text-xs text-slate-400">
-            Tüm salon kiralamalarını evrensel iCalendar (.ics) formatında dışa aktararak cep telefonunuzla veya kurumsal takviminizle senkronize edin.
+            Tüm salon kiralamalarını evrensel iCalendar (.ics) formatında dışa
+            aktararak cep telefonunuzla veya kurumsal takviminizle senkronize
+            edin.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-3 text-xs">
           <p className="text-slate-400 leading-relaxed">
-            İndirilen <code className="text-indigo-400 font-mono">.ics</code> dosyasını Google Takvim, Apple Takvim veya Microsoft Outlook uygulamalarına tek tıkla içe aktarabilirsiniz.
+            İndirilen <code className="text-indigo-400 font-mono">.ics</code>
+            {" "}
+            dosyasını Google Takvim, Apple Takvim veya Microsoft Outlook
+            uygulamalarına tek tıkla içe aktarabilirsiniz.
           </p>
 
           <Button

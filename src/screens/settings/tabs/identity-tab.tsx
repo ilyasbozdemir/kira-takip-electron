@@ -15,6 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -22,6 +29,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { normalizeTRPhoneInput } from "@/lib/phone-utils";
+import { TURKISH_CITIES, getDistrictsForCity } from "@/lib/turkey-locations";
 
 interface IdentityTabProps {
   theme: "dark" | "light";
@@ -44,6 +52,10 @@ interface IdentityTabProps {
   setDraftInstitutionKepAddress?: (v: string) => void;
   draftInstitutionAddress?: string;
   setDraftInstitutionAddress?: (v: string) => void;
+  draftDefaultCity?: string;
+  setDraftDefaultCity?: (v: string) => void;
+  draftDefaultDistrict?: string;
+  setDraftDefaultDistrict?: (v: string) => void;
   handleCancelInstitutionSettings: () => void;
   handleSaveInstitutionSettings: () => void;
 }
@@ -69,11 +81,17 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
   setDraftInstitutionKepAddress,
   draftInstitutionAddress = "",
   setDraftInstitutionAddress,
+  draftDefaultCity = "Ankara",
+  setDraftDefaultCity,
+  draftDefaultDistrict = "Çankaya",
+  setDraftDefaultDistrict,
   handleCancelInstitutionSettings,
   handleSaveInstitutionSettings,
 }) => {
   const isDark = theme === "dark";
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const availableDistricts = getDistrictsForCity(draftDefaultCity);
 
   return (
     <div className="space-y-4 pt-1">
@@ -184,7 +202,72 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* 2. Kurumsal İletişim Bilgileri */}
+      {/* 2. Varsayılan İl & İlçe Ayarı (Select ile Önden Dizili) */}
+      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+        <CardHeader>
+          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            <MapPin className="h-5 w-5 text-rose-500" /> Varsayılan Bölge, İl & İlçe Yapılandırması
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-400">
+            Yeni mekan/tesis ve salon eklerken açılır listede otomatik seçili gelecek ana il ve ilçe tanımı.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold">Varsayılan İl (Şehir) *</Label>
+              <Select
+                value={draftDefaultCity}
+                onValueChange={(val) => {
+                  if (setDraftDefaultCity) setDraftDefaultCity(val);
+                  const newDistricts = getDistrictsForCity(val);
+                  if (newDistricts.length > 0 && setDraftDefaultDistrict) {
+                    setDraftDefaultDistrict(newDistricts[0]);
+                  }
+                }}
+              >
+                <SelectTrigger className={`mt-1 text-xs h-8 ${isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-300"}`}>
+                  <SelectValue placeholder="İl Seçin..." />
+                </SelectTrigger>
+                <SelectContent className={`max-h-60 ${isDark ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200"}`}>
+                  {TURKISH_CITIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Varsayılan İlçe *</Label>
+              <Select
+                value={draftDefaultDistrict}
+                onValueChange={(val) => {
+                  if (setDraftDefaultDistrict) setDraftDefaultDistrict(val);
+                }}
+              >
+                <SelectTrigger className={`mt-1 text-xs h-8 ${isDark ? "bg-slate-950 border-slate-800" : "bg-slate-50 border-slate-300"}`}>
+                  <SelectValue placeholder="İlçe Seçin..." />
+                </SelectTrigger>
+                <SelectContent className={`max-h-60 ${isDark ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200"}`}>
+                  {availableDistricts.map((d) => (
+                    <SelectItem key={d} value={d}>
+                      {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            💡 Seçtiğiniz il ({draftDefaultCity}) ve ilçe ({draftDefaultDistrict}), yeni mekan eklerken ve filtreleme alanlarında otomatik olarak seçili getirilecektir.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* 3. Kurumsal İletişim Bilgileri */}
       <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
         <CardHeader>
           <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
@@ -243,7 +326,7 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
         </CardContent>
       </Card>
 
-      {/* 3. Resmi Kayıt & KEP & Adres */}
+      {/* 4. Resmi Kayıt & KEP & Adres */}
       <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
         <CardHeader>
           <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>

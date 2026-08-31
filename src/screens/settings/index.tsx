@@ -43,12 +43,18 @@ export function SettingsScreen({
   setDraftInstitutionKepAddress,
   draftInstitutionAddress,
   setDraftInstitutionAddress,
+  draftDefaultCity,
+  setDraftDefaultCity,
+  draftDefaultDistrict,
+  setDraftDefaultDistrict,
   handleCancelInstitutionSettings,
   handleSaveInstitutionSettings,
   draftTariffBasis,
   setDraftTariffBasis,
   handleCancelTariffSettings,
   handleSaveTariffSettings,
+  accountingModuleEnabled,
+  setAccountingModuleEnabled,
 }: SettingsScreenProps): React.JSX.Element {
   const isDark = theme === "dark";
 
@@ -88,7 +94,7 @@ export function SettingsScreen({
             value="integrations"
             className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
           >
-            <Mail className="h-3.5 w-3.5" /> E-posta & Takvim
+            <Mail className="h-3.5 w-3.5" /> E-posta & Modüller
           </TabsTrigger>
           <TabsTrigger
             value="categories"
@@ -127,6 +133,10 @@ export function SettingsScreen({
             setDraftInstitutionKepAddress={setDraftInstitutionKepAddress}
             draftInstitutionAddress={draftInstitutionAddress}
             setDraftInstitutionAddress={setDraftInstitutionAddress}
+            draftDefaultCity={draftDefaultCity}
+            setDraftDefaultCity={setDraftDefaultCity}
+            draftDefaultDistrict={draftDefaultDistrict}
+            setDraftDefaultDistrict={setDraftDefaultDistrict}
             handleCancelInstitutionSettings={handleCancelInstitutionSettings}
             handleSaveInstitutionSettings={handleSaveInstitutionSettings}
           />
@@ -143,9 +153,14 @@ export function SettingsScreen({
           />
         </TabsContent>
 
-        {/* TAB 3: Entegrasyonlar & E-posta */}
+        {/* TAB 3: Entegrasyonlar, E-posta & İsteğe Bağlı Modüller */}
         <TabsContent value="integrations">
-          <IntegrationsTab theme={theme} store={store} />
+          <IntegrationsTab
+            theme={theme}
+            store={store}
+            accountingModuleEnabled={accountingModuleEnabled}
+            setAccountingModuleEnabled={setAccountingModuleEnabled}
+          />
         </TabsContent>
 
         {/* TAB 4: Etkinlik Türleri */}

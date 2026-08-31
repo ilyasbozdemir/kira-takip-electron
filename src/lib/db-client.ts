@@ -21,9 +21,23 @@ export const sqliteStore = {
       if (window.electronAPI?.db?.getStore) {
         const data = await window.electronAPI.db.getStore();
         currentStoreData = data || { venues: [], reservations: [], personnel: [] };
+        if (window.electronAPI?.db?.getAllSettings) {
+          const settings = await window.electronAPI.db.getAllSettings();
+          if (settings?.financial_transactions_json) {
+            try {
+              currentStoreData.transactions = JSON.parse(settings.financial_transactions_json);
+            } catch {}
+          }
+        }
       } else {
         const raw = localStorage.getItem("venuekeeper-store-backup");
         if (raw) currentStoreData = JSON.parse(raw);
+        const txRaw = localStorage.getItem("venuekeeper-transactions-backup");
+        if (txRaw) {
+          try {
+            currentStoreData.transactions = JSON.parse(txRaw);
+          } catch {}
+        }
       }
     } catch (err) {
       console.error("Failed to load sqlite store:", err);
@@ -117,7 +131,8 @@ export const sqliteStore = {
     }
     await this.loadFromDb();
   },
-  async updateVenue(v: any) {
+  async updateVenue(arg1: any, arg2?: any) {
+    const v = arg2 ? { ...arg2, id: arg1 } : arg1;
     if ((window.electronAPI?.db as any)?.updateVenue) {
       await (window.electronAPI?.db as any).updateVenue(v);
     } else {
@@ -139,7 +154,8 @@ export const sqliteStore = {
     }
     await this.loadFromDb();
   },
-  async updateHall(h: any) {
+  async updateHall(arg1: any, arg2?: any) {
+    const h = arg2 ? { ...arg2, id: arg2.id || (typeof arg1 === "string" ? arg2.id : arg1.id), venueId: typeof arg1 === "string" ? arg1 : arg1.venueId } : arg1;
     if ((window.electronAPI?.db as any)?.updateHall) {
       await (window.electronAPI?.db as any).updateHall(h);
     } else {
@@ -228,6 +244,45 @@ export const sqliteStore = {
         localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
       }
     }
+    await this.loadFromDb();
+  },
+  async addTransaction(t: any) {
+    if (!currentStoreData.transactions) currentStoreData.transactions = [];
+    const newTx = {
+      ...t,
+      id: t.id || Math.random().toString(36).slice(2, 10),
+      createdAt: t.createdAt || new Date().toISOString(),
+    };
+    currentStoreData.transactions.push(newTx);
+    localStorage.setItem("venuekeeper-transactions-backup", JSON.stringify(currentStoreData.transactions));
+    if (window.electronAPI?.db?.setSetting) {
+      await window.electronAPI.db.setSetting("financial_transactions_json", JSON.stringify(currentStoreData.transactions));
+    }
+    notifyListeners();
+    await this.loadFromDb();
+  },
+  async updateTransaction(t: any) {
+    if (!currentStoreData.transactions) currentStoreData.transactions = [];
+    const idx = currentStoreData.transactions.findIndex((x) => x.id === t.id);
+    if (idx !== -1) {
+      currentStoreData.transactions[idx] = { ...currentStoreData.transactions[idx], ...t };
+    }
+    localStorage.setItem("venuekeeper-transactions-backup", JSON.stringify(currentStoreData.transactions));
+    if (window.electronAPI?.db?.setSetting) {
+      await window.electronAPI.db.setSetting("financial_transactions_json", JSON.stringify(currentStoreData.transactions));
+    }
+    notifyListeners();
+    await this.loadFromDb();
+  },
+  async deleteTransaction(id: string) {
+    if (currentStoreData.transactions) {
+      currentStoreData.transactions = currentStoreData.transactions.filter((x) => x.id !== id);
+      localStorage.setItem("venuekeeper-transactions-backup", JSON.stringify(currentStoreData.transactions));
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("financial_transactions_json", JSON.stringify(currentStoreData.transactions));
+      }
+    }
+    notifyListeners();
     await this.loadFromDb();
   },
 };

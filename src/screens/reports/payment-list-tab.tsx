@@ -1,6 +1,7 @@
 import React from "react";
-import { Search } from "lucide-react";
+import { Search, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { money, type Reservation, type Venue } from "@/lib/rental-store";
@@ -17,6 +18,7 @@ interface PaymentListTabProps {
   pageSize: number;
   setCurrentPage: (p: number) => void;
   setPageSize: (s: number) => void;
+  onUpdatePayment?: (r: Reservation) => void;
 }
 
 export const PaymentListTab: React.FC<PaymentListTabProps> = ({
@@ -31,6 +33,7 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
   pageSize,
   setCurrentPage,
   setPageSize,
+  onUpdatePayment,
 }) => {
   const isDark = theme === "dark";
 
@@ -98,6 +101,7 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
               <th className="p-3 text-right">Tahsil Edilen</th>
               <th className="p-3 text-right">Kalan Bakiye</th>
               <th className="p-3 text-center">Durum</th>
+              <th className="p-3 text-right">İşlem</th>
             </tr>
           </thead>
           <tbody
@@ -107,7 +111,7 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
           >
             {filteredPayments.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-slate-400">
+                <td colSpan={9} className="p-8 text-center text-slate-400">
                   Arama kriterlerine uygun ödeme kaydı bulunamadı.
                 </td>
               </tr>
@@ -216,6 +220,20 @@ export const PaymentListTab: React.FC<PaymentListTabProps> = ({
                           <Badge className="bg-rose-600 text-white text-[9px] font-bold">
                             Ödenmedi
                           </Badge>
+                        )}
+                      </td>
+                      <td className="p-3 text-right">
+                        {onUpdatePayment && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onUpdatePayment(r)}
+                            className="h-6.5 px-2 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            title="Tahsilat / Ödeme Durumunu Değiştir"
+                          >
+                            <Receipt className="h-3 w-3 mr-1" />
+                            Tahsilat İşle
+                          </Button>
                         )}
                       </td>
                     </tr>

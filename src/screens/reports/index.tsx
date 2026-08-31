@@ -4,6 +4,8 @@ import { ReportsStatsHeader } from "./reports-stats-header";
 import { VenueBreakdownTab } from "./venue-breakdown-tab";
 import { PaymentListTab } from "./payment-list-tab";
 import { ReportsScreenProps, VenueStatItem } from "./types";
+import { QuickPaymentModal } from "@/screens/accounting/quick-payment-modal";
+import { type Reservation } from "@/lib/rental-store";
 
 export function ReportsScreen({
   theme,
@@ -14,6 +16,7 @@ export function ReportsScreen({
   const [activeTab, setActiveTab] = useState<"summary" | "payments">("summary");
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<"all" | "paid" | "partial" | "unpaid">("all");
+  const [quickPaymentReservation, setQuickPaymentReservation] = useState<Reservation | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -199,8 +202,17 @@ export function ReportsScreen({
           pageSize={pageSize}
           setCurrentPage={setCurrentPage}
           setPageSize={setPageSize}
+          onUpdatePayment={(r) => setQuickPaymentReservation(r)}
         />
       )}
+
+      {/* Quick Payment & Status Modal */}
+      <QuickPaymentModal
+        reservation={quickPaymentReservation}
+        onClose={() => setQuickPaymentReservation(null)}
+        theme={theme}
+        venues={store?.venues || []}
+      />
     </div>
   );
 }

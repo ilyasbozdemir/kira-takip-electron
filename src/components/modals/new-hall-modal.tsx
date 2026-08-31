@@ -9,6 +9,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { PricingType } from "@/lib/rental-store";
 
 interface NewHallModalProps {
   open: boolean;
@@ -22,6 +30,8 @@ interface NewHallModalProps {
   setNewHallCapacity: (v: number) => void;
   newHallHourlyPrice: number;
   setNewHallHourlyPrice: (v: number) => void;
+  newHallPricingType?: PricingType;
+  setNewHallPricingType?: (v: PricingType) => void;
   newHallColor: string;
   setNewHallColor: (v: string) => void;
   handleCreateHall: (
@@ -42,6 +52,8 @@ export function NewHallModal({
   setNewHallCapacity,
   newHallHourlyPrice,
   setNewHallHourlyPrice,
+  newHallPricingType = "session",
+  setNewHallPricingType,
   newHallColor,
   setNewHallColor,
   handleCreateHall,
@@ -53,12 +65,18 @@ export function NewHallModal({
     });
   };
 
+  const getPriceLabel = () => {
+    if (newHallPricingType === "hourly") return "Saatlik Kira Ücreti (TL)";
+    if (newHallPricingType === "daily") return "Günlük Kira Ücreti (TL)";
+    return "Seanslık / Paket Ücreti (TL)";
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={theme === "dark"
-          ? "sm:max-w-[400px] bg-slate-900 border-slate-800 text-slate-100"
-          : "sm:max-w-[400px] bg-white border-slate-200 text-slate-900 shadow-2xl"}
+          ? "sm:max-w-105 bg-slate-900 border-slate-800 text-slate-100"
+          : "sm:max-w-105 bg-white border-slate-200 text-slate-900 shadow-2xl"}
       >
         <DialogHeader>
           <DialogTitle
@@ -70,18 +88,18 @@ export function NewHallModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-3.5 py-2 text-xs">
           <div>
             <Label
               className={`text-xs font-medium ${
                 theme === "dark" ? "text-slate-300" : "text-slate-700"
               }`}
             >
-              Salon Adı
+              Salon Adı *
             </Label>
             <Input
               required
-              placeholder="örn: Safir Balo Salonu"
+              placeholder="örn: Safir Balo Salonu, Konferans Salonu"
               value={newHallName}
               onChange={(e) => setNewHallName(e.target.value)}
               className={`mt-1 text-xs ${
@@ -91,26 +109,28 @@ export function NewHallModal({
               }`}
             />
           </div>
-          <div>
-            <Label
-              className={`text-xs font-medium ${
-                theme === "dark" ? "text-slate-300" : "text-slate-700"
-              }`}
-            >
-              Kat / Blok Bilgisi
-            </Label>
-            <Input
-              placeholder="örn: Zemin Kat / A Blok"
-              value={newHallFloor}
-              onChange={(e) => setNewHallFloor(e.target.value)}
-              className={`mt-1 text-xs ${
-                theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
-              }`}
-            />
-          </div>
+
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label
+                className={`text-xs font-medium ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                Kat / Blok Bilgisi
+              </Label>
+              <Input
+                placeholder="örn: Zemin Kat / A Blok"
+                value={newHallFloor}
+                onChange={(e) => setNewHallFloor(e.target.value)}
+                className={`mt-1 text-xs ${
+                  theme === "dark"
+                    ? "bg-slate-950 border-slate-800 text-slate-100"
+                    : "bg-slate-50 border-slate-300 text-slate-900"
+                }`}
+              />
+            </div>
+
             <div>
               <Label
                 className={`text-xs font-medium ${
@@ -130,13 +150,47 @@ export function NewHallModal({
                 }`}
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
             <div>
               <Label
                 className={`text-xs font-medium ${
                   theme === "dark" ? "text-slate-300" : "text-slate-700"
                 }`}
               >
-                Saatlik Kira (TL)
+                Fiyatlandırma Modeli
+              </Label>
+              <Select
+                value={newHallPricingType}
+                onValueChange={(val: PricingType) => {
+                  if (setNewHallPricingType) setNewHallPricingType(val);
+                }}
+              >
+                <SelectTrigger className="mt-1 text-xs h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  className={
+                    theme === "dark"
+                      ? "bg-slate-900 border-slate-800 text-slate-100"
+                      : "bg-white border-slate-200 text-slate-900"
+                  }
+                >
+                  <SelectItem value="session">🎫 Seanslık / Paket</SelectItem>
+                  <SelectItem value="hourly">⏱️ Saatlik Ücret</SelectItem>
+                  <SelectItem value="daily">📅 Günlük Sabit Ücret</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label
+                className={`text-xs font-medium ${
+                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
+                {getPriceLabel()}
               </Label>
               <Input
                 type="number"
@@ -150,6 +204,7 @@ export function NewHallModal({
               />
             </div>
           </div>
+
           <div>
             <Label
               className={`text-xs font-medium block mb-1.5 ${
@@ -193,7 +248,7 @@ export function NewHallModal({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="pt-2">
             <Button
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"

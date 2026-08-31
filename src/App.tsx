@@ -34,11 +34,16 @@ import { PersonnelScreen } from "@/screens/personnel.screen";
 import { ReportsScreen } from "@/screens/reports.screen";
 import { SettingsScreen } from "@/screens/settings.screen";
 import { CustomersScreen } from "@/screens/customers.screen";
+import { AccountingScreen } from "@/screens/accounting";
 import { HelpScreen } from "@/screens/help.screen";
 import { generateEmailHTMLTemplate, generateBackupEmailContent } from "@/lib/email-template";
 import { ExitBackupModal } from "@/components/modals/exit-backup-modal";
+import { SplashScreen } from "@/components/splash-screen";
 
 export function App(): React.JSX.Element {
+  // Startup Splash Screen State
+  const [showSplash, setShowSplash] = useState(true);
+
   // Theme State
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     return (localStorage.getItem("theme") as "dark" | "light") || "dark";
@@ -68,7 +73,10 @@ export function App(): React.JSX.Element {
     institutionWebsite,
     institutionKepAddress,
     institutionAddress,
+    defaultCity,
+    defaultDistrict,
     defaultTariffBasis,
+    accountingModuleEnabled,
     setAppName,
     setInstitutionName,
     setInstitutionSubHeader,
@@ -78,7 +86,12 @@ export function App(): React.JSX.Element {
     setInstitutionWebsite,
     setInstitutionKepAddress,
     setInstitutionAddress,
+    setDefaultCity,
+    setDefaultDistrict,
     setDefaultTariffBasis,
+    setAccountingModuleEnabled,
+    saveSettingsBulk,
+    reloadSettings,
   } = useSettingsStore();
 
   const {
@@ -414,6 +427,8 @@ export function App(): React.JSX.Element {
   const [draftInstitutionAddress, setDraftInstitutionAddress] = useState(
     institutionAddress,
   );
+  const [draftDefaultCity, setDraftDefaultCity] = useState(defaultCity || "Ankara");
+  const [draftDefaultDistrict, setDraftDefaultDistrict] = useState(defaultDistrict || "Çankaya");
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   useEffect(() => {
@@ -426,6 +441,8 @@ export function App(): React.JSX.Element {
     setDraftInstitutionWebsite(institutionWebsite);
     setDraftInstitutionKepAddress(institutionKepAddress);
     setDraftInstitutionAddress(institutionAddress);
+    setDraftDefaultCity(defaultCity || "Ankara");
+    setDraftDefaultDistrict(defaultDistrict || "Çankaya");
   }, [
     appName,
     institutionName,
@@ -436,24 +453,30 @@ export function App(): React.JSX.Element {
     institutionWebsite,
     institutionKepAddress,
     institutionAddress,
+    defaultCity,
+    defaultDistrict,
   ]);
 
   useEffect(() => {
     setDraftTariffBasis(defaultTariffBasis);
   }, [defaultTariffBasis]);
 
-  const handleSaveInstitutionSettings = () => {
-    if (setAppName) setAppName(draftAppName);
-    setInstitutionName(draftInstitutionName);
-    setInstitutionSubHeader(draftInstitutionSubHeader);
-    setInstitutionLogo(draftInstitutionLogo);
-    setInstitutionPhone(draftInstitutionPhone);
-    setInstitutionEmail(draftInstitutionEmail);
-    setInstitutionWebsite(draftInstitutionWebsite);
-    setInstitutionKepAddress(draftInstitutionKepAddress);
-    setInstitutionAddress(draftInstitutionAddress);
+  const handleSaveInstitutionSettings = async () => {
+    await saveSettingsBulk({
+      appName: draftAppName,
+      institutionName: draftInstitutionName,
+      institutionSubHeader: draftInstitutionSubHeader,
+      institutionLogo: draftInstitutionLogo,
+      institutionPhone: draftInstitutionPhone,
+      institutionEmail: draftInstitutionEmail,
+      institutionWebsite: draftInstitutionWebsite,
+      institutionKepAddress: draftInstitutionKepAddress,
+      institutionAddress: draftInstitutionAddress,
+      defaultCity: draftDefaultCity,
+      defaultDistrict: draftDefaultDistrict,
+    });
     toast.success(
-      "Uygulama adı, kurumsal kimlik, logo, iletişim ve KEP bilgileri .vke dosyasına kaydedildi.",
+      "Kurumsal kimlik, logo, iletişim, bölge (il/ilçe) ve KEP bilgileri kaydedildi.",
     );
   };
 
@@ -467,11 +490,15 @@ export function App(): React.JSX.Element {
     setDraftInstitutionWebsite(institutionWebsite);
     setDraftInstitutionKepAddress(institutionKepAddress);
     setDraftInstitutionAddress(institutionAddress);
+    setDraftDefaultCity(defaultCity || "Ankara");
+    setDraftDefaultDistrict(defaultDistrict || "Çankaya");
     toast.info("Değişiklikler iptal edildi.");
   };
 
-  const handleSaveTariffSettings = () => {
-    setDefaultTariffBasis(draftTariffBasis);
+  const handleSaveTariffSettings = async () => {
+    await saveSettingsBulk({
+      defaultTariffBasis: draftTariffBasis,
+    });
     toast.success("Resmi tarife ve karar dayanağı kaydedildi.");
   };
 
@@ -555,11 +582,14 @@ export function App(): React.JSX.Element {
     phoneSuggestions,
     decisionSuggestions,
     handleCreateReservation,
+    resetReservationForm,
   } = useReservationForm(store, defaultTariffBasis, selectedDay);
 
   const {
     newVenueName,
     setNewVenueName,
+    newVenueCity,
+    setNewVenueCity,
     newVenueDistrict,
     setNewVenueDistrict,
     newVenueAddress,
@@ -579,7 +609,8 @@ export function App(): React.JSX.Element {
     newVenueColor,
     setNewVenueColor,
     handleCreateVenue,
-  } = useVenueForm();
+    resetVenueForm,
+  } = useVenueForm(defaultCity, defaultDistrict);
 
   const {
     targetVenueId,
@@ -592,9 +623,12 @@ export function App(): React.JSX.Element {
     setNewHallCapacity,
     newHallHourlyPrice,
     setNewHallHourlyPrice,
+    newHallPricingType,
+    setNewHallPricingType,
     newHallColor,
     setNewHallColor,
     handleCreateHall,
+    resetHallForm,
   } = useHallForm();
 
   const {
@@ -610,6 +644,7 @@ export function App(): React.JSX.Element {
     setPersonnelNotes,
     handleCreatePersonnel,
     removePersonnel,
+    resetPersonnelForm,
   } = usePersonnelForm();
 
   // Hall lookup helper
@@ -814,6 +849,9 @@ export function App(): React.JSX.Element {
         setSidebarCollapsed={setSidebarCollapsed}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        store={store}
+        onNavigateToSection={(sec) => setActiveSection(sec)}
+        onSelectReservation={(r) => setSelectedReservation(r)}
         appName={appName}
         institutionName={institutionName}
         institutionSubHeader={institutionSubHeader}
@@ -841,6 +879,15 @@ export function App(): React.JSX.Element {
         }}
       />
 
+      {/* Startup Animated Developer Splash Screen */}
+      {showSplash && (
+        <SplashScreen
+          onFinish={() => setShowSplash(false)}
+          appName={appName}
+          institutionName={institutionName}
+        />
+      )}
+
       {/* Auto-Updater Banner Notification */}
       <UpdateBanner />
 
@@ -859,6 +906,7 @@ export function App(): React.JSX.Element {
           store={store}
           institutionName={institutionName}
           institutionLogo={institutionLogo}
+          accountingModuleEnabled={accountingModuleEnabled}
         />
 
         {/* Main Content View Screens & Docked Footer */}
@@ -932,6 +980,17 @@ export function App(): React.JSX.Element {
                     setHallModalOpen(true);
                   }}
                   onPromptDelete={promptDelete}
+                  onOpenNewReservationModal={(vId, hId) => {
+                    if (vId) setResVenueId(vId);
+                    if (hId) setResHallId(hId);
+                    setResModalOpen(true);
+                  }}
+                  onNavigateToCalendar={(vId) => {
+                    if (vId) setCalendarVenueFilter(vId);
+                    setActiveSection("calendar");
+                  }}
+                  defaultCity={defaultCity}
+                  defaultDistrict={defaultDistrict}
                 />
               )}
 
@@ -998,6 +1057,26 @@ export function App(): React.JSX.Element {
                 />
               )}
 
+              {activeSection === "accounting" && (
+                <AccountingScreen
+                  theme={theme}
+                  store={store}
+                  institutionName={institutionName}
+                  onAddTransaction={async (t) => {
+                    await sqliteStore.addTransaction(t);
+                  }}
+                  onUpdateTransaction={async (t) => {
+                    await sqliteStore.updateTransaction(t);
+                  }}
+                  onDeleteTransaction={async (id) => {
+                    await sqliteStore.deleteTransaction(id);
+                  }}
+                  onSelectReservation={(r) => {
+                    setSelectedReservation(r);
+                  }}
+                />
+              )}
+
               {activeSection === "reports" && (
                 <ReportsScreen
                   theme={theme}
@@ -1041,12 +1120,18 @@ export function App(): React.JSX.Element {
                   setDraftInstitutionKepAddress={setDraftInstitutionKepAddress}
                   draftInstitutionAddress={draftInstitutionAddress}
                   setDraftInstitutionAddress={setDraftInstitutionAddress}
+                  draftDefaultCity={draftDefaultCity}
+                  setDraftDefaultCity={setDraftDefaultCity}
+                  draftDefaultDistrict={draftDefaultDistrict}
+                  setDraftDefaultDistrict={setDraftDefaultDistrict}
                   handleCancelInstitutionSettings={handleCancelInstitutionSettings}
                   handleSaveInstitutionSettings={handleSaveInstitutionSettings}
                   draftTariffBasis={draftTariffBasis}
                   setDraftTariffBasis={setDraftTariffBasis}
                   handleCancelTariffSettings={handleCancelTariffSettings}
                   handleSaveTariffSettings={handleSaveTariffSettings}
+                  accountingModuleEnabled={accountingModuleEnabled}
+                  setAccountingModuleEnabled={setAccountingModuleEnabled}
                 />
               )}
 
@@ -1115,10 +1200,13 @@ export function App(): React.JSX.Element {
         phoneSuggestions={phoneSuggestions}
         decisionSuggestions={decisionSuggestions}
         handleCreateReservation={handleCreateReservation}
+        resetReservationForm={resetReservationForm}
         venueModalOpen={venueModalOpen}
         setVenueModalOpen={setVenueModalOpen}
         newVenueName={newVenueName}
         setNewVenueName={setNewVenueName}
+        newVenueCity={newVenueCity}
+        setNewVenueCity={setNewVenueCity}
         newVenueDistrict={newVenueDistrict}
         setNewVenueDistrict={setNewVenueDistrict}
         newVenueAddress={newVenueAddress}
@@ -1138,6 +1226,7 @@ export function App(): React.JSX.Element {
         newVenueColor={newVenueColor}
         setNewVenueColor={setNewVenueColor}
         handleCreateVenue={handleCreateVenue}
+        resetVenueForm={resetVenueForm}
         hallModalOpen={hallModalOpen}
         setHallModalOpen={setHallModalOpen}
         newHallName={newHallName}
@@ -1148,9 +1237,12 @@ export function App(): React.JSX.Element {
         setNewHallCapacity={setNewHallCapacity}
         newHallHourlyPrice={newHallHourlyPrice}
         setNewHallHourlyPrice={setNewHallHourlyPrice}
+        newHallPricingType={newHallPricingType}
+        setNewHallPricingType={setNewHallPricingType}
         newHallColor={newHallColor}
         setNewHallColor={setNewHallColor}
         handleCreateHall={handleCreateHall}
+        resetHallForm={resetHallForm}
         personnelModalOpen={personnelModalOpen}
         setPersonnelModalOpen={setPersonnelModalOpen}
         personnelName={personnelName}
@@ -1163,6 +1255,7 @@ export function App(): React.JSX.Element {
         setPersonnelEmail={setPersonnelEmail}
         handleCreatePersonnel={handleCreatePersonnel}
         removePersonnel={removePersonnel}
+        resetPersonnelForm={resetPersonnelForm}
         mailModalOpen={mailModalOpen}
         setMailModalOpen={setMailModalOpen}
         mailPreset={mailPreset}

@@ -153,6 +153,7 @@ function ensureDynamicColumns(d: Database.Database) {
   ]);
 
   ensureCols("TANIM_Salon", [
+    { name: "pricingType", def: "TEXT DEFAULT 'session'" },
     { name: "color", def: "TEXT DEFAULT '#8b5cf6'" },
     { name: "isDeleted", def: "INTEGER DEFAULT 0" },
   ]);
@@ -179,8 +180,52 @@ function ensureDynamicColumns(d: Database.Database) {
         notes TEXT DEFAULT '',
         createdAt TEXT DEFAULT (datetime('now','localtime'))
       );
+
+      CREATE TABLE IF NOT EXISTS DATA_FinansalIslem (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        category TEXT NOT NULL,
+        amount REAL NOT NULL DEFAULT 0,
+        date TEXT NOT NULL,
+        paymentMethod TEXT DEFAULT 'Nakit',
+        receiptNo TEXT DEFAULT '',
+        venueId TEXT DEFAULT '',
+        customerName TEXT DEFAULT '',
+        description TEXT DEFAULT '',
+        createdAt TEXT DEFAULT (datetime('now','localtime'))
+      );
     `);
   } catch {}
+
+  ensureCols("TANIM_Personel", [
+    { name: "title", def: "TEXT DEFAULT 'Tesis Sorumlusu'" },
+    { name: "phone", def: "TEXT DEFAULT ''" },
+    { name: "email", def: "TEXT DEFAULT ''" },
+    { name: "notes", def: "TEXT DEFAULT ''" },
+  ]);
+
+  ensureCols("TANIM_Musteri", [
+    { name: "phone", def: "TEXT DEFAULT ''" },
+    { name: "email", def: "TEXT DEFAULT ''" },
+    { name: "company", def: "TEXT DEFAULT ''" },
+    { name: "taxNo", def: "TEXT DEFAULT ''" },
+    { name: "address", def: "TEXT DEFAULT ''" },
+    { name: "notes", def: "TEXT DEFAULT ''" },
+    { name: "createdAt", def: "TEXT DEFAULT ''" },
+  ]);
+
+  ensureCols("DATA_FinansalIslem", [
+    { name: "type", def: "TEXT DEFAULT 'expense'" },
+    { name: "category", def: "TEXT DEFAULT 'Genel Gider'" },
+    { name: "amount", def: "REAL DEFAULT 0" },
+    { name: "date", def: "TEXT DEFAULT ''" },
+    { name: "paymentMethod", def: "TEXT DEFAULT 'Nakit'" },
+    { name: "receiptNo", def: "TEXT DEFAULT ''" },
+    { name: "venueId", def: "TEXT DEFAULT ''" },
+    { name: "customerName", def: "TEXT DEFAULT ''" },
+    { name: "description", def: "TEXT DEFAULT ''" },
+    { name: "createdAt", def: "TEXT DEFAULT ''" },
+  ]);
 
   try {
     d.exec(`
@@ -850,6 +895,19 @@ export function setSetting(key: string, value: string): void {
   if (!db && currentDbPath) initDatabase(currentDbPath);
   if (!db) return;
   db.prepare("INSERT OR REPLACE INTO TANIM_Ayar (key, value) VALUES (?, ?)").run(key, value);
+  saveWorkspaceIfActive();
+}
+
+export function setSettingsBulk(settings: Record<string, string>): void {
+  if (!db && currentDbPath) initDatabase(currentDbPath);
+  if (!db) return;
+  const insert = db.prepare("INSERT OR REPLACE INTO TANIM_Ayar (key, value) VALUES (?, ?)");
+  const runTx = db.transaction((entries: [string, string][]) => {
+    for (const [k, v] of entries) {
+      insert.run(k, v);
+    }
+  });
+  runTx(Object.entries(settings));
   saveWorkspaceIfActive();
 }
 

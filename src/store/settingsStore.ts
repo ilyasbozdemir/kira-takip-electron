@@ -37,11 +37,24 @@ export function useSettingsStore() {
     return localStorage.getItem("institution_address") || "Belediye Hizmet Binası, Merkez";
   });
 
+  const [defaultCity, setDefaultCityState] = useState<string>(() => {
+    return localStorage.getItem("default_city") || "Ankara";
+  });
+
+  const [defaultDistrict, setDefaultDistrictState] = useState<string>(() => {
+    return localStorage.getItem("default_district") || "Çankaya";
+  });
+
   const [defaultTariffBasis, setDefaultTariffBasisState] = useState<string>(() => {
     return (
       localStorage.getItem("default_tariff_basis") ||
       ""
     );
+  });
+
+  const [accountingModuleEnabled, setAccountingModuleEnabledState] = useState<boolean>(() => {
+    const val = localStorage.getItem("accounting_module_enabled");
+    return val === null ? true : val === "true";
   });
 
   // Load settings from SQLite Database
@@ -50,45 +63,58 @@ export function useSettingsStore() {
       if (window.electronAPI?.db?.getAllSettings) {
         const settings = await window.electronAPI.db.getAllSettings();
         if (settings) {
-          if (settings.app_name) {
+          if (settings.app_name !== undefined && settings.app_name !== null) {
             setAppNameState(settings.app_name);
             localStorage.setItem("app_name", settings.app_name);
           }
-          if (settings.institution_name) {
+          if (settings.institution_name !== undefined && settings.institution_name !== null) {
             setInstitutionNameState(settings.institution_name);
             localStorage.setItem("institution_name", settings.institution_name);
           }
-          if (settings.institution_subheader) {
+          if (settings.institution_subheader !== undefined && settings.institution_subheader !== null) {
             setInstitutionSubHeaderState(settings.institution_subheader);
             localStorage.setItem("institution_subheader", settings.institution_subheader);
           }
-          if (settings.institution_logo) {
+          if (settings.institution_logo !== undefined && settings.institution_logo !== null) {
             setInstitutionLogoState(settings.institution_logo);
             localStorage.setItem("institution_logo", settings.institution_logo);
           }
-          if (settings.institution_phone) {
+          if (settings.institution_phone !== undefined && settings.institution_phone !== null) {
             setInstitutionPhoneState(settings.institution_phone);
             localStorage.setItem("institution_phone", settings.institution_phone);
           }
-          if (settings.institution_email) {
+          if (settings.institution_email !== undefined && settings.institution_email !== null) {
             setInstitutionEmailState(settings.institution_email);
             localStorage.setItem("institution_email", settings.institution_email);
           }
-          if (settings.institution_website) {
+          if (settings.institution_website !== undefined && settings.institution_website !== null) {
             setInstitutionWebsiteState(settings.institution_website);
             localStorage.setItem("institution_website", settings.institution_website);
           }
-          if (settings.institution_kep_address) {
+          if (settings.institution_kep_address !== undefined && settings.institution_kep_address !== null) {
             setInstitutionKepAddressState(settings.institution_kep_address);
             localStorage.setItem("institution_kep_address", settings.institution_kep_address);
           }
-          if (settings.institution_address) {
+          if (settings.institution_address !== undefined && settings.institution_address !== null) {
             setInstitutionAddressState(settings.institution_address);
             localStorage.setItem("institution_address", settings.institution_address);
           }
-          if (settings.default_tariff_basis) {
+          if (settings.default_city !== undefined && settings.default_city !== null) {
+            setDefaultCityState(settings.default_city);
+            localStorage.setItem("default_city", settings.default_city);
+          }
+          if (settings.default_district !== undefined && settings.default_district !== null) {
+            setDefaultDistrictState(settings.default_district);
+            localStorage.setItem("default_district", settings.default_district);
+          }
+          if (settings.default_tariff_basis !== undefined && settings.default_tariff_basis !== null) {
             setDefaultTariffBasisState(settings.default_tariff_basis);
             localStorage.setItem("default_tariff_basis", settings.default_tariff_basis);
+          }
+          if (settings.accounting_module_enabled !== undefined && settings.accounting_module_enabled !== null) {
+            const isEnabled = settings.accounting_module_enabled === "true";
+            setAccountingModuleEnabledState(isEnabled);
+            localStorage.setItem("accounting_module_enabled", String(isEnabled));
           }
         }
       }
@@ -206,6 +232,30 @@ export function useSettingsStore() {
     }
   };
 
+  const setDefaultCity = async (city: string) => {
+    setDefaultCityState(city);
+    localStorage.setItem("default_city", city);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("default_city", city);
+      }
+    } catch (err) {
+      console.error("Failed to save default_city to SQLite:", err);
+    }
+  };
+
+  const setDefaultDistrict = async (dist: string) => {
+    setDefaultDistrictState(dist);
+    localStorage.setItem("default_district", dist);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("default_district", dist);
+      }
+    } catch (err) {
+      console.error("Failed to save default_district to SQLite:", err);
+    }
+  };
+
   const setDefaultTariffBasis = async (basis: string) => {
     setDefaultTariffBasisState(basis);
     localStorage.setItem("default_tariff_basis", basis);
@@ -215,6 +265,18 @@ export function useSettingsStore() {
       }
     } catch (err) {
       console.error("Failed to save default_tariff_basis to SQLite:", err);
+    }
+  };
+
+  const setAccountingModuleEnabled = async (enabled: boolean) => {
+    setAccountingModuleEnabledState(enabled);
+    localStorage.setItem("accounting_module_enabled", String(enabled));
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("accounting_module_enabled", String(enabled));
+      }
+    } catch (err) {
+      console.error("Failed to save accounting_module_enabled to SQLite:", err);
     }
   };
 
@@ -230,6 +292,104 @@ export function useSettingsStore() {
     }
   };
 
+  const saveSettingsBulk = async (updates: Partial<{
+    appName: string;
+    institutionName: string;
+    institutionSubHeader: string;
+    institutionLogo: string;
+    institutionPhone: string;
+    institutionEmail: string;
+    institutionWebsite: string;
+    institutionKepAddress: string;
+    institutionAddress: string;
+    defaultCity: string;
+    defaultDistrict: string;
+    defaultTariffBasis: string;
+    accountingModuleEnabled: boolean;
+  }>) => {
+    const dbPayload: Record<string, string> = {};
+
+    if (updates.appName !== undefined) {
+      setAppNameState(updates.appName);
+      localStorage.setItem("app_name", updates.appName);
+      dbPayload["app_name"] = updates.appName;
+    }
+    if (updates.institutionName !== undefined) {
+      setInstitutionNameState(updates.institutionName);
+      localStorage.setItem("institution_name", updates.institutionName);
+      dbPayload["institution_name"] = updates.institutionName;
+    }
+    if (updates.institutionSubHeader !== undefined) {
+      setInstitutionSubHeaderState(updates.institutionSubHeader);
+      localStorage.setItem("institution_subheader", updates.institutionSubHeader);
+      dbPayload["institution_subheader"] = updates.institutionSubHeader;
+    }
+    if (updates.institutionLogo !== undefined) {
+      setInstitutionLogoState(updates.institutionLogo);
+      localStorage.setItem("institution_logo", updates.institutionLogo);
+      dbPayload["institution_logo"] = updates.institutionLogo;
+    }
+    if (updates.institutionPhone !== undefined) {
+      setInstitutionPhoneState(updates.institutionPhone);
+      localStorage.setItem("institution_phone", updates.institutionPhone);
+      dbPayload["institution_phone"] = updates.institutionPhone;
+    }
+    if (updates.institutionEmail !== undefined) {
+      setInstitutionEmailState(updates.institutionEmail);
+      localStorage.setItem("institution_email", updates.institutionEmail);
+      dbPayload["institution_email"] = updates.institutionEmail;
+    }
+    if (updates.institutionWebsite !== undefined) {
+      setInstitutionWebsiteState(updates.institutionWebsite);
+      localStorage.setItem("institution_website", updates.institutionWebsite);
+      dbPayload["institution_website"] = updates.institutionWebsite;
+    }
+    if (updates.institutionKepAddress !== undefined) {
+      setInstitutionKepAddressState(updates.institutionKepAddress);
+      localStorage.setItem("institution_kep_address", updates.institutionKepAddress);
+      dbPayload["institution_kep_address"] = updates.institutionKepAddress;
+    }
+    if (updates.institutionAddress !== undefined) {
+      setInstitutionAddressState(updates.institutionAddress);
+      localStorage.setItem("institution_address", updates.institutionAddress);
+      dbPayload["institution_address"] = updates.institutionAddress;
+    }
+    if (updates.defaultCity !== undefined) {
+      setDefaultCityState(updates.defaultCity);
+      localStorage.setItem("default_city", updates.defaultCity);
+      dbPayload["default_city"] = updates.defaultCity;
+    }
+    if (updates.defaultDistrict !== undefined) {
+      setDefaultDistrictState(updates.defaultDistrict);
+      localStorage.setItem("default_district", updates.defaultDistrict);
+      dbPayload["default_district"] = updates.defaultDistrict;
+    }
+    if (updates.defaultTariffBasis !== undefined) {
+      setDefaultTariffBasisState(updates.defaultTariffBasis);
+      localStorage.setItem("default_tariff_basis", updates.defaultTariffBasis);
+      dbPayload["default_tariff_basis"] = updates.defaultTariffBasis;
+    }
+    if (updates.accountingModuleEnabled !== undefined) {
+      setAccountingModuleEnabledState(updates.accountingModuleEnabled);
+      localStorage.setItem("accounting_module_enabled", String(updates.accountingModuleEnabled));
+      dbPayload["accounting_module_enabled"] = String(updates.accountingModuleEnabled);
+    }
+
+    try {
+      if (Object.keys(dbPayload).length > 0) {
+        if (window.electronAPI?.db?.setSettingsBulk) {
+          await window.electronAPI.db.setSettingsBulk(dbPayload);
+        } else if (window.electronAPI?.db?.setSetting) {
+          for (const [k, v] of Object.entries(dbPayload)) {
+            await window.electronAPI.db.setSetting(k, v);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to save bulk settings to SQLite:", err);
+    }
+  };
+
   return {
     appName,
     institutionName,
@@ -240,7 +400,10 @@ export function useSettingsStore() {
     institutionWebsite,
     institutionKepAddress,
     institutionAddress,
+    defaultCity,
+    defaultDistrict,
     defaultTariffBasis,
+    accountingModuleEnabled,
     setAppName,
     setInstitutionName,
     setInstitutionSubHeader,
@@ -250,7 +413,11 @@ export function useSettingsStore() {
     setInstitutionWebsite,
     setInstitutionKepAddress,
     setInstitutionAddress,
+    setDefaultCity,
+    setDefaultDistrict,
     setDefaultTariffBasis,
+    setAccountingModuleEnabled,
+    saveSettingsBulk,
     reloadSettings: loadDbSettings,
   };
 }

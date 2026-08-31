@@ -25,6 +25,7 @@ import {
   getCurrentDbPath,
   getSetting,
   setSetting,
+  setSettingsBulk,
   getAllSettings,
   updateReservationStatus,
   updateReservationDetails,
@@ -594,6 +595,19 @@ safeHandle("db:get-setting", (_event, key: string) => {
 
 safeHandle("db:set-setting", (_event, { key, value }: { key: string; value: string }) => {
   setSetting(key, value);
+  const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("db-updated");
+  }
+  return true;
+});
+
+safeHandle("db:set-settings-bulk", (_event, settings: Record<string, string>) => {
+  setSettingsBulk(settings);
+  const win = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+  if (win && !win.isDestroyed()) {
+    win.webContents.send("db-updated");
+  }
   return true;
 });
 

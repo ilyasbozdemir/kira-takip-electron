@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { toast } from "sonner";
 import { sqliteStore } from "@/lib/db-client";
 
@@ -8,6 +8,14 @@ export function usePersonnelForm() {
   const [personnelPhone, setPersonnelPhone] = useState("");
   const [personnelEmail, setPersonnelEmail] = useState("");
   const [personnelNotes, setPersonnelNotes] = useState("");
+
+  const resetPersonnelForm = useCallback(() => {
+    setPersonnelName("");
+    setPersonnelTitle("");
+    setPersonnelPhone("");
+    setPersonnelEmail("");
+    setPersonnelNotes("");
+  }, []);
 
   const handleCreatePersonnel = async (e: React.FormEvent, onSuccess?: () => void) => {
     e.preventDefault();
@@ -23,11 +31,7 @@ export function usePersonnelForm() {
         email: personnelEmail.trim() || undefined,
         notes: personnelNotes.trim() || undefined,
       });
-      setPersonnelName("");
-      setPersonnelTitle("");
-      setPersonnelPhone("");
-      setPersonnelEmail("");
-      setPersonnelNotes("");
+      resetPersonnelForm();
       if (onSuccess) onSuccess();
       toast.success("Yeni personel başarıyla eklendi.");
     } catch (err: any) {
@@ -57,5 +61,6 @@ export function usePersonnelForm() {
     setPersonnelNotes,
     handleCreatePersonnel,
     removePersonnel,
+    resetPersonnelForm,
   };
 }

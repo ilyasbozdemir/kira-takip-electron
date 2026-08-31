@@ -1,9 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { toast } from "sonner";
 import {
   allEventTypes,
   hoursBetween,
-  toKey,
   type PricingMode,
   type Store,
 } from "@/lib/rental-store";
@@ -56,15 +55,38 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     }
   };
 
-  // Default Lump-Sum Session Price Initialization
+  // Reset form to clean initial state
+  const resetReservationForm = useCallback(() => {
+    setResCustomer("");
+    setResPhone("");
+    setResEmail("");
+    setGuestCount(0);
+    setResPrice(0);
+    setResPaid(0);
+    setResReceiptNo("");
+    setResPaymentMethod("Nakit");
+    setResStatus("confirmed");
+    setResNote("");
+    if (defaultTariffBasis) {
+      setResDecisionInfo(defaultTariffBasis);
+    }
+  }, [defaultTariffBasis]);
+
+  // Pricing calculation according to Hall's pricingType (session, hourly, daily)
   useEffect(() => {
     if (!resVenueId || !resHallId) return;
     const venue = store.venues.find((v) => v.id === resVenueId);
     const hall = venue?.halls.find((h) => h.id === resHallId);
     if (!hall) return;
 
-    setResPrice(hall.hourlyPrice);
-  }, [resVenueId, resHallId, store.venues]);
+    if (hall.pricingType === "hourly") {
+      const hours = hoursBetween(resStart, resEnd) || 1;
+      setResPrice(Math.round(hours * Number(hall.hourlyPrice)));
+    } else {
+      // session or daily lump-sum
+      setResPrice(Number(hall.hourlyPrice) || 0);
+    }
+  }, [resVenueId, resHallId, resStart, resEnd, store.venues]);
 
   // Customer Suggestions
   const customerSuggestions = useMemo(() => {
@@ -163,110 +185,92 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
           const venueMapUrl = venue?.mapUrl;
           const venueDistrict = venue?.district;
 
-          // Determine recipient:
-          // 1. resEmail alanına girilen müşteri e-postası (en güvenilir)
-          // 2. Müşteri adının kendisi e-posta formatında ise (eski destek)
-          // 3. Backup modu aktifse backup adresi
-          // 4. Hiçbiri yoksa → otomatik gönderim atlanır
           const directEmail = resEmail.trim();
           const customerHasEmail = resCustomer.includes("@");
           const backupEmail = smtpSettings.backupEmail || "";
 
           let recipientEmail = "";
           if (autoSettings.target === "backup" && backupEmail) {
-            // Backup modu: daima backup adresine gönder
             recipientEmail = backupEmail;
           } else if (directEmail) {
-            // Etkinlik formuna direkt girilen e-posta
             recipientEmail = directEmail;
           } else if (autoSettings.target === "both" && backupEmail) {
-            // Both modunda müşteri e-postası yoksa backup'a gönder
             recipientEmail = customerHasEmail ? resCustomer : backupEmail;
           } else if (customerHasEmail) {
-            // Sadece müşteriye gönder
             recipientEmail = resCustomer;
           }
 
-          // Hiç geçerli alıcı yoksa otomatik gönderimi atla — form sıfırlama devam eder
           const shouldSendEmail = !!recipientEmail;
-          if (!shouldSendEmail) {
-            // Müşterinin e-posta adresi yok → etkinlik kaydedildi, mail gönderilmeyecek.
-            // Kullanıcı etkinlik listesinden "E-posta" butonuyla manuel gönderebilir.
-          } else {
-
-          const emailHtml = generateEmailHTMLTemplate({
-            customer: resCustomer,
-            venueName,
-            hallName,
-            venueAddress,
-            venueMapUrl,
-            venueDistrict,
-            date: selectedDay,
-            start: resStart,
-            end: resEnd,
-            eventType: resEventType,
-            price: Number(resPrice) || 0,
-            paid: Number(resPaid) || 0,
-            phone: resPhone,
-          });
-
-          const icsContent = autoSettings.attachIcs !== false
-            ? generateSingleICS({
-                customer: resCustomer,
-                venueName,
-                hallName,
-                venueAddress,
-                venueMapUrl,
-                date: selectedDay,
-                start: resStart,
-                end: resEnd,
-                eventType: resEventType,
-                phone: resPhone,
-              })
-            : undefined;
-
-          const attachments = icsContent
-            ? [
-                {
-                  filename: "etkinlik-takvim-daveti.ics",
-                  content: icsContent,
-                  contentType: "text/calendar; charset=utf-8; method=REQUEST",
-                },
-              ]
-            : undefined;
-
-          if (window.electronAPI?.sendEmail) {
-            const res = await window.electronAPI.sendEmail({
-              smtpConfig: {
-                host: smtpSettings.host || "smtp.gmail.com",
-                port: Number(smtpSettings.port) || 587,
-                secure: smtpSettings.secure ?? false,
-                user: smtpSettings.user || "",
-                pass: smtpSettings.pass || "",
-                senderName: smtpSettings.senderName || "Mekan & Tesis Yönetimi",
-              },
-              mailData: {
-                to: recipientEmail,
-                subject: `⚡ Rezervasyon Onayı & Takvim Davetiyesi: ${resCustomer} (${selectedDay})`,
-                html: emailHtml,
-                attachments,
-              },
+          if (shouldSendEmail) {
+            const emailHtml = generateEmailHTMLTemplate({
+              customer: resCustomer,
+              venueName,
+              hallName,
+              venueAddress,
+              venueMapUrl,
+              venueDistrict,
+              date: selectedDay,
+              start: resStart,
+              end: resEnd,
+              eventType: resEventType,
+              price: Number(resPrice) || 0,
+              paid: Number(resPaid) || 0,
+              phone: resPhone,
             });
-            if (res?.success) {
-              toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi gönderildi!");
+
+            const icsContent = autoSettings.attachIcs !== false
+              ? generateSingleICS({
+                  customer: resCustomer,
+                  venueName,
+                  hallName,
+                  venueAddress,
+                  venueMapUrl,
+                  date: selectedDay,
+                  start: resStart,
+                  end: resEnd,
+                  eventType: resEventType,
+                  phone: resPhone,
+                })
+              : undefined;
+
+            const attachments = icsContent
+              ? [
+                  {
+                    filename: "etkinlik-takvim-daveti.ics",
+                    content: icsContent,
+                    contentType: "text/calendar; charset=utf-8; method=REQUEST",
+                  },
+                ]
+              : undefined;
+
+            if (window.electronAPI?.sendEmail) {
+              const res = await window.electronAPI.sendEmail({
+                smtpConfig: {
+                  host: smtpSettings.host || "smtp.gmail.com",
+                  port: Number(smtpSettings.port) || 587,
+                  secure: smtpSettings.secure ?? false,
+                  user: smtpSettings.user || "",
+                  pass: smtpSettings.pass || "",
+                  senderName: smtpSettings.senderName || "Mekan & Tesis Yönetimi",
+                },
+                mailData: {
+                  to: recipientEmail,
+                  subject: `⚡ Rezervasyon Onayı & Takvim Davetiyesi: ${resCustomer} (${selectedDay})`,
+                  html: emailHtml,
+                  attachments,
+                },
+              });
+              if (res?.success) {
+                toast.success("⚡ Otomatik e-posta & .ics takvim davetiyesi gönderildi!");
+              }
             }
           }
-          } // end else (shouldSendEmail)
         }
       } catch (e) {
         console.error("Otomatik e-posta gönderim hatası:", e);
       }
 
-      setResCustomer("");
-      setResPhone("");
-      setResEmail("");
-      setResReceiptNo("");
-      setResNote("");
+      resetReservationForm();
       if (onSuccess) onSuccess();
       toast.success("Etkinlik ve salon tahsis kaydı SQLite veritabanına eklendi!");
     } catch (err: any) {
@@ -316,5 +320,6 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     phoneSuggestions,
     decisionSuggestions,
     handleCreateReservation,
+    resetReservationForm,
   };
 }

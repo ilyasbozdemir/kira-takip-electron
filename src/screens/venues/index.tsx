@@ -6,6 +6,7 @@ import { VenueStatsHeader } from "./venue-stats-header";
 import { VenueCard } from "./venue-card";
 import { EditVenueModal } from "./edit-venue-modal";
 import { EditHallModal } from "./edit-hall-modal";
+import { VenueScheduleModal } from "./venue-schedule-modal";
 import { VenuesScreenProps } from "./types";
 import { type Hall, type Venue } from "@/lib/rental-store";
 
@@ -15,6 +16,10 @@ export function VenuesScreen({
   onOpenVenueModal,
   onOpenHallModal,
   onPromptDelete,
+  onOpenNewReservationModal,
+  onNavigateToCalendar,
+  defaultCity,
+  defaultDistrict,
 }: VenuesScreenProps): React.JSX.Element {
   const isDark = theme === "dark";
 
@@ -32,6 +37,7 @@ export function VenuesScreen({
   // Modal editing states
   const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
   const [editingHall, setEditingHall] = useState<{ venueId: string; hall: Hall } | null>(null);
+  const [scheduleVenueTarget, setScheduleVenueTarget] = useState<{ venue: Venue; hallId?: string } | null>(null);
 
   // Categories list
   const categories = useMemo(() => {
@@ -122,6 +128,9 @@ export function VenuesScreen({
                   onDeleteHall={(venueId, hallId, hallName) =>
                     onPromptDelete("hall", hallId, hallName, venueId)
                   }
+                  onViewVenueSchedule={(venue, hallId) =>
+                    setScheduleVenueTarget({ venue, hallId })
+                  }
                 />
               ))}
           </div>
@@ -148,6 +157,8 @@ export function VenuesScreen({
         editingVenue={editingVenue}
         onClose={() => setEditingVenue(null)}
         personnelList={store.personnel || []}
+        defaultCity={defaultCity}
+        defaultDistrict={defaultDistrict}
       />
 
       {/* Edit Hall Dialog Modal */}
@@ -155,6 +166,21 @@ export function VenuesScreen({
         theme={theme}
         editingHall={editingHall}
         onClose={() => setEditingHall(null)}
+      />
+
+      {/* Venue Schedule / Calendar Quick Modal */}
+      <VenueScheduleModal
+        theme={theme}
+        venue={scheduleVenueTarget?.venue || null}
+        initialHallId={scheduleVenueTarget?.hallId}
+        reservations={store.reservations || []}
+        onClose={() => setScheduleVenueTarget(null)}
+        onOpenNewReservation={(vId, hId) => {
+          if (onOpenNewReservationModal) {
+            onOpenNewReservationModal(vId, hId);
+          }
+        }}
+        onNavigateToCalendar={onNavigateToCalendar}
       />
     </div>
   );

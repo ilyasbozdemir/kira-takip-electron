@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 
+export type PricingType = "session" | "hourly" | "daily";
+
 export type Hall = {
   id: string;
   name: string;
   floor: string;
   capacity: number;
   hourlyPrice: number;
+  pricingType?: PricingType;
   color?: string;
 };
 
@@ -73,7 +76,34 @@ export type Customer = {
   createdAt?: string;
 };
 
-export type NavSection = "dashboard" | "calendar" | "venues" | "events" | "customers" | "personnel" | "reports" | "settings" | "help";
+export type TransactionType = "income" | "expense";
+
+export type FinancialTransaction = {
+  id: string;
+  type: TransactionType;
+  category: string;
+  amount: number;
+  date: string; // YYYY-MM-DD
+  paymentMethod: "Nakit" | "Havale/EFT" | "Kredi Kartı" | string;
+  receiptNo?: string;
+  venueId?: string;
+  reservationId?: string;
+  customerName?: string;
+  description?: string;
+  createdAt?: string;
+};
+
+export type NavSection =
+  | "dashboard"
+  | "calendar"
+  | "venues"
+  | "events"
+  | "customers"
+  | "personnel"
+  | "accounting"
+  | "reports"
+  | "settings"
+  | "help";
 export type PricingMode = "hourly" | "daily";
 
 export const allEventTypes = [
@@ -94,6 +124,7 @@ export type Store = {
   reservations: Reservation[];
   personnel?: Personnel[];
   customers?: Customer[];
+  transactions?: FinancialTransaction[];
 };
 
 const KEY = "belediye-kiralama-v2";

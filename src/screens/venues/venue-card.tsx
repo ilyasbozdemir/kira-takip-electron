@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Building2,
+  Calendar as CalendarIcon,
   DollarSign,
   ExternalLink,
   Layers,
@@ -30,6 +31,7 @@ interface VenueCardProps {
   onAddHall: (venueId: string) => void;
   onEditHall: (venueId: string, hall: Hall) => void;
   onDeleteHall: (venueId: string, hallId: string, hallName: string) => void;
+  onViewVenueSchedule?: (venue: Venue, hallId?: string) => void;
 }
 
 export const VenueCard: React.FC<VenueCardProps> = ({
@@ -40,6 +42,7 @@ export const VenueCard: React.FC<VenueCardProps> = ({
   onAddHall,
   onEditHall,
   onDeleteHall,
+  onViewVenueSchedule,
 }) => {
   const isDark = theme === "dark";
 
@@ -102,6 +105,21 @@ export const VenueCard: React.FC<VenueCardProps> = ({
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
+              {onViewVenueSchedule && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => onViewVenueSchedule(v)}
+                  className={`h-7 w-7 ${
+                    isDark
+                      ? "text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/50"
+                      : "text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                  }`}
+                  title="Tesis / Mekan Etkinlik Takvimi"
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                </Button>
+              )}
               <Button
                 size="icon"
                 variant="ghost"
@@ -286,12 +304,31 @@ export const VenueCard: React.FC<VenueCardProps> = ({
                           <Users className="h-2.5 w-2.5 text-slate-400" /> {h.capacity} Kişi
                         </span>
                         <span className="flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 font-bold">
-                          <DollarSign className="h-2.5 w-2.5" /> {money(h.hourlyPrice)} / sa
+                          <DollarSign className="h-2.5 w-2.5" />
+                          {money(h.hourlyPrice)}{" "}
+                          <span className="text-[9px] font-normal text-slate-400">
+                            {h.pricingType === "hourly"
+                              ? "/ saat"
+                              : h.pricingType === "daily"
+                              ? "/ gün"
+                              : "/ seans"}
+                          </span>
                         </span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-0.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                      {onViewVenueSchedule && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => onViewVenueSchedule(v, h.id)}
+                          className="h-6 w-6 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
+                          title="Salon Etkinlik Takvimini Aç"
+                        >
+                          <CalendarIcon className="h-3 w-3" />
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant="ghost"

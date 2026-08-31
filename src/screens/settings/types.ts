@@ -34,11 +34,17 @@ export interface SettingsScreenProps {
   setDraftInstitutionKepAddress: (v: string) => void;
   draftInstitutionAddress: string;
   setDraftInstitutionAddress: (v: string) => void;
+  draftDefaultCity?: string;
+  setDraftDefaultCity?: (v: string) => void;
+  draftDefaultDistrict?: string;
+  setDraftDefaultDistrict?: (v: string) => void;
   handleCancelInstitutionSettings: () => void;
   handleSaveInstitutionSettings: () => void;
   draftTariffBasis: string;
   setDraftTariffBasis: (v: string) => void;
   handleCancelTariffSettings: () => void;
   handleSaveTariffSettings: () => void;
+  accountingModuleEnabled?: boolean;
+  setAccountingModuleEnabled?: (enabled: boolean) => void;
   store: Store;
 }

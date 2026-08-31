@@ -44,6 +44,7 @@ export const electronAPI = {
     switchDatabase: (filePath: string) => ipcRenderer.invoke("db:switch-path", filePath),
     getSetting: (key: string) => ipcRenderer.invoke("db:get-setting", key),
     setSetting: (key: string, value: string) => ipcRenderer.invoke("db:set-setting", { key, value }),
+    setSettingsBulk: (settings: Record<string, string>) => ipcRenderer.invoke("db:set-settings-bulk", settings),
     getAllSettings: () => ipcRenderer.invoke("db:get-all-settings"),
     getPersonnel: () => ipcRenderer.invoke("db:get-personnel"),
     addPersonnel: (p: { name: string; title?: string; phone?: string; email?: string; notes?: string }) => ipcRenderer.invoke("db:add-personnel", p),

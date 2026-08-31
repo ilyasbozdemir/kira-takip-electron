@@ -14,6 +14,7 @@ import {
   Settings,
   User,
   Users,
+  WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { NavSection, Store } from "@/lib/rental-store";
@@ -31,6 +32,7 @@ interface AppSidebarProps {
   store: Store;
   institutionName: string;
   institutionLogo: string;
+  accountingModuleEnabled?: boolean;
 }
 
 export function AppSidebar({
@@ -45,10 +47,45 @@ export function AppSidebar({
   store,
   institutionName,
   institutionLogo,
+  accountingModuleEnabled = true,
 }: AppSidebarProps): React.JSX.Element {
-  // Active operator / user personnel data
-  const activePersonnel =
-    store.personnel && store.personnel.length > 0 ? store.personnel[0] : null;
+  // Navigation items list
+  const navItems = [
+    { id: "dashboard", label: "Gösterge Paneli", icon: LayoutDashboard },
+    { id: "calendar", label: "Takvim & Etkinlikler", icon: CalendarIcon },
+    {
+      id: "venues",
+      label: `Mekanlar & Salonlar (${store.venues.length})`,
+      icon: Building2,
+    },
+    {
+      id: "events",
+      label: `Etkinlik Listesi (${store.reservations.length})`,
+      icon: Layers,
+    },
+    {
+      id: "customers",
+      label: `Müşteri Rehberi (${store.customers?.length || 0})`,
+      icon: Users,
+    },
+    {
+      id: "personnel",
+      label: `Personel Kadrosu (${store.personnel?.length || 0})`,
+      icon: User,
+    },
+    ...(accountingModuleEnabled
+      ? [
+          {
+            id: "accounting",
+            label: "Muhasebe & Kasa",
+            icon: WalletCards,
+          },
+        ]
+      : []),
+    { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
+    { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
+    { id: "help", label: "Yardım & Rehber", icon: HelpCircle },
+  ];
 
   return (
     <aside
@@ -62,33 +99,7 @@ export function AppSidebar({
     >
       {/* Navigation Items */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {[
-          { id: "dashboard", label: "Gösterge Paneli", icon: LayoutDashboard },
-          { id: "calendar", label: "Takvim & Etkinlikler", icon: CalendarIcon },
-          {
-            id: "venues",
-            label: `Mekanlar & Salonlar (${store.venues.length})`,
-            icon: Building2,
-          },
-          {
-            id: "events",
-            label: `Etkinlik Listesi (${store.reservations.length})`,
-            icon: Layers,
-          },
-          {
-            id: "customers",
-            label: `Müşteri Rehberi (${store.customers?.length || 0})`,
-            icon: Users,
-          },
-          {
-            id: "personnel",
-            label: `Personel Kadrosu (${store.personnel?.length || 0})`,
-            icon: User,
-          },
-          { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
-          { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
-          { id: "help", label: "Yardım & Rehber", icon: HelpCircle },
-        ].map((item) => {
+        {navItems.map((item) => {
           const IconComp = item.icon;
           const isActive = activeSection === item.id;
           return (
@@ -189,6 +200,7 @@ export function AppSidebar({
             <div className="min-w-0 flex-1">
               <div className="flex items-center justify-between">
                 <span
+                  title={institutionName}
                   className={`text-xs font-bold truncate ${
                     theme === "dark" ? "text-slate-100" : "text-slate-900"
                   }`}
