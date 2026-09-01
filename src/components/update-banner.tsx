@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, RefreshCw, AlertCircle, CheckCircle, X } from "lucide-react";
+import { Download, RefreshCw, AlertCircle, CheckCircle, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ export function UpdateBanner() {
   const [version, setVersion] = useState<string>("");
   const [percent, setPercent] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [dismissed, setDismissed] = useState<boolean>(false);
 
   useEffect(() => {
@@ -23,7 +24,8 @@ export function UpdateBanner() {
       } else if (data.status === "downloading") {
         setPercent(Math.round(data.percent || 0));
       } else if (data.status === "downloaded") {
-        toast.success("Güncelleme indirildi! Uygulama yeniden başlatılarak otomatik güncellenecek.");
+        setCountdown(10);
+        toast.success("⚡ Güncelleme indirildi! 10 saniye içinde otomatik kurulup yeniden başlatılacak.");
       } else if (data.status === "error") {
         setErrorMessage(data.error || "Güncelleme kontrolü başarısız.");
       }
@@ -33,6 +35,23 @@ export function UpdateBanner() {
       unsubscribe();
     };
   }, []);
+
+  // Countdown effect to automatically trigger installation
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      if (window.electronAPI?.quitAndInstall) {
+        window.electronAPI.quitAndInstall();
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const handleDownload = async () => {
     if (window.electronAPI?.downloadUpdate) {
@@ -44,6 +63,12 @@ export function UpdateBanner() {
     if (window.electronAPI?.quitAndInstall) {
       window.electronAPI.quitAndInstall();
     }
+  };
+
+  const handlePostpone = () => {
+    setCountdown(null);
+    setDismissed(true);
+    toast.info("Güncelleme ertelendi. Uygulama kapatıldığında otomatik kurulacaktır.");
   };
 
   if (dismissed || status === "idle" || status === "not-available") {
@@ -86,7 +111,7 @@ export function UpdateBanner() {
           <>
             <CheckCircle className="h-4 w-4 text-emerald-400" />
             <span className="text-emerald-300 font-medium">
-              Güncelleme hazır! Değişikliklerin uygulanması için yeniden başlatın.
+              ⚡ Güncelleme hazır! {countdown !== null ? `${countdown}s içinde otomatik kurulacak.` : "Değişikliklerin uygulanması için yeniden başlatın."}
             </span>
           </>
         )}
@@ -111,18 +136,28 @@ export function UpdateBanner() {
         )}
 
         {status === "downloaded" && (
-          <Button
-            size="sm"
-            onClick={handleRestart}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white h-8 text-xs font-medium"
-          >
-            Yeniden Başlat & Güncelle
-          </Button>
+          <>
+            <Button
+              size="sm"
+              onClick={handleRestart}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white h-8 text-xs font-medium gap-1.5"
+            >
+              <Zap className="h-3.5 w-3.5" /> Hemen Yeniden Başlat & Kur
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handlePostpone}
+              className="border-slate-700 text-slate-300 hover:bg-slate-800 h-8 text-xs font-medium"
+            >
+              Ertele
+            </Button>
+          </>
         )}
 
         <button
-          onClick={() => setDismissed(true)}
-          className="text-slate-400 hover:text-slate-200 p-1 rounded-md"
+          onClick={handlePostpone}
+          className="text-slate-400 hover:text-slate-200 p-1 rounded-md cursor-pointer"
         >
           <X className="h-4 w-4" />
         </button>
