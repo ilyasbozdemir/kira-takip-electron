@@ -902,4 +902,11 @@ function initAutoUpdater() {
       autoUpdater.checkForUpdates().catch(() => {});
     }
   }, 5000);
+
+  // Periodic silent background update check every 30 minutes
+  setInterval(() => {
+    if (app.isPackaged) {
+      autoUpdater.checkForUpdates().catch(() => {});
+    }
+  }, 30 * 60 * 1000);
 }

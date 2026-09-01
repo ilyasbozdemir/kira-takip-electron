@@ -22,6 +22,9 @@ export interface CalendarScreenProps {
   hallById: (id: string) => { name: string; color?: string } | undefined;
   getEventTypeColor: (type?: string) => string;
   today: Date;
+  workingYear?: string;
+  setWorkingYear?: (y: string) => void;
+  onOpenExportModal?: () => void;
   onOpenNewReservationModal: () => void;
   onSelectReservation: (r: Reservation) => void;
   onPromptDeleteReservation: (id: string, title: string) => void;

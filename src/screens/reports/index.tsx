@@ -6,6 +6,7 @@ import { PaymentListTab } from "./payment-list-tab";
 import { ReportsScreenProps, VenueStatItem } from "./types";
 import { QuickPaymentModal } from "@/screens/accounting/quick-payment-modal";
 import { type Reservation } from "@/lib/rental-store";
+import { exportReservationsToExcel } from "@/lib/export-excel-template";
 
 export function ReportsScreen({
   theme,
@@ -83,62 +84,23 @@ export function ReportsScreen({
     });
   }, [store, searchTerm, paymentStatusFilter]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!store?.reservations || store.reservations.length === 0) {
-      toast.error("Dışa aktarılacak rezervasyon verisi bulunmuyor.");
+      toast.warning("Dışa aktarılacak etkinlik veya rezervasyon kaydı bulunamadı.");
       return;
     }
 
-    const headers = [
-      "ID",
-      "Tarih",
-      "Baslangic",
-      "Bitis",
-      "Musteri",
-      "Telefon",
-      "Mekan",
-      "Salon",
-      "Etkinlik Turu",
-      "Toplam Fiyat (TL)",
-      "Odenen (TL)",
-      "Kalan (TL)",
-      "Makbuz No",
-      "Durum",
-    ];
-
-    const rows = store.reservations.map((r) => {
-      const v = store.venues.find((x) => x.id === r.venueId);
-      const h = v?.halls?.find((x) => x.id === r.hallId);
-      const rem = (Number(r.price) || 0) - (Number(r.paid) || 0);
-
-      return [
-        `"${r.id}"`,
-        `"${r.date}"`,
-        `"${r.start}"`,
-        `"${r.end}"`,
-        `"${(r.customer || "").replace(/"/g, '""')}"`,
-        `"${r.phone || ""}"`,
-        `"${(v?.name || "").replace(/"/g, '""')}"`,
-        `"${(h?.name || "").replace(/"/g, '""')}"`,
-        `"${r.eventType || "Etkinlik"}"`,
-        r.price || 0,
-        r.paid || 0,
-        rem,
-        `"${r.receiptNo || ""}"`,
-        `"${r.status === "option" ? "Opsiyon" : "Kesin"}"`,
-      ].join(";");
-    });
-
-    const csvContent = "\uFEFF" + [headers.join(";"), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Finansal_Rapor_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success("Muhasebe ve finans raporu Excel formatında (.csv) indirildi!");
+    try {
+      await exportReservationsToExcel({
+        reportTitle: "GENEL ETKİNLİK, SALON TAHSİS VE GELİR RAPORU",
+        reservations: store.reservations,
+        venues: store.venues || [],
+        filterSummary: "Tüm Tesisler ve Salonlar",
+      });
+      toast.success("📊 Kurumsal Excel tablosu (.xlsx) başarıyla indirildi!");
+    } catch (err: any) {
+      toast.error(`Excel dışa aktarma hatası: ${err.message || err}`);
+    }
   };
 
   const handlePrint = () => {

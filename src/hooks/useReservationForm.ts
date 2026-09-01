@@ -120,7 +120,11 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     return Array.from(set);
   }, [store.reservations, defaultTariffBasis]);
 
-  const handleCreateReservation = async (e: React.FormEvent, onSuccess?: () => void) => {
+  // Confirmation Modal State before Saving
+  const [isConfirmDateModalOpen, setIsConfirmDateModalOpen] = useState(false);
+  const [onSuccessCallback, setOnSuccessCallback] = useState<(() => void) | null>(null);
+
+  const handleCreateReservation = (e: React.FormEvent, onSuccess?: () => void) => {
     e.preventDefault();
     if (!resVenueId || !resHallId || !resCustomer || !resPhone) {
       toast.error("Lütfen tüm zorunlu alanları doldurun.");
@@ -137,6 +141,11 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
       return;
     }
 
+    if (onSuccess) setOnSuccessCallback(() => onSuccess);
+    setIsConfirmDateModalOpen(true);
+  };
+
+  const executeConfirmedCreateReservation = async () => {
     try {
       const formattedNote = [
         resNote.trim(),
@@ -270,8 +279,9 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
         console.error("Otomatik e-posta gönderim hatası:", e);
       }
 
+      setIsConfirmDateModalOpen(false);
       resetReservationForm();
-      if (onSuccess) onSuccess();
+      if (onSuccessCallback) onSuccessCallback();
       toast.success("Etkinlik ve salon tahsis kaydı SQLite veritabanına eklendi!");
     } catch (err: any) {
       toast.error(`Kayıt hatası: ${err.message || err}`);
@@ -320,6 +330,9 @@ export function useReservationForm(store: Store, defaultTariffBasis: string, sel
     phoneSuggestions,
     decisionSuggestions,
     handleCreateReservation,
+    isConfirmDateModalOpen,
+    setIsConfirmDateModalOpen,
+    executeConfirmedCreateReservation,
     resetReservationForm,
   };
 }

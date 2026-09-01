@@ -39,6 +39,9 @@ import { HelpScreen } from "@/screens/help.screen";
 import { generateEmailHTMLTemplate, generateBackupEmailContent } from "@/lib/email-template";
 import { ExitBackupModal } from "@/components/modals/exit-backup-modal";
 import { SplashScreen } from "@/components/splash-screen";
+import { ReservationDateConfirmModal } from "@/components/modals/reservation-date-confirm-modal";
+import { PastRecordSecurityModal } from "@/components/modals/past-record-security-modal";
+import { AdvancedExportModal } from "@/components/modals/advanced-export-modal";
 
 export function App(): React.JSX.Element {
   // Startup Splash Screen State
@@ -77,6 +80,10 @@ export function App(): React.JSX.Element {
     defaultDistrict,
     defaultTariffBasis,
     accountingModuleEnabled,
+    workingYear,
+    securityPin,
+    authorizedPersonnelName,
+    authorizedPersonnelTitle,
     setAppName,
     setInstitutionName,
     setInstitutionSubHeader,
@@ -90,6 +97,10 @@ export function App(): React.JSX.Element {
     setDefaultDistrict,
     setDefaultTariffBasis,
     setAccountingModuleEnabled,
+    setWorkingYear,
+    setSecurityPin,
+    setAuthorizedPersonnelName,
+    setAuthorizedPersonnelTitle,
     saveSettingsBulk,
     reloadSettings,
   } = useSettingsStore();
@@ -111,6 +122,15 @@ export function App(): React.JSX.Element {
 
   // Launcher Modal State
   const [showLauncherModal, setShowLauncherModal] = useState(false);
+
+  // Export & Security Modals State
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [pastRecordSecurityOpen, setPastRecordSecurityOpen] = useState(false);
+  const [pastRecordTarget, setPastRecordTarget] = useState<{
+    id: string;
+    title: string;
+    date: string;
+  } | null>(null);
 
   // SQLite Store State
   const [store, setStore] = useState(sqliteStore.getSnapshot());
@@ -429,6 +449,10 @@ export function App(): React.JSX.Element {
   );
   const [draftDefaultCity, setDraftDefaultCity] = useState(defaultCity || "Ankara");
   const [draftDefaultDistrict, setDraftDefaultDistrict] = useState(defaultDistrict || "Çankaya");
+  const [draftWorkingYear, setDraftWorkingYear] = useState(workingYear || "2026");
+  const [draftSecurityPin, setDraftSecurityPin] = useState(securityPin || "");
+  const [draftAuthorizedPersonnelName, setDraftAuthorizedPersonnelName] = useState(authorizedPersonnelName || "");
+  const [draftAuthorizedPersonnelTitle, setDraftAuthorizedPersonnelTitle] = useState(authorizedPersonnelTitle || "Tesis & İşletme Müdürü");
   const [draftTariffBasis, setDraftTariffBasis] = useState(defaultTariffBasis);
 
   useEffect(() => {
@@ -443,6 +467,10 @@ export function App(): React.JSX.Element {
     setDraftInstitutionAddress(institutionAddress);
     setDraftDefaultCity(defaultCity || "Ankara");
     setDraftDefaultDistrict(defaultDistrict || "Çankaya");
+    setDraftWorkingYear(workingYear || "2026");
+    setDraftSecurityPin(securityPin || "");
+    setDraftAuthorizedPersonnelName(authorizedPersonnelName || "");
+    setDraftAuthorizedPersonnelTitle(authorizedPersonnelTitle || "Tesis & İşletme Müdürü");
   }, [
     appName,
     institutionName,
@@ -455,6 +483,10 @@ export function App(): React.JSX.Element {
     institutionAddress,
     defaultCity,
     defaultDistrict,
+    workingYear,
+    securityPin,
+    authorizedPersonnelName,
+    authorizedPersonnelTitle,
   ]);
 
   useEffect(() => {
@@ -474,9 +506,13 @@ export function App(): React.JSX.Element {
       institutionAddress: draftInstitutionAddress,
       defaultCity: draftDefaultCity,
       defaultDistrict: draftDefaultDistrict,
+      workingYear: draftWorkingYear,
+      securityPin: draftSecurityPin,
+      authorizedPersonnelName: draftAuthorizedPersonnelName,
+      authorizedPersonnelTitle: draftAuthorizedPersonnelTitle,
     });
     toast.success(
-      "Kurumsal kimlik, logo, iletişim, bölge (il/ilçe) ve KEP bilgileri kaydedildi.",
+      "Kurumsal kimlik, logo, çalışma yılı, yetkili personel ve güvenlik şifresi kaydedildi.",
     );
   };
 
@@ -492,6 +528,10 @@ export function App(): React.JSX.Element {
     setDraftInstitutionAddress(institutionAddress);
     setDraftDefaultCity(defaultCity || "Ankara");
     setDraftDefaultDistrict(defaultDistrict || "Çankaya");
+    setDraftWorkingYear(workingYear || "2026");
+    setDraftSecurityPin(securityPin || "");
+    setDraftAuthorizedPersonnelName(authorizedPersonnelName || "");
+    setDraftAuthorizedPersonnelTitle(authorizedPersonnelTitle || "Tesis & İşletme Müdürü");
     toast.info("Değişiklikler iptal edildi.");
   };
 
@@ -582,6 +622,9 @@ export function App(): React.JSX.Element {
     phoneSuggestions,
     decisionSuggestions,
     handleCreateReservation,
+    isConfirmDateModalOpen,
+    setIsConfirmDateModalOpen,
+    executeConfirmedCreateReservation,
     resetReservationForm,
   } = useReservationForm(store, defaultTariffBasis, selectedDay);
 
@@ -733,14 +776,34 @@ export function App(): React.JSX.Element {
     if (type === "reservation") {
       const res = store.reservations.find((r) => r.id === id);
       if (res && res.date < toKey(new Date())) {
-        toast.error(
-          "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!",
-        );
+        // Open Past Record Security Modal with Admin PIN verification
+        setPastRecordTarget({
+          id: res.id,
+          title: res.customer,
+          date: res.date,
+        });
+        setPastRecordSecurityOpen(true);
         return;
       }
     }
     setDeleteTarget({ type, id, title, venueId });
     setDeleteConfirmOpen(true);
+  };
+
+  const handleExecutePastRecordDelete = async () => {
+    if (!pastRecordTarget) return;
+    try {
+      await sqliteStore.deleteReservation(pastRecordTarget.id);
+      toast.success(`"${pastRecordTarget.title}" geçmiş etkinlik kaydı yetkili onayı ile silindi.`);
+      if (selectedReservation?.id === pastRecordTarget.id) {
+        setSelectedReservation(null);
+      }
+    } catch (err: any) {
+      toast.error(`Kayıt silme hatası: ${err.message || err}`);
+    } finally {
+      setPastRecordTarget(null);
+      setPastRecordSecurityOpen(false);
+    }
   };
 
   const handleExecuteDelete = async () => {
@@ -753,13 +816,6 @@ export function App(): React.JSX.Element {
         await sqliteStore.deleteHall(deleteTarget.venueId, deleteTarget.id);
         toast.success(`"${deleteTarget.title}" salonu silindi.`);
       } else if (deleteTarget.type === "reservation") {
-        const res = store.reservations.find((r) => r.id === deleteTarget.id);
-        if (res && res.date < toKey(new Date())) {
-          toast.error(
-            "Geçmiş tarihli etkinlik ve tahsis kayıtları mali ve resmi denetim güvenliği nedeniyle silinemez!",
-          );
-          return;
-        }
         await sqliteStore.deleteReservation(deleteTarget.id);
         toast.success(`"${deleteTarget.title}" rezervasyonu silindi.`);
       }
@@ -963,6 +1019,9 @@ export function App(): React.JSX.Element {
                   }}
                   onCopySMS={handleCopySMS}
                   onQuickMail={handleQuickMail}
+                  workingYear={workingYear}
+                  setWorkingYear={setWorkingYear}
+                  onOpenExportModal={() => setExportModalOpen(true)}
                   onNavigateToCustomer={(custName) => {
                     setSearchTerm(custName);
                     setActiveSection("customers");
@@ -1124,6 +1183,14 @@ export function App(): React.JSX.Element {
                   setDraftDefaultCity={setDraftDefaultCity}
                   draftDefaultDistrict={draftDefaultDistrict}
                   setDraftDefaultDistrict={setDraftDefaultDistrict}
+                  draftWorkingYear={draftWorkingYear}
+                  setDraftWorkingYear={setDraftWorkingYear}
+                  draftSecurityPin={draftSecurityPin}
+                  setDraftSecurityPin={setDraftSecurityPin}
+                  draftAuthorizedPersonnelName={draftAuthorizedPersonnelName}
+                  setDraftAuthorizedPersonnelName={setDraftAuthorizedPersonnelName}
+                  draftAuthorizedPersonnelTitle={draftAuthorizedPersonnelTitle}
+                  setDraftAuthorizedPersonnelTitle={setDraftAuthorizedPersonnelTitle}
                   handleCancelInstitutionSettings={handleCancelInstitutionSettings}
                   handleSaveInstitutionSettings={handleSaveInstitutionSettings}
                   draftTariffBasis={draftTariffBasis}
@@ -1301,6 +1368,53 @@ export function App(): React.JSX.Element {
         trashModalOpen={trashModalOpen}
         setTrashModalOpen={setTrashModalOpen}
         onReservationRestored={() => sqliteStore.loadFromDb()}
+      />
+
+      {/* Date & Time Confirmation Modal before saving reservation */}
+      <ReservationDateConfirmModal
+        open={isConfirmDateModalOpen}
+        onOpenChange={setIsConfirmDateModalOpen}
+        theme={theme}
+        date={selectedDay}
+        start={resStart}
+        end={resEnd}
+        timeSlotSession={timeSlotSession}
+        venueName={store.venues.find((v) => v.id === resVenueId)?.name || "Tesis"}
+        hallName={store.venues.flatMap((v) => v.halls).find((h) => h.id === resHallId)?.name || "Salon"}
+        customer={resCustomer}
+        phone={resPhone}
+        eventType={resEventType}
+        price={Number(resPrice) || 0}
+        paid={Number(resPaid) || 0}
+        onConfirm={executeConfirmedCreateReservation}
+      />
+
+      {/* Past Record Deletion Security PIN Modal */}
+      {pastRecordTarget && (
+        <PastRecordSecurityModal
+          open={pastRecordSecurityOpen}
+          onOpenChange={setPastRecordSecurityOpen}
+          theme={theme}
+          recordTitle={pastRecordTarget.title}
+          recordDate={pastRecordTarget.date}
+          authorizedPersonnelName={authorizedPersonnelName}
+          authorizedPersonnelTitle={authorizedPersonnelTitle}
+          savedSecurityPin={securityPin}
+          onSuccess={handleExecutePastRecordDelete}
+        />
+      )}
+
+      {/* Advanced Excel & Official PDF Export Modal */}
+      <AdvancedExportModal
+        open={exportModalOpen}
+        onOpenChange={setExportModalOpen}
+        theme={theme}
+        reservations={store.reservations}
+        venues={store.venues}
+        workingYear={workingYear}
+        institutionName={institutionName}
+        institutionSubHeader={institutionSubHeader}
+        institutionLogo={institutionLogo}
       />
 
       <ExitBackupModal

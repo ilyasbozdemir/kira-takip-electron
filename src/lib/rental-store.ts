@@ -149,7 +149,19 @@ export const trMonths = [
   "Aralık",
 ];
 
+export const trMonthsFull = trMonths;
+
 export const trDays = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+
+export const trDaysFull = [
+  "Pazar",
+  "Pazartesi",
+  "Salı",
+  "Çarşamba",
+  "Perşembe",
+  "Cuma",
+  "Cumartesi",
+];
 
 export const money = (n: number) =>
   new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(n);

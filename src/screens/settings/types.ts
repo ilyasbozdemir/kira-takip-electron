@@ -38,6 +38,14 @@ export interface SettingsScreenProps {
   setDraftDefaultCity?: (v: string) => void;
   draftDefaultDistrict?: string;
   setDraftDefaultDistrict?: (v: string) => void;
+  draftWorkingYear?: string;
+  setDraftWorkingYear?: (v: string) => void;
+  draftSecurityPin?: string;
+  setDraftSecurityPin?: (v: string) => void;
+  draftAuthorizedPersonnelName?: string;
+  setDraftAuthorizedPersonnelName?: (v: string) => void;
+  draftAuthorizedPersonnelTitle?: string;
+  setDraftAuthorizedPersonnelTitle?: (v: string) => void;
   handleCancelInstitutionSettings: () => void;
   handleSaveInstitutionSettings: () => void;
   draftTariffBasis: string;

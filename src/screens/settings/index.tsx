@@ -47,6 +47,14 @@ export function SettingsScreen({
   setDraftDefaultCity,
   draftDefaultDistrict,
   setDraftDefaultDistrict,
+  draftWorkingYear,
+  setDraftWorkingYear,
+  draftSecurityPin,
+  setDraftSecurityPin,
+  draftAuthorizedPersonnelName,
+  setDraftAuthorizedPersonnelName,
+  draftAuthorizedPersonnelTitle,
+  setDraftAuthorizedPersonnelTitle,
   handleCancelInstitutionSettings,
   handleSaveInstitutionSettings,
   draftTariffBasis,
@@ -137,6 +145,14 @@ export function SettingsScreen({
             setDraftDefaultCity={setDraftDefaultCity}
             draftDefaultDistrict={draftDefaultDistrict}
             setDraftDefaultDistrict={setDraftDefaultDistrict}
+            draftWorkingYear={draftWorkingYear}
+            setDraftWorkingYear={setDraftWorkingYear}
+            draftSecurityPin={draftSecurityPin}
+            setDraftSecurityPin={setDraftSecurityPin}
+            draftAuthorizedPersonnelName={draftAuthorizedPersonnelName}
+            setDraftAuthorizedPersonnelName={setDraftAuthorizedPersonnelName}
+            draftAuthorizedPersonnelTitle={draftAuthorizedPersonnelTitle}
+            setDraftAuthorizedPersonnelTitle={setDraftAuthorizedPersonnelTitle}
             handleCancelInstitutionSettings={handleCancelInstitutionSettings}
             handleSaveInstitutionSettings={handleSaveInstitutionSettings}
           />

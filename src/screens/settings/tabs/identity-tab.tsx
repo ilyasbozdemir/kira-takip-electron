@@ -1,14 +1,19 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   Building2,
+  Calendar,
   Check,
+  Eye,
+  EyeOff,
   Globe,
+  Lock,
   Mail,
   MapPin,
   Phone,
   ShieldCheck,
   Upload,
   User,
+  UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +61,14 @@ interface IdentityTabProps {
   setDraftDefaultCity?: (v: string) => void;
   draftDefaultDistrict?: string;
   setDraftDefaultDistrict?: (v: string) => void;
+  draftWorkingYear?: string;
+  setDraftWorkingYear?: (v: string) => void;
+  draftSecurityPin?: string;
+  setDraftSecurityPin?: (v: string) => void;
+  draftAuthorizedPersonnelName?: string;
+  setDraftAuthorizedPersonnelName?: (v: string) => void;
+  draftAuthorizedPersonnelTitle?: string;
+  setDraftAuthorizedPersonnelTitle?: (v: string) => void;
   handleCancelInstitutionSettings: () => void;
   handleSaveInstitutionSettings: () => void;
 }
@@ -85,11 +98,20 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
   setDraftDefaultCity,
   draftDefaultDistrict = "Çankaya",
   setDraftDefaultDistrict,
+  draftWorkingYear = "2026",
+  setDraftWorkingYear,
+  draftSecurityPin = "",
+  setDraftSecurityPin,
+  draftAuthorizedPersonnelName = "",
+  setDraftAuthorizedPersonnelName,
+  draftAuthorizedPersonnelTitle = "Tesis & İşletme Müdürü",
+  setDraftAuthorizedPersonnelTitle,
   handleCancelInstitutionSettings,
   handleSaveInstitutionSettings,
 }) => {
   const isDark = theme === "dark";
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const [showSecurityPin, setShowSecurityPin] = useState(false);
 
   const availableDistricts = getDistrictsForCity(draftDefaultCity);
 
@@ -366,6 +388,108 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
               rows={2}
               className="mt-1 text-xs resize-none"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 5. Çalışma Yılı, Yetkili Personel & Güvenlik Şifresi */}
+      <Card className={isDark ? "bg-slate-900/80 border-slate-800" : "bg-white border-slate-200 shadow-sm"}>
+        <CardHeader>
+          <CardTitle className={`text-base font-bold flex items-center gap-2 ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+            <Lock className="h-5 w-5 text-indigo-500" /> Aktif Çalışma Yılı, Yetkili Personel & Yönetici Şifresi
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-400">
+            Takvim çalışma yılını sabitleyin, yetkili personel tanımlayın ve geçmiş kayıt silme / kritik işlem onay şifresini belirleyin.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-indigo-500" /> Sistem Çalışma Yılı *
+              </Label>
+              <Select
+                value={draftWorkingYear}
+                onValueChange={(val) => {
+                  if (setDraftWorkingYear) setDraftWorkingYear(val);
+                }}
+              >
+                <SelectTrigger className={`mt-1 text-xs h-8 font-semibold ${isDark ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-slate-50 border-slate-300 text-slate-900"}`}>
+                  <SelectValue placeholder="Çalışma Yılı Seçin..." />
+                </SelectTrigger>
+                <SelectContent className={`max-h-60 ${isDark ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-900"}`}>
+                  {Array.from({ length: 12 }, (_, i) => 2024 + i).map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      📅 {y} Mali / Çalışma Yılı
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[10px] text-slate-500 mt-1">
+                Takvim ve filtreler varsayılan olarak bu çalışma yılını baz alır, kontrolsüz yıl atlamasını engeller.
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Lock className="h-3.5 w-3.5 text-amber-500" /> Yönetici Güvenlik & Silme Şifresi
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowSecurityPin(!showSecurityPin)}
+                  className="text-[10px] text-indigo-500 hover:text-indigo-400 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  {showSecurityPin ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {showSecurityPin ? "Gizle" : "Göster"}
+                </button>
+              </Label>
+              <div className="relative mt-1">
+                <Input
+                  type={showSecurityPin ? "text" : "password"}
+                  value={draftSecurityPin}
+                  onChange={(e) =>
+                    setDraftSecurityPin && setDraftSecurityPin(e.target.value)
+                  }
+                  placeholder="Yönetici güvenlik şifresi belirleyin..."
+                  className="text-xs font-mono pr-8"
+                />
+              </div>
+              <p className="text-[10px] text-slate-500 mt-1">
+                🔒 Geçmiş tarihli resmi rezervasyonları silmek veya çöp kutusunu kalıcı boşaltmak için bu şifre sorulur.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <UserCheck className="h-3.5 w-3.5 text-sky-500" /> Onay Yetkilisi Adı Soyadı
+              </Label>
+              <Input
+                value={draftAuthorizedPersonnelName}
+                onChange={(e) =>
+                  setDraftAuthorizedPersonnelName && setDraftAuthorizedPersonnelName(e.target.value)
+                }
+                placeholder="Örn: İlyas Bozdemir"
+                className="mt-1 text-xs"
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" /> Yetkili Personel Görevi / Unvanı
+              </Label>
+              <Input
+                value={draftAuthorizedPersonnelTitle}
+                onChange={(e) =>
+                  setDraftAuthorizedPersonnelTitle && setDraftAuthorizedPersonnelTitle(e.target.value)
+                }
+                placeholder="Örn: Tesis ve Salon İşletme Müdürü"
+                className="mt-1 text-xs"
+              />
+            </div>
           </div>
 
           <div className="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-2">

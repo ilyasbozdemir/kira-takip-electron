@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  FileSpreadsheet,
   Grid as GridIcon,
   Plus,
 } from "lucide-react";
@@ -30,6 +31,9 @@ interface CalendarToolbarProps {
   setCalendarVenueFilter: (v: string) => void;
   venues: Venue[];
   today: Date;
+  workingYear?: string;
+  setWorkingYear?: (y: string) => void;
+  onOpenExportModal?: () => void;
   onOpenNewReservationModal: () => void;
 }
 
@@ -45,6 +49,9 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
   setCalendarVenueFilter,
   venues,
   today,
+  workingYear = "2026",
+  setWorkingYear,
+  onOpenExportModal,
   onOpenNewReservationModal,
 }) => {
   return (
@@ -256,6 +263,23 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
             ))}
           </SelectContent>
         </Select>
+
+        {onOpenExportModal && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onOpenExportModal}
+            className={`text-xs h-8 font-semibold px-2.5 gap-1.5 cursor-pointer ${
+              theme === "dark"
+                ? "border-emerald-500/40 text-emerald-400 hover:bg-emerald-950/30"
+                : "border-emerald-600/30 text-emerald-700 hover:bg-emerald-50"
+            }`}
+            title="Mekan ve salon bazlı kurumsal Excel (.xlsx) veya resmi PDF raporu oluştur"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="hidden sm:inline">Rapor / Excel</span>
+          </Button>
+        )}
 
         <Button
           size="sm"

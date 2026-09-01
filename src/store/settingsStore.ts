@@ -57,6 +57,22 @@ export function useSettingsStore() {
     return val === null ? true : val === "true";
   });
 
+  const [workingYear, setWorkingYearState] = useState<string>(() => {
+    return localStorage.getItem("working_year") || String(new Date().getFullYear());
+  });
+
+  const [securityPin, setSecurityPinState] = useState<string>(() => {
+    return localStorage.getItem("security_pin") || "";
+  });
+
+  const [authorizedPersonnelName, setAuthorizedPersonnelNameState] = useState<string>(() => {
+    return localStorage.getItem("authorized_personnel_name") || "";
+  });
+
+  const [authorizedPersonnelTitle, setAuthorizedPersonnelTitleState] = useState<string>(() => {
+    return localStorage.getItem("authorized_personnel_title") || "Tesis & İşletme Yetkilisi";
+  });
+
   // Load settings from SQLite Database
   const loadDbSettings = useCallback(async () => {
     try {
@@ -115,6 +131,22 @@ export function useSettingsStore() {
             const isEnabled = settings.accounting_module_enabled === "true";
             setAccountingModuleEnabledState(isEnabled);
             localStorage.setItem("accounting_module_enabled", String(isEnabled));
+          }
+          if (settings.working_year !== undefined && settings.working_year !== null) {
+            setWorkingYearState(settings.working_year);
+            localStorage.setItem("working_year", settings.working_year);
+          }
+          if (settings.security_pin !== undefined && settings.security_pin !== null) {
+            setSecurityPinState(settings.security_pin);
+            localStorage.setItem("security_pin", settings.security_pin);
+          }
+          if (settings.authorized_personnel_name !== undefined && settings.authorized_personnel_name !== null) {
+            setAuthorizedPersonnelNameState(settings.authorized_personnel_name);
+            localStorage.setItem("authorized_personnel_name", settings.authorized_personnel_name);
+          }
+          if (settings.authorized_personnel_title !== undefined && settings.authorized_personnel_title !== null) {
+            setAuthorizedPersonnelTitleState(settings.authorized_personnel_title);
+            localStorage.setItem("authorized_personnel_title", settings.authorized_personnel_title);
           }
         }
       }
@@ -292,6 +324,54 @@ export function useSettingsStore() {
     }
   };
 
+  const setWorkingYear = async (year: string) => {
+    setWorkingYearState(year);
+    localStorage.setItem("working_year", year);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("working_year", year);
+      }
+    } catch (err) {
+      console.error("Failed to save working_year to SQLite:", err);
+    }
+  };
+
+  const setSecurityPin = async (pin: string) => {
+    setSecurityPinState(pin);
+    localStorage.setItem("security_pin", pin);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("security_pin", pin);
+      }
+    } catch (err) {
+      console.error("Failed to save security_pin to SQLite:", err);
+    }
+  };
+
+  const setAuthorizedPersonnelName = async (name: string) => {
+    setAuthorizedPersonnelNameState(name);
+    localStorage.setItem("authorized_personnel_name", name);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("authorized_personnel_name", name);
+      }
+    } catch (err) {
+      console.error("Failed to save authorized_personnel_name to SQLite:", err);
+    }
+  };
+
+  const setAuthorizedPersonnelTitle = async (title: string) => {
+    setAuthorizedPersonnelTitleState(title);
+    localStorage.setItem("authorized_personnel_title", title);
+    try {
+      if (window.electronAPI?.db?.setSetting) {
+        await window.electronAPI.db.setSetting("authorized_personnel_title", title);
+      }
+    } catch (err) {
+      console.error("Failed to save authorized_personnel_title to SQLite:", err);
+    }
+  };
+
   const saveSettingsBulk = async (updates: Partial<{
     appName: string;
     institutionName: string;
@@ -306,6 +386,10 @@ export function useSettingsStore() {
     defaultDistrict: string;
     defaultTariffBasis: string;
     accountingModuleEnabled: boolean;
+    workingYear: string;
+    securityPin: string;
+    authorizedPersonnelName: string;
+    authorizedPersonnelTitle: string;
   }>) => {
     const dbPayload: Record<string, string> = {};
 
@@ -374,6 +458,26 @@ export function useSettingsStore() {
       localStorage.setItem("accounting_module_enabled", String(updates.accountingModuleEnabled));
       dbPayload["accounting_module_enabled"] = String(updates.accountingModuleEnabled);
     }
+    if (updates.workingYear !== undefined) {
+      setWorkingYearState(updates.workingYear);
+      localStorage.setItem("working_year", updates.workingYear);
+      dbPayload["working_year"] = updates.workingYear;
+    }
+    if (updates.securityPin !== undefined) {
+      setSecurityPinState(updates.securityPin);
+      localStorage.setItem("security_pin", updates.securityPin);
+      dbPayload["security_pin"] = updates.securityPin;
+    }
+    if (updates.authorizedPersonnelName !== undefined) {
+      setAuthorizedPersonnelNameState(updates.authorizedPersonnelName);
+      localStorage.setItem("authorized_personnel_name", updates.authorizedPersonnelName);
+      dbPayload["authorized_personnel_name"] = updates.authorizedPersonnelName;
+    }
+    if (updates.authorizedPersonnelTitle !== undefined) {
+      setAuthorizedPersonnelTitleState(updates.authorizedPersonnelTitle);
+      localStorage.setItem("authorized_personnel_title", updates.authorizedPersonnelTitle);
+      dbPayload["authorized_personnel_title"] = updates.authorizedPersonnelTitle;
+    }
 
     try {
       if (Object.keys(dbPayload).length > 0) {
@@ -404,6 +508,10 @@ export function useSettingsStore() {
     defaultDistrict,
     defaultTariffBasis,
     accountingModuleEnabled,
+    workingYear,
+    securityPin,
+    authorizedPersonnelName,
+    authorizedPersonnelTitle,
     setAppName,
     setInstitutionName,
     setInstitutionSubHeader,
@@ -417,6 +525,10 @@ export function useSettingsStore() {
     setDefaultDistrict,
     setDefaultTariffBasis,
     setAccountingModuleEnabled,
+    setWorkingYear,
+    setSecurityPin,
+    setAuthorizedPersonnelName,
+    setAuthorizedPersonnelTitle,
     saveSettingsBulk,
     reloadSettings: loadDbSettings,
   };

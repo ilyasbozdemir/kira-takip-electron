@@ -24,6 +24,9 @@ export function CalendarScreen({
   hallById,
   getEventTypeColor,
   today,
+  workingYear,
+  setWorkingYear,
+  onOpenExportModal,
   onOpenNewReservationModal,
   onSelectReservation,
   onPromptDeleteReservation,
@@ -52,6 +55,9 @@ export function CalendarScreen({
         setCalendarVenueFilter={setCalendarVenueFilter}
         venues={store.venues}
         today={today}
+        workingYear={workingYear}
+        setWorkingYear={setWorkingYear}
+        onOpenExportModal={onOpenExportModal}
         onOpenNewReservationModal={onOpenNewReservationModal}
       />
 
