@@ -167,6 +167,27 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
           Bugüne Git
         </Button>
 
+        {workingYear && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const yNum = Number(workingYear) || 2026;
+              setCursor(new Date(yNum, 0, 1));
+              setSelectedDay(`${yNum}-01-01`);
+              toast.info(`Aktif çalışma yılına (${yNum}) gidildi.`);
+            }}
+            className={`text-xs h-8 font-bold px-2.5 gap-1 cursor-pointer ${
+              theme === "dark"
+                ? "border-indigo-500/40 text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/50"
+                : "border-indigo-300 text-indigo-800 bg-indigo-50 hover:bg-indigo-100"
+            }`}
+            title={`Aktif çalışma yılı (${workingYear}) başlangıcına git`}
+          >
+            📅 {workingYear} Çalışma Yılı
+          </Button>
+        )}
+
         {/* İlgili Tarihe Git Date Picker */}
         <div className="flex items-center gap-1.5 ml-1 border-l pl-2 dark:border-slate-800 border-slate-300">
           <span
