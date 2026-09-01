@@ -156,7 +156,9 @@ export const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-3.5 py-1 text-xs">
           {/* Type Selector (Gelir vs Gider) */}
-          <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-950/40 border border-slate-800/80">
+          <div className={`grid grid-cols-2 gap-2 p-1 rounded-xl border ${
+            isDark ? "bg-slate-950/40 border-slate-800/80" : "bg-slate-100 border-slate-200"
+          }`}>
             <button
               type="button"
               onClick={() => {
@@ -166,7 +168,9 @@ export const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
               className={`py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 type === "expense"
                   ? "bg-rose-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
+                  : isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <TrendingDown className="h-3.5 w-3.5" /> Gider (Harcama)
@@ -180,7 +184,9 @@ export const NewTransactionModal: React.FC<NewTransactionModalProps> = ({
               className={`py-1.5 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 type === "income"
                   ? "bg-emerald-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
+                  : isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" /> Gelir (Tahsilat)

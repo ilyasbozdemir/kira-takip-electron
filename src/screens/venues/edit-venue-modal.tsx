@@ -150,7 +150,9 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
 
         <form onSubmit={handleSave} className="space-y-3.5 py-1 text-xs">
           <div>
-            <Label className="text-xs font-semibold">Mekan / Tesis Adı *</Label>
+            <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+              Mekan / Tesis Adı *
+            </Label>
             <Input
               required
               value={name}
@@ -158,15 +160,17 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
               placeholder="Örn: Kültür ve Kongre Merkezi"
               className={`mt-1 text-xs ${
                 theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
               }`}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-xs font-semibold">İl (Şehir) *</Label>
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                İl (Şehir) *
+              </Label>
               <Select
                 value={city}
                 onValueChange={(newCity) => {
@@ -203,7 +207,9 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
             </div>
 
             <div>
-              <Label className="text-xs font-semibold">İlçe / Bölge *</Label>
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                İlçe / Bölge *
+              </Label>
               <Select value={district} onValueChange={setDistrict}>
                 <SelectTrigger
                   className={`mt-1 text-xs h-8 ${
@@ -232,7 +238,9 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
           </div>
 
           <div>
-            <Label className="text-xs font-semibold">Mekan Kategorisi</Label>
+            <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+              Mekan Kategorisi
+            </Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger
                 className={`mt-1 text-xs h-8 ${
@@ -261,7 +269,9 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
           </div>
 
           <div>
-            <Label className="text-xs font-semibold">Açık Adres</Label>
+            <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+              Açık Adres
+            </Label>
             <Textarea
               rows={2}
               value={address}
@@ -269,14 +279,16 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
               placeholder="Cadde, sokak, mahalle detayları"
               className={`mt-1 text-xs ${
                 theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
               }`}
             />
           </div>
 
           <div>
-            <Label className="text-xs font-semibold">Google Maps / Yol Tarifi Linki</Label>
+            <Label className={`text-xs font-semibold ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+              Google Maps / Yol Tarifi Linki
+            </Label>
             <Input
               type="url"
               value={mapUrl}
@@ -284,20 +296,20 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
               placeholder="https://maps.google.com/..."
               className={`mt-1 text-xs font-mono ${
                 theme === "dark"
-                  ? "bg-slate-950 border-slate-800 text-slate-100"
-                  : "bg-slate-50 border-slate-300 text-slate-900"
+                  ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
+                  : "bg-slate-50 border-slate-300 text-slate-900 placeholder:text-slate-400"
               }`}
             />
           </div>
 
           {/* Quick Assign from Personnel */}
           {/* Tesis / İşletme Sorumlusu Seçimi */}
-          <div className="pt-2 border-t border-slate-800/40 space-y-2.5">
+          <div className={`pt-2 border-t space-y-2.5 ${theme === "dark" ? "border-slate-800/60" : "border-slate-200"}`}>
             <div className="flex items-center justify-between">
-              <Label className="text-xs font-semibold text-indigo-400">
+              <Label className={`text-xs font-semibold ${theme === "dark" ? "text-indigo-400" : "text-indigo-600"}`}>
                 🏢 Tesis / İşletme Sorumlusu
               </Label>
-              <span className="text-[10px] text-slate-400">Personel Rehberinden</span>
+              <span className={`text-[10px] ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}>Personel Rehberinden</span>
             </div>
 
             {personnelList.length > 0 ? (
@@ -347,7 +359,7 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
                         👤 {p.name} — {p.title || "Personel"} {p.phone ? `(📞 ${p.phone})` : ""}
                       </SelectItem>
                     ))}
-                    <SelectItem value="custom" className="text-indigo-400 font-bold">
+                    <SelectItem value="custom" className="text-indigo-500 font-bold">
                       ✏️ Kadro Dışı Özel Yetkili (Manuel Gir)
                     </SelectItem>
                   </SelectContent>
@@ -358,8 +370,8 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
                   <div
                     className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
                       theme === "dark"
-                        ? "bg-indigo-950/20 border-indigo-500/30 text-indigo-200"
-                        : "bg-indigo-50 border-indigo-200 text-indigo-900"
+                        ? "bg-indigo-950/30 border-indigo-500/30 text-indigo-200"
+                        : "bg-indigo-50/80 border-indigo-200 text-indigo-900"
                     }`}
                   >
                     <div>
@@ -368,7 +380,7 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
                         {managerTitle || "Tesis Sorumlusu"} • 📞 {managerPhone || "Telefon Belirtilmedi"}
                       </span>
                     </div>
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px]">
+                    <Badge className="bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[9px]">
                       Atandı
                     </Badge>
                   </div>
@@ -378,35 +390,61 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
 
             {/* Manual textboxes only if custom mode or no registered personnel */}
             {(personnelList.length === 0 || (!managerPersonnelId && managerName !== "")) && (
-              <div className="p-3 rounded-xl border border-slate-700/50 bg-slate-950/40 space-y-2.5 animate-in fade-in duration-150">
-                <p className="text-[10px] text-slate-400 font-medium">Manuel Sorumlu Bilgileri:</p>
+              <div
+                className={`p-3 rounded-xl border space-y-2.5 animate-in fade-in duration-150 ${
+                  theme === "dark"
+                    ? "border-slate-800 bg-slate-950/60"
+                    : "border-slate-200 bg-slate-50"
+                }`}
+              >
+                <p className={`text-[10px] font-semibold ${theme === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                  Manuel Sorumlu Bilgileri:
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-[10px]">Sorumlu Adı Soyadı</Label>
+                    <Label className={`text-[10px] font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                      Sorumlu Adı Soyadı
+                    </Label>
                     <Input
                       placeholder="örn: Ahmet Yılmaz"
                       value={managerName}
                       onChange={(e) => setManagerName(e.target.value)}
-                      className="mt-0.5 text-xs h-7.5"
+                      className={`mt-0.5 text-xs h-7.5 ${
+                        theme === "dark"
+                          ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                          : "bg-white border-slate-300 text-slate-900 placeholder:text-slate-400"
+                      }`}
                     />
                   </div>
                   <div>
-                    <Label className="text-[10px]">Görevi / Unvanı</Label>
+                    <Label className={`text-[10px] font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                      Görevi / Unvanı
+                    </Label>
                     <Input
                       placeholder="örn: Tesis Sorumlusu"
                       value={managerTitle}
                       onChange={(e) => setManagerTitle(e.target.value)}
-                      className="mt-0.5 text-xs h-7.5"
+                      className={`mt-0.5 text-xs h-7.5 ${
+                        theme === "dark"
+                          ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                          : "bg-white border-slate-300 text-slate-900 placeholder:text-slate-400"
+                      }`}
                     />
                   </div>
                 </div>
                 <div>
-                  <Label className="text-[10px]">Sorumlu İletişim Telefonu</Label>
+                  <Label className={`text-[10px] font-medium ${theme === "dark" ? "text-slate-300" : "text-slate-700"}`}>
+                    Sorumlu İletişim Telefonu
+                  </Label>
                   <Input
                     placeholder="05XX XXX XX XX"
                     value={managerPhone}
                     onChange={(e) => setManagerPhone(normalizeTRPhoneInput(e.target.value))}
-                    className="mt-0.5 text-xs font-mono h-7.5"
+                    className={`mt-0.5 text-xs font-mono h-7.5 ${
+                      theme === "dark"
+                        ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                        : "bg-white border-slate-300 text-slate-900 placeholder:text-slate-400"
+                    }`}
                   />
                 </div>
               </div>
@@ -450,7 +488,9 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="h-6 w-8 rounded cursor-pointer border border-slate-700 bg-transparent"
+                className={`h-6 w-8 rounded cursor-pointer border ${
+                  theme === "dark" ? "border-slate-700 bg-slate-900" : "border-slate-300 bg-white"
+                }`}
                 title="Özel Renk Seç"
               />
             </div>
@@ -462,7 +502,11 @@ export const EditVenueModal: React.FC<EditVenueModalProps> = ({
               variant="outline"
               size="sm"
               onClick={onClose}
-              className="text-xs h-8"
+              className={`text-xs h-8 ${
+                theme === "dark"
+                  ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-100"
+              }`}
             >
               İptal
             </Button>
