@@ -1,15 +1,26 @@
 import React from "react";
 import {
   CalendarDays,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
   FileSpreadsheet,
   Grid as GridIcon,
+  Moon,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -35,6 +46,7 @@ interface CalendarToolbarProps {
   workingYear?: string;
   setWorkingYear?: (y: string) => void;
   onOpenExportModal?: () => void;
+  onOpenHolidaysModal?: () => void;
   onOpenNewReservationModal: () => void;
 }
 
@@ -53,8 +65,28 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
   workingYear = "2026",
   setWorkingYear,
   onOpenExportModal,
+  onOpenHolidaysModal,
   onOpenNewReservationModal,
 }) => {
+  const lastWheelTimeRef = React.useRef<number>(0);
+
+  const handleWheelMonth = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaY) < 10 && Math.abs(e.deltaX) < 10) return;
+    const now = Date.now();
+    if (now - lastWheelTimeRef.current < 200) return;
+    lastWheelTimeRef.current = now;
+
+    const direction = e.deltaY > 0 || e.deltaX > 0 ? 1 : -1;
+    const nextDate = new Date(cursor.getFullYear(), cursor.getMonth() + direction, 1);
+    setCursor(nextDate);
+    const mName = trMonths[nextDate.getMonth()];
+    toast.dismiss("calendar-wheel-toast");
+    toast.info(`📅 ${mName} ${nextDate.getFullYear()}`, {
+      id: "calendar-wheel-toast",
+      duration: 1000,
+    });
+  };
+
   return (
     <div
       className={`p-4 rounded-xl border flex flex-wrap items-center justify-between gap-4 transition-colors ${
@@ -63,8 +95,12 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
           : "bg-white border-slate-200 shadow-sm"
       }`}
     >
-      {/* Left: Detailed Month & Year Navigator with Quick Jump */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Left: Detailed Month & Year Navigator with Quick Jump & Mouse Wheel scroll */}
+      <div
+        onWheel={handleWheelMonth}
+        title="Fare tekerleğiyle (scroll) ayları hızlıca değiştirebilirsiniz"
+        className="flex flex-wrap items-center gap-2 cursor-pointer"
+      >
         <Button
           variant="outline"
           size="icon"
@@ -77,7 +113,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
             setCursor(
               new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1),
             )}
-          title="Önceki Ay"
+          title="Önceki Ay (Fare tekerleği yukarı)"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -150,7 +186,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
             setCursor(
               new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1),
             )}
-          title="Sonraki Ay"
+          title="Sonraki Ay (Fare tekerleği aşağı)"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -301,6 +337,73 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
             ))}
           </SelectContent>
         </Select>
+
+        {onOpenHolidaysModal && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className={`text-xs h-8 font-semibold px-2.5 gap-1.5 cursor-pointer ${
+                  theme === "dark"
+                    ? "border-rose-500/40 text-rose-400 hover:bg-rose-950/30"
+                    : "border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                }`}
+                title="Resmi tatiller, dini bayramlar ve takvim yönetimi menüsü"
+              >
+                <span className="text-xs">🇹🇷</span>
+                <span className="hidden sm:inline">Tatiller & Takvim</span>
+                <ChevronDown className="h-3 w-3 opacity-60 ml-0.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className={`w-64 p-1.5 rounded-xl ${
+                theme === "dark"
+                  ? "bg-slate-900 border-slate-800 text-slate-100 shadow-2xl"
+                  : "bg-white border-slate-200 text-slate-900 shadow-2xl"
+              }`}
+            >
+              <DropdownMenuLabel className="text-[11px] font-bold text-slate-400 px-2 py-1 flex items-center justify-between">
+                <span>🇹🇷 Tatil & Takvim Menüsü</span>
+                <span className="text-[10px] text-emerald-500 font-bold flex items-center gap-0.5">
+                  <ShieldCheck className="h-3 w-3" /> Teyitli
+                </span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator className={theme === "dark" ? "bg-slate-800" : "bg-slate-100"} />
+              <DropdownMenuItem
+                onClick={onOpenHolidaysModal}
+                className="text-xs font-semibold py-2 px-2.5 cursor-pointer flex items-center gap-2"
+              >
+                <span className="text-sm">🇹🇷</span>
+                <div className="flex flex-col">
+                  <span>Resmi Tatiller & Özel Günler</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Miladi bayramlar ve anma günleri</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onOpenHolidaysModal}
+                className="text-xs font-semibold py-2 px-2.5 cursor-pointer flex items-center gap-2"
+              >
+                <Moon className="h-4 w-4 text-emerald-400" />
+                <div className="flex flex-col">
+                  <span>Hicri Dini Bayramlar & Doğrulama</span>
+                  <span className="text-[10px] text-emerald-400/80 font-normal">Diyanet & Google ICS teyitli</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onOpenHolidaysModal}
+                className="text-xs font-semibold py-2 px-2.5 cursor-pointer flex items-center gap-2"
+              >
+                <ShieldCheck className="h-4 w-4 text-sky-400" />
+                <div className="flex flex-col">
+                  <span>Google Takvim (ICS) & Web Eşitle</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Canlı iCal .ics akışından çek</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
 
         {onOpenExportModal && (
           <Button

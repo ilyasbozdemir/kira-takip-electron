@@ -43,6 +43,7 @@ import { money, type FinancialTransaction, type Reservation, toKey } from "@/lib
 import { NewTransactionModal } from "./new-transaction-modal";
 import { EditTransactionModal } from "./edit-transaction-modal";
 import { QuickPaymentModal } from "./quick-payment-modal";
+import { AccountingPrintModal } from "./accounting-print-modal";
 import { AccountingScreenProps } from "./types";
 import { PaginationControls } from "@/components/ui/pagination-controls";
 import { toast } from "sonner";
@@ -55,6 +56,10 @@ export function AccountingScreen({
   onDeleteTransaction,
   onSelectReservation,
   institutionName,
+  institutionSubHeader,
+  institutionLogo,
+  authorizedPersonnelName,
+  authorizedPersonnelTitle,
 }: AccountingScreenProps): React.JSX.Element {
   const isDark = theme === "dark";
 
@@ -68,6 +73,7 @@ export function AccountingScreen({
   const [newModalType, setNewModalType] = useState<"income" | "expense">("expense");
   const [editingTransaction, setEditingTransaction] = useState<FinancialTransaction | null>(null);
   const [quickPaymentReservation, setQuickPaymentReservation] = useState<Reservation | null>(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -239,7 +245,7 @@ export function AccountingScreen({
   };
 
   const handlePrintSummary = () => {
-    window.print();
+    setIsPrintModalOpen(true);
   };
 
   return (
@@ -736,6 +742,25 @@ export function AccountingScreen({
         onClose={() => setQuickPaymentReservation(null)}
         theme={theme}
         venues={store.venues}
+      />
+
+      {/* Official A4 Accounting & Cash Flow Statement Print Modal */}
+      <AccountingPrintModal
+        isOpen={isPrintModalOpen}
+        onOpenChange={setIsPrintModalOpen}
+        theme={theme}
+        store={store}
+        entries={filteredEntries}
+        summary={summary}
+        filterVenueId={selectedVenueFilter}
+        filterType={activeTab}
+        filterCategory=""
+        filterSearch={searchTerm}
+        institutionName={institutionName}
+        institutionSubHeader={institutionSubHeader}
+        institutionLogo={institutionLogo}
+        authorizedPersonnelName={authorizedPersonnelName}
+        authorizedPersonnelTitle={authorizedPersonnelTitle}
       />
     </div>
   );

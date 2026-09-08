@@ -1,6 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { money, type Reservation, trMonths, type Venue } from "@/lib/rental-store";
+import { getHolidayInfo, getWeekendDayName, isWeekend } from "@/lib/holidays";
 
 interface CalendarTimelineViewProps {
   theme: "dark" | "light";
@@ -43,6 +44,9 @@ export const CalendarTimelineView: React.FC<CalendarTimelineViewProps> = ({
           const h = hallById(r.hallId);
           const v = venues.find((x) => x.id === r.venueId);
           const colorClass = getEventTypeColor(r.eventType);
+          const weekend = isWeekend(r.date);
+          const weekendName = getWeekendDayName(r.date);
+          const holiday = getHolidayInfo(r.date);
 
           return (
             <div
@@ -54,14 +58,34 @@ export const CalendarTimelineView: React.FC<CalendarTimelineViewProps> = ({
               className={`p-3 rounded-xl border flex items-center justify-between gap-4 cursor-pointer transition-all ${
                 r.date === selectedDay
                   ? "border-indigo-500 bg-indigo-950/20 shadow-xs"
+                  : holiday && holiday.isOffDay
+                  ? theme === "dark"
+                    ? "bg-rose-950/15 border-rose-800/40 hover:bg-rose-900/25"
+                    : "bg-rose-50/40 border-rose-200 hover:bg-rose-50"
+                  : weekend
+                  ? theme === "dark"
+                    ? "bg-slate-950 border-rose-950/50 hover:bg-slate-900/40"
+                    : "bg-slate-50/80 border-rose-200/50 hover:bg-slate-100"
                   : theme === "dark"
                   ? "bg-slate-950 border-slate-800 hover:bg-slate-800/40"
                   : "bg-slate-50 border-slate-200 hover:bg-slate-100"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="text-center font-mono shrink-0 bg-indigo-600/10 border border-indigo-500/20 px-2.5 py-1 rounded-lg">
-                  <span className="text-xs font-bold text-indigo-500 block">
+                <div
+                  className={`text-center font-mono shrink-0 px-2.5 py-1 rounded-lg border ${
+                    holiday && holiday.isOffDay
+                      ? "bg-rose-500/10 border-rose-500/30"
+                      : weekend
+                      ? "bg-rose-500/5 border-rose-500/20"
+                      : "bg-indigo-600/10 border-indigo-500/20"
+                  }`}
+                >
+                  <span
+                    className={`text-xs font-bold block ${
+                      holiday || weekend ? "text-rose-500" : "text-indigo-500"
+                    }`}
+                  >
                     {r.date}
                   </span>
                   <span className="text-[10px] text-slate-400">
@@ -69,7 +93,7 @@ export const CalendarTimelineView: React.FC<CalendarTimelineViewProps> = ({
                   </span>
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p
                       className={`text-xs font-bold ${
                         theme === "dark" ? "text-slate-100" : "text-slate-900"
@@ -77,6 +101,17 @@ export const CalendarTimelineView: React.FC<CalendarTimelineViewProps> = ({
                     >
                       {r.customer}
                     </p>
+                    {weekend && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                        {weekendName}
+                      </span>
+                    )}
+                    {holiday && (
+                      <span className="text-[9px] px-1.5 py-0.2 rounded font-bold bg-rose-500/15 text-rose-600 dark:text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                        <span>{holiday.icon || "🇹🇷"}</span>
+                        <span>{holiday.shortTitle || holiday.title}</span>
+                      </span>
+                    )}
                     {r.status === "option" ? (
                       <Badge
                         variant="outline"

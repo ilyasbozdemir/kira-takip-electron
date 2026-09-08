@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/card";
 import { normalizeTRPhoneInput } from "@/lib/phone-utils";
 import { TURKISH_CITIES, getDistrictsForCity } from "@/lib/turkey-locations";
+import { CalendarHolidaysModal } from "@/screens/calendar/calendar-holidays-modal";
 
 interface IdentityTabProps {
   theme: "dark" | "light";
@@ -112,6 +113,7 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
   const isDark = theme === "dark";
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [showSecurityPin, setShowSecurityPin] = useState(false);
+  const [isHolidaysModalOpen, setIsHolidaysModalOpen] = useState(false);
 
   const availableDistricts = getDistrictsForCity(draftDefaultCity);
 
@@ -426,9 +428,26 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[10px] text-slate-500 mt-1">
-                Takvim ve filtreler varsayılan olarak bu çalışma yılını baz alır, kontrolsüz yıl atlamasını engeller.
-              </p>
+              <div className="flex items-center justify-between gap-2 mt-2">
+                <p className="text-[10px] text-slate-500">
+                  Takvim ve filtreler varsayılan olarak bu çalışma yılını baz alır.
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setIsHolidaysModalOpen(true)}
+                  className={`text-[11px] h-7 px-2 font-bold gap-1 shrink-0 cursor-pointer ${
+                    isDark
+                      ? "border-rose-500/40 text-rose-400 bg-rose-950/20 hover:bg-rose-950/40"
+                      : "border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                  }`}
+                  title="Resmi tatilleri yapılandır / takvim.com'dan veri çek"
+                >
+                  <span className="text-xs">🇹🇷</span>
+                  <span>Resmi Tatil Ayarları</span>
+                </Button>
+              </div>
             </div>
 
             <div>
@@ -513,6 +532,14 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Holiday Configuration Modal */}
+      <CalendarHolidaysModal
+        theme={theme}
+        isOpen={isHolidaysModalOpen}
+        onOpenChange={setIsHolidaysModalOpen}
+        initialYear={Number(draftWorkingYear) || 2026}
+      />
     </div>
   );
 };

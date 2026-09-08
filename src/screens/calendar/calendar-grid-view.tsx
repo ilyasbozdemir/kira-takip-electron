@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar as CalendarIcon, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
   trDays,
   type Venue,
 } from "@/lib/rental-store";
+import { getHolidayInfo, isWeekend } from "@/lib/holidays";
 
 interface CalendarGridViewProps {
   theme: "dark" | "light";
@@ -28,6 +29,7 @@ interface CalendarGridViewProps {
   getEventTypeColor: (type?: string) => string;
   onSelectReservation: (r: Reservation) => void;
   onOpenNewReservationModal: () => void;
+  onNavigateMonth?: (direction: 1 | -1) => void;
 }
 
 export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
@@ -43,15 +45,42 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
   getEventTypeColor,
   onSelectReservation,
   onOpenNewReservationModal,
+  onNavigateMonth,
 }) => {
+  const lastWheelTimeRef = React.useRef<number>(0);
+
+  const handleHeaderWheel = (e: React.WheelEvent) => {
+    if (!onNavigateMonth) return;
+    if (Math.abs(e.deltaY) < 10 && Math.abs(e.deltaX) < 10) return;
+    const now = Date.now();
+    if (now - lastWheelTimeRef.current < 200) return;
+    lastWheelTimeRef.current = now;
+
+    const direction = e.deltaY > 0 || e.deltaX > 0 ? 1 : -1;
+    onNavigateMonth(direction);
+  };
+
   return (
-    <>
-      <div className="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-400 mb-2">
-        {trDays.map((d) => (
-          <div key={d} className="py-1.5 uppercase font-mono text-[11px]">
-            {d}
-          </div>
-        ))}
+    <div onWheel={handleHeaderWheel} className="select-none">
+      <div
+        title="Fare tekerleğiyle (scroll) ayları hızlıca değiştirebilirsiniz"
+        className="grid grid-cols-7 gap-1 text-center font-semibold text-xs text-slate-400 mb-2 cursor-pointer"
+      >
+        {trDays.map((d) => {
+          const isWeekendCol = d === "Cmt" || d === "Paz";
+          return (
+            <div
+              key={d}
+              className={`py-1.5 uppercase font-mono text-[11px] rounded-md transition-colors ${
+                isWeekendCol
+                  ? "text-rose-500 font-bold bg-rose-500/10 dark:text-rose-400 dark:bg-rose-950/30"
+                  : ""
+              }`}
+            >
+              {d}
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-7 gap-1.5">
@@ -71,6 +100,8 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
           const k = toKey(cell);
           const isToday = k === toKey(today);
           const isSelected = k === selectedDay;
+          const weekend = isWeekend(cell);
+          const holiday = getHolidayInfo(k);
           const rawDayRes = byDate.get(k) ?? [];
           const dayResList = rawDayRes.filter(
             (r) =>
@@ -90,6 +121,14 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
                   ? theme === "dark"
                     ? "border-amber-500/60 bg-amber-950/20"
                     : "border-amber-500 bg-amber-50"
+                  : holiday && holiday.isOffDay
+                  ? theme === "dark"
+                    ? "border-rose-800/60 bg-rose-950/25 hover:bg-rose-900/35 hover:border-rose-600"
+                    : "border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 hover:border-rose-300 shadow-2xs"
+                  : weekend
+                  ? theme === "dark"
+                    ? "border-rose-950/80 bg-rose-950/15 hover:bg-rose-900/25 hover:border-rose-800/50"
+                    : "border-rose-100 bg-rose-50/35 hover:bg-rose-50/80 hover:border-rose-200 shadow-2xs"
                   : theme === "dark"
                   ? "border-slate-800/80 bg-slate-950/60 hover:bg-slate-800/50 hover:border-slate-700"
                   : "border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 shadow-2xs"
@@ -97,24 +136,56 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
             >
               <div className="flex items-center justify-between w-full">
                 <span
-                  className={`text-xs font-bold ${
+                  className={`text-xs font-bold flex items-center gap-1 ${
                     isToday
                       ? "bg-amber-500 text-slate-950 h-5 px-1.5 rounded-full flex items-center justify-center font-mono text-[11px]"
+                      : holiday
+                      ? "text-rose-600 dark:text-rose-400 font-extrabold"
+                      : weekend
+                      ? "text-rose-500 dark:text-rose-400 font-bold"
                       : theme === "dark"
                       ? "text-slate-300"
                       : "text-slate-800"
                   }`}
                 >
                   {cell.getDate()}
+                  {holiday && (
+                    <span className="text-[10px] select-none" title={holiday.title}>
+                      {holiday.icon || "🇹🇷"}
+                    </span>
+                  )}
                 </span>
-                {dayResList.length > 0 && (
+                {dayResList.length > 0 ? (
                   <Badge className="bg-indigo-600 text-white text-[10px] px-1 py-0 h-4">
                     {dayResList.length} Kayıt
                   </Badge>
-                )}
+                ) : holiday ? (
+                  <span
+                    className={`text-[9px] px-1 rounded font-bold ${
+                      holiday.isOffDay
+                        ? "text-rose-500 bg-rose-500/10"
+                        : "text-indigo-500 bg-indigo-500/10"
+                    }`}
+                  >
+                    {holiday.shortTitle || "Tatil"}
+                  </span>
+                ) : null}
               </div>
 
               <div className="space-y-1 mt-1 overflow-y-auto no-scrollbar flex-1 w-full">
+                {holiday && dayResList.length === 0 && (
+                  <div
+                    className={`text-[9.5px] leading-tight p-1 rounded border font-medium flex items-center gap-1 ${
+                      holiday.isOffDay
+                        ? "bg-rose-500/10 border-rose-500/25 text-rose-600 dark:text-rose-300 font-semibold"
+                        : "bg-indigo-500/10 border-indigo-500/20 text-indigo-500 dark:text-indigo-300"
+                    }`}
+                    title={holiday.title}
+                  >
+                    <span className="shrink-0">{holiday.icon || "🇹🇷"}</span>
+                    <span className="truncate">{holiday.shortTitle || holiday.title}</span>
+                  </div>
+                )}
                 {dayResList.slice(0, 2).map((r) => {
                   const h = hallById(r.hallId);
                   const v = venues.find((x) => x.id === r.venueId);
@@ -161,7 +232,7 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
             </button>
           );
 
-          if (dayResList.length === 0) {
+          if (dayResList.length === 0 && !holiday) {
             return dayButton;
           }
 
@@ -183,54 +254,82 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
                   <div className="flex items-center gap-1.5 font-bold text-xs">
                     <CalendarIcon className="h-4 w-4 text-indigo-500" />
                     <span>{k}</span>
+                    {weekend && (
+                      <span className="text-[10px] text-rose-500 font-bold bg-rose-500/10 px-1.5 py-0.2 rounded">
+                        Hafta Sonu
+                      </span>
+                    )}
                   </div>
-                  <Badge className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 font-bold">
-                    {dayResList.length} Etkinlik
-                  </Badge>
+                  {dayResList.length > 0 && (
+                    <Badge className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 font-bold">
+                      {dayResList.length} Etkinlik
+                    </Badge>
+                  )}
                 </div>
 
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {dayResList.map((r) => {
-                    const h = hallById(r.hallId);
-                    const v = venues.find((x) => x.id === r.venueId);
-                    return (
-                      <div
-                        key={r.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectReservation(r);
-                        }}
-                        className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all space-y-1 ${
-                          theme === "dark"
-                            ? "bg-slate-950 border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800/40"
-                            : "bg-slate-50 border-slate-200 hover:border-indigo-500/60 hover:bg-slate-100 shadow-2xs"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between font-bold text-xs">
-                          <span className="truncate">{r.customer}</span>
-                          {r.status === "option" ? (
-                            <span className="text-[9px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded font-bold border border-amber-500/30">
-                              ⚠️ Opsiyon
-                            </span>
-                          ) : (
-                            <span className="text-[9px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-bold border border-emerald-500/30">
-                              ✅ Kesin
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between pt-0.5">
-                          <span>⏰ {r.start} - {r.end}</span>
-                          <span className="font-bold text-emerald-400">
-                            {money(r.price)}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-indigo-400 font-medium truncate pt-0.5">
-                          🏛️ {v?.name} • {h?.name}
-                        </div>
+                {holiday && (
+                  <div
+                    className={`flex items-center gap-2 p-2 rounded-xl border text-xs font-semibold ${
+                      holiday.isOffDay
+                        ? "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-300"
+                        : "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-300"
+                    }`}
+                  >
+                    <span className="text-base select-none">{holiday.icon || "🇹🇷"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold truncate">{holiday.title}</div>
+                      <div className="text-[10px] font-normal opacity-85">
+                        {holiday.isOffDay ? "Resmi Tatil / Gün Boyu Kapalı" : "Özel Gün"}
+                        {holiday.isHalfDay ? " (Yarım Gün)" : ""}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  </div>
+                )}
+
+                {dayResList.length > 0 && (
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {dayResList.map((r) => {
+                      const h = hallById(r.hallId);
+                      const v = venues.find((x) => x.id === r.venueId);
+                      return (
+                        <div
+                          key={r.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectReservation(r);
+                          }}
+                          className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all space-y-1 ${
+                            theme === "dark"
+                              ? "bg-slate-950 border-slate-800 hover:border-indigo-500/60 hover:bg-slate-800/40"
+                              : "bg-slate-50 border-slate-200 hover:border-indigo-500/60 hover:bg-slate-100 shadow-2xs"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between font-bold text-xs">
+                            <span className="truncate">{r.customer}</span>
+                            {r.status === "option" ? (
+                              <span className="text-[9px] text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded font-bold border border-amber-500/30">
+                                ⚠️ Opsiyon
+                              </span>
+                            ) : (
+                              <span className="text-[9px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.5 rounded font-bold border border-emerald-500/30">
+                                ✅ Kesin
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-mono flex items-center justify-between pt-0.5">
+                            <span>⏰ {r.start} - {r.end}</span>
+                            <span className="font-bold text-emerald-400">
+                              {money(r.price)}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-indigo-400 font-medium truncate pt-0.5">
+                            🏛️ {v?.name} • {h?.name}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div className="pt-2 border-t flex items-center justify-between gap-2 text-[11px]">
                   <Button
@@ -249,6 +348,7 @@ export const CalendarGridView: React.FC<CalendarGridViewProps> = ({
           );
         })}
       </div>
-    </>
+    </div>
   );
 };
+

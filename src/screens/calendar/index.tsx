@@ -5,8 +5,10 @@ import { CalendarGridView } from "./calendar-grid-view";
 import { CalendarTimelineView } from "./calendar-timeline-view";
 import { CalendarDayPanel } from "./calendar-day-panel";
 import { CalendarAgendaModal } from "./calendar-agenda-modal";
+import { CalendarHolidaysModal } from "./calendar-holidays-modal";
 import { CalendarYearsView } from "./calendar-years-view";
 import { CalendarScreenProps, RightPanelViewMode } from "./types";
+import { trMonths } from "@/lib/rental-store";
 import { toast } from "sonner";
 
 export function CalendarScreen({
@@ -39,8 +41,21 @@ export function CalendarScreen({
 }: CalendarScreenProps): React.JSX.Element {
   const [rightPanelViewMode, setRightPanelViewMode] = useState<RightPanelViewMode>("list");
   const [isExpandedModalOpen, setIsExpandedModalOpen] = useState(false);
+  const [isHolidaysModalOpen, setIsHolidaysModalOpen] = useState(false);
+  const [, setHolidaysVersion] = useState(0);
 
   const dayReservations = byDate.get(selectedDay) ?? [];
+
+  const handleNavigateMonth = (direction: 1 | -1) => {
+    const nextDate = new Date(cursor.getFullYear(), cursor.getMonth() + direction, 1);
+    setCursor(nextDate);
+    const mName = trMonths[nextDate.getMonth()];
+    toast.dismiss("calendar-wheel-toast");
+    toast.info(`📅 ${mName} ${nextDate.getFullYear()}`, {
+      id: "calendar-wheel-toast",
+      duration: 1000,
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -60,6 +75,7 @@ export function CalendarScreen({
         workingYear={workingYear}
         setWorkingYear={setWorkingYear}
         onOpenExportModal={onOpenExportModal}
+        onOpenHolidaysModal={() => setIsHolidaysModalOpen(true)}
         onOpenNewReservationModal={onOpenNewReservationModal}
       />
 
@@ -80,6 +96,7 @@ export function CalendarScreen({
           }}
           onOpenNewReservationModal={onOpenNewReservationModal}
           onOpenExportModal={onOpenExportModal}
+          onOpenHolidaysModal={() => setIsHolidaysModalOpen(true)}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -106,6 +123,7 @@ export function CalendarScreen({
                   getEventTypeColor={getEventTypeColor}
                   onSelectReservation={onSelectReservation}
                   onOpenNewReservationModal={onOpenNewReservationModal}
+                  onNavigateMonth={handleNavigateMonth}
                 />
               ) : (
                 <CalendarTimelineView
@@ -161,8 +179,18 @@ export function CalendarScreen({
         onQuickMail={onQuickMail}
         onNavigateToCustomer={onNavigateToCustomer}
       />
+
+      {/* Holiday & Off-Day Configuration Modal */}
+      <CalendarHolidaysModal
+        theme={theme}
+        isOpen={isHolidaysModalOpen}
+        onOpenChange={setIsHolidaysModalOpen}
+        initialYear={cursor.getFullYear()}
+        onHolidaysUpdated={() => setHolidaysVersion((v) => v + 1)}
+      />
     </div>
   );
 }
 
 export * from "./types";
+

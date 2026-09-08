@@ -22,6 +22,7 @@ import {
   type Reservation,
   type Venue,
 } from "@/lib/rental-store";
+import { getHolidayInfo, getWeekendDayName, isWeekend } from "@/lib/holidays";
 
 interface CalendarAgendaModalProps {
   theme: "dark" | "light";
@@ -54,6 +55,10 @@ export const CalendarAgendaModal: React.FC<CalendarAgendaModalProps> = ({
   onQuickMail,
   onNavigateToCustomer,
 }) => {
+  const holiday = getHolidayInfo(selectedDay);
+  const weekend = isWeekend(selectedDay);
+  const weekendName = getWeekendDayName(selectedDay);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent
@@ -67,7 +72,7 @@ export const CalendarAgendaModal: React.FC<CalendarAgendaModalProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="space-y-1">
               <DialogTitle
-                className={`text-lg font-black flex items-center gap-2 ${
+                className={`text-lg font-black flex items-center gap-2 flex-wrap ${
                   theme === "dark" ? "text-slate-100" : "text-slate-900"
                 }`}
               >
@@ -75,6 +80,26 @@ export const CalendarAgendaModal: React.FC<CalendarAgendaModalProps> = ({
                 <span>
                   {selectedDay} Tarihli Günlük Etkinlik & Tahsis Ajandası
                 </span>
+                {weekend && (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
+                    🏖️ {weekendName} (Hafta Sonu)
+                  </span>
+                )}
+                {holiday && (
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-bold border flex items-center gap-1 ${
+                      holiday.isOffDay
+                        ? "bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-300"
+                        : "bg-indigo-500/15 border-indigo-500/30 text-indigo-600 dark:text-indigo-300"
+                    }`}
+                  >
+                    <span>{holiday.icon || "🇹🇷"}</span>
+                    <span>{holiday.title}</span>
+                    {holiday.isHalfDay && (
+                      <span className="text-[10px] opacity-75">(Yarım Gün)</span>
+                    )}
+                  </span>
+                )}
                 <Badge className="bg-indigo-600 text-white text-xs px-2 py-0.5 font-bold ml-1">
                   {dayReservations.length} Kayıt
                 </Badge>

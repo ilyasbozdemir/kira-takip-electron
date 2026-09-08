@@ -30,6 +30,7 @@ import {
   type Reservation,
   type Venue,
 } from "@/lib/rental-store";
+import { getHolidayInfo, getWeekendDayName, isWeekend } from "@/lib/holidays";
 import { RightPanelViewMode } from "./types";
 
 interface CalendarDayPanelProps {
@@ -82,6 +83,9 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
   onNavigateToCustomer,
 }) => {
   const isDark = theme === "dark";
+  const holiday = getHolidayInfo(selectedDay);
+  const weekend = isWeekend(selectedDay);
+  const weekendDayName = getWeekendDayName(selectedDay);
 
   return (
     <Card
@@ -105,6 +109,11 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
             >
               <CalendarIcon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />{" "}
               {selectedDay}
+              {weekend && (
+                <span className="text-[10px] text-rose-500 font-bold bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20">
+                  {weekendDayName} (Hafta Sonu)
+                </span>
+              )}
             </CardTitle>
             <CardDescription
               className={`text-[11px] mt-0.5 font-medium ${
@@ -138,6 +147,54 @@ export const CalendarDayPanel: React.FC<CalendarDayPanelProps> = ({
             </Button>
           </div>
         </div>
+
+        {holiday && (
+          <div
+            className={`p-2 rounded-xl border flex items-center gap-2 text-xs ${
+              holiday.isOffDay
+                ? isDark
+                  ? "bg-rose-950/30 border-rose-800/60 text-rose-300"
+                  : "bg-rose-50 border-rose-200 text-rose-800"
+                : isDark
+                ? "bg-indigo-950/30 border-indigo-800/60 text-indigo-300"
+                : "bg-indigo-50 border-indigo-200 text-indigo-800"
+            }`}
+          >
+            <span className="text-base select-none">{holiday.icon || "🇹🇷"}</span>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold flex items-center gap-1.5 flex-wrap">
+                <span>{holiday.title}</span>
+                {holiday.calendarType === "hicri" || holiday.type === "religious" ? (
+                  <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                    🌙 {holiday.hijriDetail || "Hicri Takvim"}
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-rose-400 bg-rose-500/10 px-1.5 py-0.2 rounded border border-rose-500/20">
+                    ☀️ Miladi Takvim
+                  </span>
+                )}
+                {holiday.isHalfDay && (
+                  <span className="text-[10px] font-semibold opacity-80">
+                    (Yarım Gün)
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] opacity-75 flex items-center gap-1.5">
+                <span>
+                  {holiday.isOffDay
+                    ? "Resmi Tatil / Gün Boyu Kapalı"
+                    : "Özel Gün / Anma"}
+                </span>
+                {holiday.description && (
+                  <>
+                    <span>•</span>
+                    <span className="truncate max-w-50">{holiday.description}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* View Mode Selector Tabs */}
         <div className="flex items-center justify-between pt-1">

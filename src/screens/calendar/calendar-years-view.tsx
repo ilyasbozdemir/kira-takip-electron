@@ -11,6 +11,7 @@ import {
   Plus,
   Sparkles,
   Star,
+  Trash2,
   TrendingUp,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ interface CalendarYearsViewProps {
   onSelectYearAndMonth: (year: number, month?: number) => void;
   onOpenNewReservationModal: (preselectedYear?: number) => void;
   onOpenExportModal?: () => void;
+  onOpenHolidaysModal?: () => void;
 }
 
 export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
@@ -39,11 +41,60 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
   onSelectYearAndMonth,
   onOpenNewReservationModal,
   onOpenExportModal,
+  onOpenHolidaysModal,
 }) => {
   const isDark = theme === "dark";
   const currentRealYear = new Date().getFullYear();
   const [customNewYear, setCustomNewYear] = useState<string>("");
   const [showAddYearInput, setShowAddYearInput] = useState(false);
+
+  // Persisted list of custom-added years by the user
+  const [customYears, setCustomYears] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem("app_custom_calendar_years");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed.map(Number).filter((n) => !isNaN(n));
+      }
+    } catch {}
+    return [];
+  });
+
+  const saveCustomYears = (years: number[]) => {
+    setCustomYears(years);
+    try {
+      localStorage.setItem("app_custom_calendar_years", JSON.stringify(years));
+    } catch {}
+  };
+
+  const addCustomYear = (yNum: number, openCalendar: boolean = false) => {
+    if (isNaN(yNum) || yNum < 2000 || yNum > 2100) {
+      toast.error("Lütfen geçerli bir yıl (Örn: 2027) girin.");
+      return;
+    }
+
+    if (!customYears.includes(yNum)) {
+      const next = [...customYears, yNum].sort((a, b) => b - a);
+      saveCustomYears(next);
+    }
+
+    setCustomNewYear("");
+    setShowAddYearInput(false);
+
+    if (openCalendar) {
+      onSelectYearAndMonth(yNum, 0);
+      toast.success(`${yNum} yılı takvim dönemi açıldı.`);
+    } else {
+      toast.success(`${yNum} yılı dönem kartı takvime eklendi.`);
+    }
+  };
+
+  const removeCustomYear = (yNum: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const next = customYears.filter((y) => y !== yNum);
+    saveCustomYears(next);
+    toast.info(`${yNum} yılı dönem kartı kaldırıldı.`);
+  };
 
   // Group all reservations by Year and compute comprehensive statistics
   const yearStats = useMemo(() => {
@@ -58,16 +109,18 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
         totalPaid: number;
         monthlyCounts: number[];
         monthlyRevs: number[];
+        isCustomAdded: boolean;
       }
     >();
 
-    // Always include workingYear, currentRealYear and adjacent years (e.g. +1, +2, -1)
+    // Always include workingYear, currentRealYear, adjacent years, and custom-added years
     const baseYears = new Set<number>([
       Number(workingYear) || currentRealYear,
       currentRealYear,
       currentRealYear - 1,
       currentRealYear + 1,
       currentRealYear + 2,
+      ...customYears,
     ]);
 
     // Add all years found in reservations
@@ -89,6 +142,7 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
         totalPaid: 0,
         monthlyCounts: Array(12).fill(0),
         monthlyRevs: Array(12).fill(0),
+        isCustomAdded: customYears.includes(y),
       });
     }
 
@@ -110,6 +164,7 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
           totalPaid: 0,
           monthlyCounts: Array(12).fill(0),
           monthlyRevs: Array(12).fill(0),
+          isCustomAdded: customYears.includes(y),
         };
         map.set(y, stat);
       }
@@ -130,7 +185,7 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
     }
 
     return Array.from(map.values()).sort((a, b) => b.year - a.year);
-  }, [reservations, workingYear, currentRealYear]);
+  }, [reservations, workingYear, currentRealYear, customYears]);
 
   // Overall totals across all years
   const grandTotal = useMemo(() => {
@@ -144,18 +199,19 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
     );
   }, [yearStats]);
 
-  const handleAddNewYear = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const yNum = Number(customNewYear.trim());
-    if (isNaN(yNum) || yNum < 2000 || yNum > 2100) {
-      toast.error("Lütfen geçerli bir yıl (Örn: 2027) girin.");
-      return;
-    }
-    setCustomNewYear("");
-    setShowAddYearInput(false);
-    onSelectYearAndMonth(yNum, 0);
-    toast.success(`${yNum} yılı takvim dönemi açıldı.`);
+    addCustomYear(yNum, false);
   };
+
+  // Quick preset year suggestions (e.g. 2027, 2028, 2029) not yet having cards
+  const suggestedYears = useMemo(() => {
+    const existing = new Set(yearStats.map((s) => s.year));
+    return [currentRealYear + 1, currentRealYear + 2, currentRealYear + 3, currentRealYear + 4].filter(
+      (y) => !existing.has(y)
+    );
+  }, [yearStats, currentRealYear]);
 
   return (
     <div className="space-y-6">
@@ -179,6 +235,12 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
               >
                 Aktif Sistem Yılı: {workingYear}
               </Badge>
+              <Badge
+                variant="outline"
+                className="border-emerald-500/40 text-emerald-400 text-[11px]"
+              >
+                Toplam {yearStats.length} Mali Dönem
+              </Badge>
             </div>
             <h2
               className={`text-lg sm:text-xl font-extrabold tracking-tight ${
@@ -192,7 +254,7 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             {onOpenExportModal && (
               <Button
                 variant="outline"
@@ -209,6 +271,23 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
               </Button>
             )}
 
+            {onOpenHolidaysModal && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenHolidaysModal}
+                className={`text-xs h-9 font-semibold gap-1.5 cursor-pointer ${
+                  isDark
+                    ? "border-rose-500/40 text-rose-400 bg-rose-950/20 hover:bg-rose-950/40"
+                    : "border-rose-300 text-rose-700 bg-rose-50 hover:bg-rose-100"
+                }`}
+                title="Resmi tatil ve dini bayramları yapılandır / takvim.com'dan çek"
+              >
+                <span className="text-sm">🇹🇷</span>
+                <span>Tatil Ayarları</span>
+              </Button>
+            )}
+
             {!showAddYearInput ? (
               <Button
                 size="sm"
@@ -218,31 +297,67 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
                 <Plus className="h-4 w-4" /> İleri Yıl / Dönem Ekle
               </Button>
             ) : (
-              <form onSubmit={handleAddNewYear} className="flex items-center gap-1.5">
+              <form onSubmit={handleFormSubmit} className="flex items-center gap-1.5 flex-wrap">
                 <input
                   type="number"
                   autoFocus
                   placeholder="Yıl (2027)"
                   value={customNewYear}
                   onChange={(e) => setCustomNewYear(e.target.value)}
-                  className={`w-24 h-9 px-2 text-xs font-mono font-bold rounded-lg border focus:outline-hidden ${
+                  className={`w-28 h-9 px-2.5 text-xs font-mono font-bold rounded-lg border focus:outline-hidden ${
                     isDark
                       ? "bg-slate-950 border-indigo-500 text-white"
                       : "bg-white border-indigo-400 text-slate-900"
                   }`}
                 />
-                <Button type="submit" size="sm" className="h-9 text-xs font-bold px-3">
-                  Aç
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-9 text-xs font-bold px-3 bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                  title="Dönem kartı olarak listeye ekle"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Kart Ekle
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    const yNum = Number(customNewYear.trim());
+                    addCustomYear(yNum, true);
+                  }}
+                  className="h-9 text-xs font-bold px-3 bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
+                  title="Dönemi ekle ve doğrudan o yılın takvimine git"
+                >
+                  Takvimi Aç
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowAddYearInput(false)}
-                  className="h-9 text-xs text-slate-400"
+                  onClick={() => {
+                    setShowAddYearInput(false);
+                    setCustomNewYear("");
+                  }}
+                  className="h-9 text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
                 >
                   İptal
                 </Button>
+
+                {suggestedYears.length > 0 && (
+                  <div className="w-full flex items-center gap-1.5 pt-1 text-[11px] text-slate-400">
+                    <span className="text-[10px]">Hızlı Öneri:</span>
+                    {suggestedYears.map((sy) => (
+                      <button
+                        key={sy}
+                        type="button"
+                        onClick={() => addCustomYear(sy, false)}
+                        className="px-2 py-0.5 rounded-md bg-indigo-600/15 hover:bg-indigo-600/30 text-indigo-400 font-mono text-[10px] font-bold border border-indigo-500/20 cursor-pointer"
+                      >
+                        +{sy}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </form>
             )}
           </div>
@@ -307,6 +422,18 @@ export const CalendarYearsView: React.FC<CalendarYearsViewProps> = ({
                       <Badge variant="outline" className="border-slate-500/40 text-slate-400 text-[10px]">
                         📁 Geçmiş Arşiv
                       </Badge>
+                    )}
+                    {stat.isCustomAdded && stat.totalCount === 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => removeCustomYear(stat.year, e)}
+                        className="h-6 w-6 p-0 text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 cursor-pointer"
+                        title="Bu boş dönem kartını kaldır"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     )}
                   </div>
                 </div>

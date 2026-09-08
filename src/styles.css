@@ -208,3 +208,67 @@
   font-weight: 500;
   &:hover { background-color: color-mix(in oklab, var(--color-destructive) 10%, transparent); }
 }
+
+/* ==========================================================================
+   A4 Standart Resmi Evrak ve Mali Kasa Raporu Yazdırma Stilleri
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 12mm 12mm 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide app layout, navigation, modals backdrop and unnecessary controls */
+  header,
+  nav,
+  aside,
+  button,
+  .no-print,
+  [role="dialog"] > div:not(:has(#printable-accounting-report)):not(:has(#printable-official-document)) {
+    display: none !important;
+  }
+
+  /* Target printable reports */
+  #printable-accounting-report,
+  #printable-official-document {
+    display: block !important;
+    position: relative !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Ensure table headers and rows break cleanly */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+}
+

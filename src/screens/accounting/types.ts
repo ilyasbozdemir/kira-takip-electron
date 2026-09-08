@@ -1,4 +1,4 @@
-import { type Store, type FinancialTransaction, type Reservation } from "@/lib/rental-store";
+import { type Store, type Reservation } from "@/lib/rental-store";
 
 export interface AccountingScreenProps {
   theme: "dark" | "light";
@@ -8,4 +8,10 @@ export interface AccountingScreenProps {
   onDeleteTransaction: (id: string) => Promise<void> | void;
   onSelectReservation?: (res: Reservation) => void;
   institutionName?: string;
+  institutionSubHeader?: string;
+  institutionLogo?: string;
+  authorizedPersonnelName?: string;
+  authorizedPersonnelTitle?: string;
 }
+
+

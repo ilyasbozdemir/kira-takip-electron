@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Building2,
   CheckCircle2,
@@ -28,7 +28,9 @@ export function SplashScreen({
   appName = "VenueKeeper Tesis & Salon Otomasyonu",
 }: SplashScreenProps): React.JSX.Element {
   const [progress, setProgress] = useState(0);
-  const [statusText, setStatusText] = useState("Yerel .vke SQLite veritabanı bağlanıyor...");
+  const [statusText, setStatusText] = useState(
+    "Yerel .vke SQLite veritabanı bağlanıyor...",
+  );
   const [isClosing, setIsClosing] = useState(false);
 
   const openLink = (url: string) => {
@@ -53,7 +55,9 @@ export function SplashScreen({
         if (next >= 30 && next < 65) {
           setStatusText("Mekan, salon ve tarife parametreleri yükleniyor...");
         } else if (next >= 65 && next < 90) {
-          setStatusText("Finansal veriler ve çevrimdışı önbellek doğrulanıyor...");
+          setStatusText(
+            "Finansal veriler ve çevrimdışı önbellek doğrulanıyor...",
+          );
         } else if (next >= 90) {
           setStatusText("Sistem hazır. Hoş geldiniz!");
         }
@@ -75,7 +79,9 @@ export function SplashScreen({
   return (
     <div
       className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 text-slate-100 backdrop-blur-xl select-none transition-all duration-400 ${
-        isClosing ? "opacity-0 scale-95 pointer-events-none" : "opacity-100 scale-100"
+        isClosing
+          ? "opacity-0 scale-95 pointer-events-none"
+          : "opacity-100 scale-100"
       }`}
     >
       {/* Background Ambient Glows */}
@@ -97,7 +103,9 @@ export function SplashScreen({
           </h1>
 
           <p className="text-xs text-indigo-400 font-semibold tracking-wide">
-            {institutionName ? `🏛️ ${institutionName}` : "Kurumsal Tesis & Salon İşletim Otomasyonu"}
+            {institutionName
+              ? `🏛️ ${institutionName}`
+              : "Kurumsal Tesis & Salon İşletim Otomasyonu"}
           </p>
         </div>
 
@@ -123,7 +131,13 @@ export function SplashScreen({
               </span>
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Bu uygulama; kamu kurumları, belediyeler ve özel işletmeler için <strong>yüksek performanslı, %100 çevrimdışı SQLite (.vke) veri bütünlüğü</strong> ile geliştirilmiştir.
+              Bu uygulama; kamu kurumları, belediyeler ve özel işletmeler için
+              {" "}
+              <strong>
+                yüksek performanslı, %100 çevrimdışı SQLite (.vke) veri
+                bütünlüğü
+              </strong>{" "}
+              ile geliştirilmiştir.
             </p>
           </div>
 
@@ -161,11 +175,10 @@ export function SplashScreen({
         {/* Feature Badges Bar */}
         <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-semibold text-slate-400">
           <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-center gap-1">
-            <HardDrive className="h-3.5 w-3.5 text-indigo-400" /> Yerel SQLite (.vke)
+            <HardDrive className="h-3.5 w-3.5 text-indigo-400" />{" "}
+            Yerel SQLite (.vke)
           </div>
-          <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Sayıştay & Teftiş
-          </div>
+
           <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center justify-center gap-1">
             <Code2 className="h-3.5 w-3.5 text-purple-400" /> Modern TS & React
           </div>
@@ -178,7 +191,9 @@ export function SplashScreen({
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
               {statusText}
             </span>
-            <span className="font-mono font-bold text-indigo-400">%{progress}</span>
+            <span className="font-mono font-bold text-indigo-400">
+              %{progress}
+            </span>
           </div>
 
           {/* Progress Track */}

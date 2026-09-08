@@ -1149,6 +1149,10 @@ export function App(): React.JSX.Element {
                   theme={theme}
                   store={store}
                   institutionName={institutionName}
+                  institutionSubHeader={institutionSubHeader}
+                  institutionLogo={institutionLogo}
+                  authorizedPersonnelName={authorizedPersonnelName}
+                  authorizedPersonnelTitle={authorizedPersonnelTitle}
                   onAddTransaction={async (t) => {
                     await sqliteStore.addTransaction(t);
                   }}
