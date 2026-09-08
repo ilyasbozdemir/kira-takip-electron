@@ -151,14 +151,41 @@ export function App(): React.JSX.Element {
 
   // Calendar State
   const today = useMemo(() => new Date(), []);
-  const [cursor, setCursor] = useState(() =>
-    new Date(today.getFullYear(), today.getMonth(), 1)
-  );
-  const [selectedDay, setSelectedDay] = useState(() => toKey(today));
-  const [calendarViewMode, setCalendarViewMode] = useState<"grid" | "timeline">(
-    "grid",
-  );
+  const [cursor, setCursor] = useState(() => {
+    const wy = localStorage.getItem("working_year");
+    const y = wy ? Number(wy) : today.getFullYear();
+    return new Date(y, today.getMonth(), 1);
+  });
+  const [selectedDay, setSelectedDay] = useState(() => {
+    const wy = localStorage.getItem("working_year");
+    if (wy && Number(wy) !== today.getFullYear()) {
+      return `${wy}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    }
+    return toKey(today);
+  });
+  const [calendarViewMode, setCalendarViewMode] = useState<
+    "grid" | "timeline" | "years"
+  >("grid");
   const [calendarVenueFilter, setCalendarVenueFilter] = useState("all");
+
+  // Keep calendar cursor in sync with workingYear when loaded or updated
+  useEffect(() => {
+    if (workingYear) {
+      const targetYear = Number(workingYear);
+      if (!isNaN(targetYear) && cursor.getFullYear() !== targetYear) {
+        setCursor(new Date(targetYear, cursor.getMonth(), 1));
+        setSelectedDay((prev) => {
+          if (prev && !prev.startsWith(workingYear)) {
+            const parts = prev.split("-");
+            const month = parts[1] || String(today.getMonth() + 1).padStart(2, "0");
+            const day = parts[2] || String(today.getDate()).padStart(2, "0");
+            return `${workingYear}-${month}-${day}`;
+          }
+          return prev;
+        });
+      }
+    }
+  }, [workingYear]);
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState("");
@@ -1056,6 +1083,7 @@ export function App(): React.JSX.Element {
               {activeSection === "events" && (
                 <EventsScreen
                   theme={theme}
+                  workingYear={workingYear}
                   eventTypeFilter={eventTypeFilter}
                   setEventTypeFilter={setEventTypeFilter}
                   allEventTypes={mergedEventTypes}

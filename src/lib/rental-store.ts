@@ -149,6 +149,21 @@ export const trMonths = [
   "Aralık",
 ];
 
+export const trMonthsShort = [
+  "Oca",
+  "Şub",
+  "Mar",
+  "Nis",
+  "May",
+  "Haz",
+  "Tem",
+  "Ağu",
+  "Eyl",
+  "Eki",
+  "Kas",
+  "Ara",
+];
+
 export const trMonthsFull = trMonths;
 
 export const trDays = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];

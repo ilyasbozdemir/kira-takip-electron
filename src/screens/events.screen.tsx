@@ -33,12 +33,14 @@ import { formatTRPhone } from "@/lib/phone-utils";
 
 interface EventsScreenProps {
   theme: "dark" | "light";
+  workingYear?: string;
   eventTypeFilter: string;
   setEventTypeFilter: (v: string) => void;
   allEventTypes: string[];
   filteredReservations: Reservation[];
   store: {
     venues: Venue[];
+    reservations?: Reservation[];
     personnel?: Array<{ id: string; name: string; title?: string; phone?: string; email?: string }>;
   };
   hallById: (id: string) => { name: string } | undefined;
@@ -51,6 +53,7 @@ interface EventsScreenProps {
 
 export function EventsScreen({
   theme,
+  workingYear,
   eventTypeFilter,
   setEventTypeFilter,
   allEventTypes,
@@ -63,6 +66,31 @@ export function EventsScreen({
   onQuickStaffMail,
   onNavigateToCustomer,
 }: EventsScreenProps): React.JSX.Element {
+  // Year Filter State (Defaults to workingYear if set, or "all")
+  const [yearFilter, setYearFilter] = useState<string>(() => workingYear || "all");
+
+  // Keep yearFilter in sync when workingYear prop loads
+  React.useEffect(() => {
+    if (workingYear && yearFilter === "all") {
+      setYearFilter(workingYear);
+    }
+  }, [workingYear]);
+
+  // Extract all distinct years from reservations + workingYear + current year
+  const availableYears = useMemo(() => {
+    const yearSet = new Set<string>();
+    if (workingYear) yearSet.add(workingYear);
+    yearSet.add(String(new Date().getFullYear()));
+    const allRes = store.reservations || filteredReservations;
+    for (const r of allRes) {
+      if (r.date) {
+        const y = r.date.split("-")[0];
+        if (y && y.length === 4) yearSet.add(y);
+      }
+    }
+    return Array.from(yearSet).sort((a, b) => Number(b) - Number(a));
+  }, [store.reservations, filteredReservations, workingYear]);
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
@@ -75,17 +103,23 @@ export function EventsScreen({
   // Reset to page 1 when filter changes
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [eventTypeFilter, mailStatusFilter, filteredReservations.length]);
+  }, [yearFilter, eventTypeFilter, mailStatusFilter, filteredReservations.length]);
+
+  // Filter reservations by Year
+  const filteredByYear = useMemo(() => {
+    if (yearFilter === "all") return filteredReservations;
+    return filteredReservations.filter((r) => r.date.startsWith(yearFilter));
+  }, [filteredReservations, yearFilter]);
 
   const filteredByMailStatus = useMemo(() => {
-    return filteredReservations.filter((r) => {
+    return filteredByYear.filter((r) => {
       if (mailStatusFilter === "customer_sent") return Boolean(r.customerMailSentAt || r.mailSentAt);
       if (mailStatusFilter === "customer_unsent") return !(r.customerMailSentAt || r.mailSentAt);
       if (mailStatusFilter === "staff_sent") return Boolean(r.staffMailSentAt);
       if (mailStatusFilter === "staff_unsent") return !r.staffMailSentAt;
       return true;
     });
-  }, [filteredReservations, mailStatusFilter]);
+  }, [filteredByYear, mailStatusFilter]);
 
   const totalItems = filteredByMailStatus.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -120,11 +154,39 @@ export function EventsScreen({
               theme === "dark" ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            Filtreleme, arama, e-posta durumu ve sayfalama ile tüm etkinlik kayıtları.
+            Yıl, etkinlik türü, e-posta durumu ve arama filtreleri ile tüm etkinlik kayıtları.
           </CardDescription>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Year Filter */}
+          <Select
+            value={yearFilter}
+            onValueChange={setYearFilter}
+          >
+            <SelectTrigger
+              className={`w-44 text-xs h-8 font-semibold ${
+                theme === "dark"
+                  ? "bg-slate-950 border-slate-800 text-slate-100"
+                  : "bg-slate-50 border-slate-300 text-slate-900"
+              }`}
+            >
+              <SelectValue placeholder="Yıl Seçin" />
+            </SelectTrigger>
+            <SelectContent
+              className={theme === "dark"
+                ? "bg-slate-900 border-slate-800 text-slate-200"
+                : "bg-white border-slate-200 text-slate-900"}
+            >
+              <SelectItem value="all">📅 Tüm Yıllar (Tümü)</SelectItem>
+              {availableYears.map((y) => (
+                <SelectItem key={y} value={y} className="font-semibold">
+                  📅 {y} {y === workingYear ? "(Aktif Çalışma Yılı)" : "Yılı"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {/* Mail Status Filter */}
           <Select
             value={mailStatusFilter}
@@ -183,6 +245,78 @@ export function EventsScreen({
           </Select>
         </div>
       </CardHeader>
+
+      {/* Quick Year / Period Selection Pills Bar */}
+      <div
+        className={`px-4 py-2 border-b flex items-center gap-1.5 overflow-x-auto text-xs ${
+          theme === "dark" ? "bg-slate-950/50 border-slate-800" : "bg-slate-50 border-slate-200"
+        }`}
+      >
+        <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1">
+          Dönem Seç:
+        </span>
+        <button
+          type="button"
+          onClick={() => setYearFilter("all")}
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+            yearFilter === "all"
+              ? "bg-indigo-600 text-white shadow-xs"
+              : theme === "dark"
+              ? "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
+              : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+          }`}
+        >
+          <span>Tüm Yıllar</span>
+          <Badge
+            variant="outline"
+            className={`text-[9px] px-1 py-0 ${
+              yearFilter === "all" ? "bg-white/20 text-white border-transparent" : ""
+            }`}
+          >
+            {filteredReservations.length}
+          </Badge>
+        </button>
+
+        {availableYears.map((y) => {
+          const countForYear = (store.reservations || filteredReservations).filter((r) =>
+            r.date.startsWith(y)
+          ).length;
+          const isSelected = yearFilter === y;
+          const isWorking = y === workingYear;
+
+          return (
+            <button
+              key={y}
+              type="button"
+              onClick={() => setYearFilter(y)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                isSelected
+                  ? "bg-indigo-600 text-white shadow-xs"
+                  : isWorking
+                  ? theme === "dark"
+                    ? "bg-indigo-950/40 border border-indigo-500/40 text-indigo-300 hover:bg-indigo-900/40"
+                    : "bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100"
+                  : theme === "dark"
+                  ? "bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800"
+                  : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+              }`}
+            >
+              <span>📅 {y}</span>
+              {isWorking && !isSelected && (
+                <span className="text-[9px] text-amber-400 font-bold">★</span>
+              )}
+              <Badge
+                variant="outline"
+                className={`text-[9px] px-1 py-0 ${
+                  isSelected ? "bg-white/20 text-white border-transparent" : ""
+                }`}
+              >
+                {countForYear}
+              </Badge>
+            </button>
+          );
+        })}
+      </div>
 
       <CardContent className="p-0 overflow-x-auto">
         <table

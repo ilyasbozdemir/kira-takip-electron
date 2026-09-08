@@ -8,8 +8,8 @@ export interface CalendarScreenProps {
   setCursor: (d: Date) => void;
   selectedDay: string;
   setSelectedDay: (day: string) => void;
-  calendarViewMode: "grid" | "timeline";
-  setCalendarViewMode: (mode: "grid" | "timeline") => void;
+  calendarViewMode: "grid" | "timeline" | "years";
+  setCalendarViewMode: (mode: "grid" | "timeline" | "years") => void;
   calendarVenueFilter: string;
   setCalendarVenueFilter: (v: string) => void;
   store: {

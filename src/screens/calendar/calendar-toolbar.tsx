@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Clock,
   FileSpreadsheet,
   Grid as GridIcon,
   Plus,
@@ -25,8 +26,8 @@ interface CalendarToolbarProps {
   setCursor: (d: Date) => void;
   selectedDay: string;
   setSelectedDay: (day: string) => void;
-  calendarViewMode: "grid" | "timeline";
-  setCalendarViewMode: (mode: "grid" | "timeline") => void;
+  calendarViewMode: "grid" | "timeline" | "years";
+  setCalendarViewMode: (mode: "grid" | "timeline" | "years") => void;
   calendarVenueFilter: string;
   setCalendarVenueFilter: (v: string) => void;
   venues: Venue[];
@@ -116,7 +117,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
             setCursor(new Date(Number(val), cursor.getMonth(), 1))}
         >
           <SelectTrigger
-            className={`w-[90px] text-xs h-8 font-semibold ${
+            className={`w-28 text-xs h-8 font-semibold ${
               theme === "dark"
                 ? "bg-slate-950 border-slate-800 text-slate-100"
                 : "bg-slate-50 border-slate-300 text-slate-900"
@@ -131,7 +132,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
           >
             {Array.from({ length: 16 }, (_, i) => 2020 + i).map((y) => (
               <SelectItem key={y} value={String(y)}>
-                {y}
+                {y} {String(y) === workingYear ? "⭐ (Aktif)" : ""}
               </SelectItem>
             ))}
           </SelectContent>
@@ -169,7 +170,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
 
         {workingYear && (
           <Button
-            variant="outline"
+            variant={cursor.getFullYear() === Number(workingYear) ? "default" : "outline"}
             size="sm"
             onClick={() => {
               const yNum = Number(workingYear) || 2026;
@@ -177,8 +178,10 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
               setSelectedDay(`${yNum}-01-01`);
               toast.info(`Aktif çalışma yılına (${yNum}) gidildi.`);
             }}
-            className={`text-xs h-8 font-bold px-2.5 gap-1 cursor-pointer ${
-              theme === "dark"
+            className={`text-xs h-8 font-bold px-2.5 gap-1 cursor-pointer transition-all ${
+              cursor.getFullYear() === Number(workingYear)
+                ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs border-indigo-600"
+                : theme === "dark"
                 ? "border-indigo-500/40 text-indigo-300 bg-indigo-950/40 hover:bg-indigo-900/50"
                 : "border-indigo-300 text-indigo-800 bg-indigo-50 hover:bg-indigo-100"
             }`}
@@ -230,6 +233,20 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
       >
         <button
           type="button"
+          onClick={() => setCalendarViewMode("years")}
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all font-semibold cursor-pointer ${
+            calendarViewMode === "years"
+              ? "bg-indigo-600 text-white shadow-xs"
+              : theme === "dark"
+              ? "text-slate-400 hover:text-slate-200"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+          title="Tüm çalışma ve mali yılları kart görünümünde aç"
+        >
+          <CalendarDays className="h-3.5 w-3.5" /> Yıllar & Dönemler
+        </button>
+        <button
+          type="button"
           onClick={() => setCalendarViewMode("grid")}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-md transition-all font-medium cursor-pointer ${
             calendarViewMode === "grid"
@@ -252,7 +269,7 @@ export const CalendarToolbar: React.FC<CalendarToolbarProps> = ({
               : "text-slate-600 hover:text-slate-900"
           }`}
         >
-          <CalendarDays className="h-3.5 w-3.5" /> Zaman Çizelgesi
+          <Clock className="h-3.5 w-3.5" /> Zaman Çizelgesi
         </button>
       </div>
 

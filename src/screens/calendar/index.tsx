@@ -5,7 +5,9 @@ import { CalendarGridView } from "./calendar-grid-view";
 import { CalendarTimelineView } from "./calendar-timeline-view";
 import { CalendarDayPanel } from "./calendar-day-panel";
 import { CalendarAgendaModal } from "./calendar-agenda-modal";
+import { CalendarYearsView } from "./calendar-years-view";
 import { CalendarScreenProps, RightPanelViewMode } from "./types";
+import { toast } from "sonner";
 
 export function CalendarScreen({
   theme,
@@ -24,7 +26,7 @@ export function CalendarScreen({
   hallById,
   getEventTypeColor,
   today,
-  workingYear,
+  workingYear = "2026",
   setWorkingYear,
   onOpenExportModal,
   onOpenNewReservationModal,
@@ -61,68 +63,87 @@ export function CalendarScreen({
         onOpenNewReservationModal={onOpenNewReservationModal}
       />
 
-      {/* Main Calendar Grid & Day Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Calendar Grid or Timeline */}
-        <Card
-          className={`lg:col-span-8 ${
-            theme === "dark"
-              ? "bg-slate-900/80 border-slate-800"
-              : "bg-white border-slate-200 shadow-sm"
-          }`}
-        >
-          <CardContent className="p-4">
-            {calendarViewMode === "grid" ? (
-              <CalendarGridView
-                theme={theme}
-                grid={grid}
-                today={today}
-                selectedDay={selectedDay}
-                setSelectedDay={setSelectedDay}
-                byDate={byDate}
-                calendarVenueFilter={calendarVenueFilter}
-                venues={store.venues}
-                hallById={hallById}
-                getEventTypeColor={getEventTypeColor}
-                onSelectReservation={onSelectReservation}
-                onOpenNewReservationModal={onOpenNewReservationModal}
-              />
-            ) : (
-              <CalendarTimelineView
-                theme={theme}
-                cursor={cursor}
-                selectedDay={selectedDay}
-                setSelectedDay={setSelectedDay}
-                filteredReservations={filteredReservations}
-                venues={store.venues}
-                hallById={hallById}
-                getEventTypeColor={getEventTypeColor}
-                onSelectReservation={onSelectReservation}
-              />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Right Column: Selected Day Details Panel */}
-        <CalendarDayPanel
+      {/* Main Content Area: Years Overview vs Month Grid/Timeline */}
+      {calendarViewMode === "years" ? (
+        <CalendarYearsView
           theme={theme}
-          selectedDay={selectedDay}
-          dayReservations={dayReservations}
-          rightPanelViewMode={rightPanelViewMode}
-          setRightPanelViewMode={setRightPanelViewMode}
+          reservations={store.reservations}
           venues={store.venues}
-          hallById={hallById}
-          getEventTypeColor={getEventTypeColor}
+          workingYear={workingYear}
+          setWorkingYear={setWorkingYear}
+          onSelectYearAndMonth={(year, month = 0) => {
+            setCursor(new Date(year, month, 1));
+            const monthStr = String(month + 1).padStart(2, "0");
+            setSelectedDay(`${year}-${monthStr}-01`);
+            setCalendarViewMode("grid");
+            toast.info(`📅 ${year} yılı takvim dönemi açıldı.`);
+          }}
           onOpenNewReservationModal={onOpenNewReservationModal}
-          onOpenExpandedModal={() => setIsExpandedModalOpen(true)}
-          onSelectReservation={onSelectReservation}
-          onPromptDeleteReservation={onPromptDeleteReservation}
-          onPrintOfficialDoc={onPrintOfficialDoc}
-          onCopySMS={onCopySMS}
-          onQuickMail={onQuickMail}
-          onNavigateToCustomer={onNavigateToCustomer}
+          onOpenExportModal={onOpenExportModal}
         />
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Calendar Grid or Timeline */}
+          <Card
+            className={`lg:col-span-8 ${
+              theme === "dark"
+                ? "bg-slate-900/80 border-slate-800"
+                : "bg-white border-slate-200 shadow-sm"
+            }`}
+          >
+            <CardContent className="p-4">
+              {calendarViewMode === "grid" ? (
+                <CalendarGridView
+                  theme={theme}
+                  grid={grid}
+                  today={today}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
+                  byDate={byDate}
+                  calendarVenueFilter={calendarVenueFilter}
+                  venues={store.venues}
+                  hallById={hallById}
+                  getEventTypeColor={getEventTypeColor}
+                  onSelectReservation={onSelectReservation}
+                  onOpenNewReservationModal={onOpenNewReservationModal}
+                />
+              ) : (
+                <CalendarTimelineView
+                  theme={theme}
+                  cursor={cursor}
+                  selectedDay={selectedDay}
+                  setSelectedDay={setSelectedDay}
+                  filteredReservations={filteredReservations}
+                  venues={store.venues}
+                  hallById={hallById}
+                  getEventTypeColor={getEventTypeColor}
+                  onSelectReservation={onSelectReservation}
+                />
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Right Column: Selected Day Details Panel */}
+          <CalendarDayPanel
+            theme={theme}
+            selectedDay={selectedDay}
+            dayReservations={dayReservations}
+            rightPanelViewMode={rightPanelViewMode}
+            setRightPanelViewMode={setRightPanelViewMode}
+            venues={store.venues}
+            hallById={hallById}
+            getEventTypeColor={getEventTypeColor}
+            onOpenNewReservationModal={onOpenNewReservationModal}
+            onOpenExpandedModal={() => setIsExpandedModalOpen(true)}
+            onSelectReservation={onSelectReservation}
+            onPromptDeleteReservation={onPromptDeleteReservation}
+            onPrintOfficialDoc={onPrintOfficialDoc}
+            onCopySMS={onCopySMS}
+            onQuickMail={onQuickMail}
+            onNavigateToCustomer={onNavigateToCustomer}
+          />
+        </div>
+      )}
 
       {/* Expanded Full-Screen Day Agenda Modal */}
       <CalendarAgendaModal

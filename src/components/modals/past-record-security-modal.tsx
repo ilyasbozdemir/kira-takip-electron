@@ -73,12 +73,6 @@ export const PastRecordSecurityModal: React.FC<PastRecordSecurityModalProps> = (
         toast.error("Hatalı güvenlik şifresi! Geçmiş kayıt silme işlemi yetkilendirilmedi.");
         return;
       }
-    } else {
-      // If no security pin is set, require user to enter any non-empty confirmation or warn
-      if (!pinInput.trim()) {
-        toast.error("Lütfen onay için bir yetkili şifresi veya onay metni girin.");
-        return;
-      }
     }
 
     try {
@@ -93,6 +87,8 @@ export const PastRecordSecurityModal: React.FC<PastRecordSecurityModalProps> = (
       setIsSubmitting(false);
     }
   };
+
+  const hasPinConfigured = Boolean(savedSecurityPin && savedSecurityPin.trim() !== "");
 
   return (
     <Dialog
@@ -170,32 +166,39 @@ export const PastRecordSecurityModal: React.FC<PastRecordSecurityModalProps> = (
           <div className="space-y-1">
             <Label className="text-xs font-semibold flex items-center justify-between">
               <span className="flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5 text-amber-500" /> Yönetici Güvenlik Şifresi *
+                <KeyRound className="h-3.5 w-3.5 text-amber-500" /> {hasPinConfigured ? "Yönetici Güvenlik Şifresi *" : "Yönetici Güvenlik Onayı"}
               </span>
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-[10px] text-indigo-500 hover:text-indigo-400 font-medium flex items-center gap-1 cursor-pointer"
-              >
-                {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                {showPassword ? "Gizle" : "Göster"}
-              </button>
+              {hasPinConfigured && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-[10px] text-indigo-500 hover:text-indigo-400 font-medium flex items-center gap-1 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {showPassword ? "Gizle" : "Göster"}
+                </button>
+              )}
             </Label>
-            <Input
-              type={showPassword ? "text" : "password"}
-              required
-              autoFocus
-              value={pinInput}
-              onChange={(e) => setPinInput(e.target.value)}
-              placeholder="Ayarlarda tanımlı güvenlik şifresini girin..."
-              className={`text-xs font-mono h-8.5 ${
-                isDark ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-white border-slate-300 text-slate-900"
-              }`}
-            />
-            {!savedSecurityPin && (
-              <p className="text-[10px] text-amber-500/90 font-medium">
-                ℹ️ Ayarlar ekranında henüz özel güvenlik şifresi belirlenmemiştir. Onaylamak için şifre alanına herhangi bir giriş yapabilirsiniz.
-              </p>
+            {hasPinConfigured ? (
+              <Input
+                type={showPassword ? "text" : "password"}
+                required
+                autoFocus
+                value={pinInput}
+                onChange={(e) => setPinInput(e.target.value)}
+                placeholder="Ayarlarda tanımlı güvenlik şifresini girin..."
+                className={`text-xs font-mono h-8.5 ${
+                  isDark ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-white border-slate-300 text-slate-900"
+                }`}
+              />
+            ) : (
+              <div
+                className={`p-2.5 rounded-lg border text-[11px] ${
+                  isDark ? "bg-slate-950/50 border-slate-800 text-slate-300" : "bg-amber-50/60 border-amber-200 text-amber-900"
+                }`}
+              >
+                ℹ️ Ayarlar ekranında henüz özel bir güvenlik şifresi belirlenmemiştir. Geçmiş kaydı doğrudan onaylayarak silebilirsiniz. (İsterseniz Ayarlar {">"} Kurum Kimliği sekmesinden güvenlik şifresi tanımlayabilirsiniz.)
+              </div>
             )}
           </div>
 
@@ -213,10 +216,10 @@ export const PastRecordSecurityModal: React.FC<PastRecordSecurityModalProps> = (
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || !pinInput.trim()}
+              disabled={isSubmitting || (hasPinConfigured && !pinInput.trim())}
               className="bg-rose-600 hover:bg-rose-500 text-white text-xs h-8 font-bold shadow-xs cursor-pointer"
             >
-              <Trash2 className="h-3.5 w-3.5 mr-1" /> Şifreyi Doğrula ve Sil
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> {hasPinConfigured ? "Şifreyi Doğrula ve Sil" : "Geçmiş Kaydı Sil"}
             </Button>
           </DialogFooter>
         </form>
