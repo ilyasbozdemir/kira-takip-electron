@@ -96,6 +96,7 @@ export type FinancialTransaction = {
 export type NavSection =
   | "dashboard"
   | "calendar"
+  | "holidays"
   | "venues"
   | "events"
   | "customers"

@@ -43,6 +43,7 @@ import { ReservationDateConfirmModal } from "@/components/modals/reservation-dat
 import { PastRecordSecurityModal } from "@/components/modals/past-record-security-modal";
 import { AdvancedExportModal } from "@/components/modals/advanced-export-modal";
 import { CalendarHolidaysModal } from "@/screens/calendar/calendar-holidays-modal";
+import { HolidaysScreen } from "@/screens/holidays.screen";
 
 export function App(): React.JSX.Element {
   // Startup Splash Screen State
@@ -1056,6 +1057,13 @@ export function App(): React.JSX.Element {
                     setSearchTerm(custName);
                     setActiveSection("customers");
                   }}
+                />
+              )}
+
+              {activeSection === "holidays" && (
+                <HolidaysScreen
+                  theme={theme}
+                  onOpenCalendar={() => setActiveSection("calendar")}
                 />
               )}
 

@@ -103,10 +103,14 @@ export function AppSidebar({
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const IconComp = item.icon;
-          const isActive = activeSection === item.id;
+          const isDirectActive = activeSection === item.id;
+          const isCalendarGroup = item.id === "calendar";
+          const isGroupActive = isCalendarGroup && (activeSection === "calendar" || activeSection === "holidays");
+
           return (
-            <React.Fragment key={item.id}>
+            <div key={item.id} className="space-y-1">
               <button
+                type="button"
                 onClick={() => {
                   setActiveSection(item.id as NavSection);
                   setSidebarOpen(false);
@@ -116,9 +120,13 @@ export function AppSidebar({
                   sidebarCollapsed
                     ? "justify-center px-2 py-3"
                     : "gap-3 px-3.5 py-2.5"
-                } rounded-xl text-xs font-medium transition-all ${
-                  isActive
+                } rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                  isDirectActive
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20 font-semibold"
+                    : isGroupActive && !sidebarCollapsed
+                    ? theme === "dark"
+                      ? "bg-indigo-950/40 text-indigo-300 font-semibold border border-indigo-800/30"
+                      : "bg-indigo-50/80 text-indigo-700 font-semibold border border-indigo-200/60"
                     : theme === "dark"
                     ? "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
@@ -130,43 +138,94 @@ export function AppSidebar({
                   }
                 />
                 {!sidebarCollapsed && (
-                  <span className="truncate">{item.label}</span>
+                  <div className="flex-1 flex items-center justify-between min-w-0">
+                    <span className="truncate">{item.label}</span>
+                    {isCalendarGroup && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+                          isGroupActive
+                            ? "bg-indigo-500/20 text-indigo-300"
+                            : "bg-slate-800/40 text-slate-400"
+                        }`}
+                      >
+                        2 Menü
+                      </span>
+                    )}
+                  </div>
                 )}
               </button>
 
-              {/* Tatil & Takvim Menüsü - Sol Menüde Takvim Altında */}
-              {item.id === "calendar" && onOpenHolidaysModal && (
+              {/* İç İçe Alt Menü (Submenu): Takvim & Etkinlikler Alt Başlıkları */}
+              {isCalendarGroup && !sidebarCollapsed && (
+                <div className="ml-4 pl-3.5 border-l-2 border-slate-700/40 dark:border-slate-800 space-y-1 my-1">
+                  {/* Submenu 1: Rezervasyon Takvimi */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSection("calendar");
+                      setSidebarOpen(false);
+                    }}
+                    title="Etkinlik ve Salon Rezervasyon Takvimi"
+                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                      activeSection === "calendar"
+                        ? "bg-indigo-600 text-white font-bold shadow-xs"
+                        : theme === "dark"
+                        ? "text-slate-400 hover:bg-slate-800/70 hover:text-slate-200"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="text-xs">🗓️</span>
+                      <span className="truncate">Rezervasyon Takvimi</span>
+                    </div>
+                  </button>
+
+                  {/* Submenu 2: Tatil & Takvim Yönetimi */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSection("holidays");
+                      setSidebarOpen(false);
+                    }}
+                    title="Resmi Tatiller, Dini Bayramlar & Hicri/Miladi Takvim Yönetimi"
+                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                      activeSection === "holidays"
+                        ? "bg-rose-600 text-white font-bold shadow-xs"
+                        : theme === "dark"
+                        ? "text-rose-300/80 hover:bg-rose-950/40 hover:text-rose-200"
+                        : "text-rose-700/90 hover:bg-rose-50 hover:text-rose-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="text-xs">🇹🇷</span>
+                      <span className="truncate">Resmi & Dini Tatiller</span>
+                    </div>
+                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
+                      Hicri/ICS
+                    </span>
+                  </button>
+                </div>
+              )}
+
+              {/* Daraltılmış Sidebar (Collapsed) için Hızlı Tatil Butonu */}
+              {isCalendarGroup && sidebarCollapsed && (
                 <button
                   type="button"
-                  onClick={() => onOpenHolidaysModal()}
-                  title="Resmi Tatiller, Dini Bayramlar & Takvim Ayarları (Hicri/Miladi/ICS)"
-                  className={`w-full flex items-center ${
-                    sidebarCollapsed
-                      ? "justify-center px-2 py-2.5"
-                      : "gap-3 px-3 py-2"
-                  } rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    theme === "dark"
-                      ? "bg-rose-950/20 hover:bg-rose-900/40 text-rose-300 border-rose-800/30"
-                      : "bg-rose-50/70 hover:bg-rose-100 text-rose-800 border-rose-200/80"
+                  onClick={() => {
+                    setActiveSection("holidays");
+                    setSidebarOpen(false);
+                  }}
+                  title="Resmi & Dini Tatiller (Hicri/Miladi/ICS)"
+                  className={`w-full flex items-center justify-center px-2 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    activeSection === "holidays"
+                      ? "bg-rose-600 text-white shadow-xs"
+                      : "hover:bg-slate-800 text-rose-400"
                   }`}
                 >
-                  <span className="text-base select-none shrink-0">🇹🇷</span>
-                  {!sidebarCollapsed && (
-                    <div className="flex-1 text-left min-w-0">
-                      <div className="truncate font-bold flex items-center justify-between">
-                        <span>Tatil & Takvim</span>
-                        <span className="text-[9px] font-mono bg-rose-500/20 text-rose-400 dark:text-rose-300 px-1 py-0.2 rounded border border-rose-500/30">
-                          Hicri/ICS
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                        Resmi & Dini Günler
-                      </div>
-                    </div>
-                  )}
+                  <span className="text-base select-none">🇹🇷</span>
                 </button>
               )}
-            </React.Fragment>
+            </div>
           );
         })}
       </nav>
