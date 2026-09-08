@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu, net } from "electron";
 import path from "node:path";
 import fs from "node:fs";
 import os from "node:os";
@@ -834,6 +834,26 @@ safeHandle("list-backups", () => {
     })
     .sort((a, b) => new Date(b.mtime).getTime() - new Date(a.mtime).getTime())
     .slice(0, MAX_LOCAL_BACKUPS);
+});
+
+/** Güvenli doğrudan HTTP/HTTPS veri çekme (CORS engelini aşar) */
+safeHandle("fetch-url", async (_event, url: string) => {
+  try {
+    const res = await net.fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        Accept: "*/*",
+      },
+    });
+    if (!res.ok) {
+      return { success: false, error: `HTTP ${res.status}: ${res.statusText}` };
+    }
+    const text = await res.text();
+    return { success: true, data: text };
+  } catch (err: any) {
+    return { success: false, error: err?.message || String(err) };
+  }
 });
 
 /* ========================================================================== */

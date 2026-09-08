@@ -112,6 +112,7 @@ export const electronAPI = {
   listBackups: () => ipcRenderer.invoke("list-backups"),
   openBackupFolder: () => ipcRenderer.invoke("open-backup-folder"),
   openExternalLink: (url: string) => ipcRenderer.invoke("open-external-link", url),
+  fetchUrl: (url: string) => ipcRenderer.invoke("fetch-url", url),
 
   minimizeWindow: () => ipcRenderer.invoke("win:minimize"),
   maximizeWindow: () => ipcRenderer.invoke("win:maximize"),

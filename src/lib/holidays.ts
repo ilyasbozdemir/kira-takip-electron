@@ -497,25 +497,55 @@ export function parseICSContent(icsText: string, targetYear?: number): HolidayIn
 }
 
 /**
+ * Güvenli Uzak Metin / ICS Çekici (Electron IPC ile CORS engelini aşar)
+ */
+async function fetchRemoteText(url: string): Promise<string | null> {
+  // 1. Electron IPC ile doğrudan Node.js net.fetch üzerinden istek
+  try {
+    if (typeof window !== "undefined" && (window as any).electronAPI?.fetchUrl) {
+      const res = await (window as any).electronAPI.fetchUrl(url);
+      if (res && res.success && typeof res.data === "string" && res.data.length > 0) {
+        return res.data;
+      }
+    }
+  } catch (e) {
+    console.warn("electronAPI.fetchUrl hatası:", e);
+  }
+
+  // 2. Tarayıcı doğrudan fetch
+  try {
+    const res = await fetch(url);
+    if (res.ok) {
+      return await res.text();
+    }
+  } catch (e) {
+    console.warn("Tarayıcı fetch hatası:", e);
+  }
+
+  return null;
+}
+
+/**
  * Google Calendar Public Turkish Holidays ICS feed'ini canlı olarak çeker ve parse eder
  */
 export async function fetchGoogleCalendarICS(targetYear?: number): Promise<HolidayInfo[]> {
   const urls = [
     GOOGLE_CALENDAR_TR_ICS_URL,
     GOOGLE_CALENDAR_BACKUP_ICS_URL,
+    "https://calendar.google.com/calendar/ical/turkish__tr%40holiday.calendar.google.com/public/basic.ics",
   ];
 
   for (const url of urls) {
     try {
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const text = await res.text();
-      const parsed = parseICSContent(text, targetYear);
-      if (parsed.length > 0) {
-        if (targetYear) {
-          saveWebCachedHolidays(targetYear, parsed);
+      const text = await fetchRemoteText(url);
+      if (text && text.includes("BEGIN:VCALENDAR")) {
+        const parsed = parseICSContent(text, targetYear);
+        if (parsed.length > 0) {
+          if (targetYear) {
+            saveWebCachedHolidays(targetYear, parsed);
+          }
+          return parsed;
         }
-        return parsed;
       }
     } catch (err) {
       console.warn(`Google ICS fetch failed for ${url}:`, err);
@@ -721,15 +751,13 @@ export function parseTakvimComText(text: string, year: number): HolidayInfo[] {
 export async function fetchOnlineHolidays(year: number): Promise<HolidayInfo[]> {
   const url = `https://www.takvim.com/${year}_takvimi.html`;
   try {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const html = await res.text();
-    const parsed = parseTakvimComText(html, year);
-    if (parsed.length > 0) {
-      saveWebCachedHolidays(year, parsed);
-      return parsed;
+    const html = await fetchRemoteText(url);
+    if (html && html.length > 0) {
+      const parsed = parseTakvimComText(html, year);
+      if (parsed.length > 0) {
+        saveWebCachedHolidays(year, parsed);
+        return parsed;
+      }
     }
   } catch (err) {
     console.warn(`takvim.com verisi çekilemedi (${year}):`, err);
