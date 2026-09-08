@@ -42,6 +42,7 @@ import { SplashScreen } from "@/components/splash-screen";
 import { ReservationDateConfirmModal } from "@/components/modals/reservation-date-confirm-modal";
 import { PastRecordSecurityModal } from "@/components/modals/past-record-security-modal";
 import { AdvancedExportModal } from "@/components/modals/advanced-export-modal";
+import { CalendarHolidaysModal } from "@/screens/calendar/calendar-holidays-modal";
 
 export function App(): React.JSX.Element {
   // Startup Splash Screen State
@@ -203,6 +204,7 @@ export function App(): React.JSX.Element {
   const [customerHistoryName, setCustomerHistoryName] = useState("");
   const [trashModalOpen, setTrashModalOpen] = useState(false);
   const [exitModalOpen, setExitModalOpen] = useState(false);
+  const [holidaysModalOpen, setHolidaysModalOpen] = useState(false);
 
   // Kapanırken yedek alınıyor durumu
   const [isClosing, setIsClosing] = useState(false);
@@ -990,6 +992,7 @@ export function App(): React.JSX.Element {
           institutionName={institutionName}
           institutionLogo={institutionLogo}
           accountingModuleEnabled={accountingModuleEnabled}
+          onOpenHolidaysModal={() => setHolidaysModalOpen(true)}
         />
 
         {/* Main Content View Screens & Docked Footer */}
@@ -1457,6 +1460,15 @@ export function App(): React.JSX.Element {
         currentFilePath={currentFilePath}
         onConfirmExit={handleExecuteExit}
         onDirectExit={handleDirectExit}
+      />
+
+      {/* Global Tatiller & Takvim Yönetim Modalı (Sol Menüden Tetiklenir) */}
+      <CalendarHolidaysModal
+        theme={theme}
+        isOpen={holidaysModalOpen}
+        onOpenChange={setHolidaysModalOpen}
+        initialYear={cursor.getFullYear()}
+        onHolidaysUpdated={() => sqliteStore.loadFromDb()}
       />
     </div>
   );
