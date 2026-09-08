@@ -425,11 +425,34 @@ export const CalendarHolidaysModal: React.FC<CalendarHolidaysModalProps> = ({
                 </Badge>
               </DialogTitle>
               <DialogDescription
-                className={`text-xs ${
+                className={`text-xs flex flex-col gap-1 ${
                   isDark ? "text-slate-400" : "text-slate-600 font-medium"
                 }`}
               >
-                Miladi ulusal bayramlar, Hicri dini bayramlar (Diyanet & Google ICS teyitli) ve kurumsal özel izinleri yönetin.
+                <span>
+                  Miladi ulusal bayramlar, Hicri dini bayramlar (Diyanet & Google ICS teyitli) ve kurumsal özel izinleri yönetin.
+                </span>
+                <span className="text-[11px] text-amber-500/90 dark:text-amber-400 flex items-center gap-1.5 font-normal">
+                  <span>💡</span>
+                  <span>
+                    <strong>Önemli Hatırlatma:</strong> Dini bayramlar Kameri (Ay) takvimine göre belirlendiğinden, resmi kurum planlamalarında Diyanet İşleri veya Google Takvim üzerinden güncel tarihleri teyit etmeniz önerilir.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const queryUrl = `https://www.google.com/search?q=${selectedYear}+dini+bayramlar+ve+resmi+tatiller+diyanet`;
+                      if ((window as any).electronAPI?.openExternalLink) {
+                        (window as any).electronAPI.openExternalLink(queryUrl);
+                      } else {
+                        window.open(queryUrl, "_blank");
+                      }
+                    }}
+                    className="underline hover:text-amber-300 font-semibold cursor-pointer ml-1 inline-flex items-center gap-0.5"
+                    title={`${selectedYear} yılı dini ve resmi tatillerini Google'da doğrula`}
+                  >
+                    🔍 Google'da Teyit Et
+                  </button>
+                </span>
               </DialogDescription>
             </div>
 
