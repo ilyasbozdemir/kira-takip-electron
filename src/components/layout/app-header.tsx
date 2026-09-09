@@ -93,6 +93,7 @@ export function AppHeader({
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -110,11 +111,16 @@ export function AppHeader({
     };
   }, []);
 
-  // Close dropdown on Escape key
+  // Global search shortcut (Ctrl+K / Cmd+K) & Close on Escape
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        setIsSearchOpen(true);
+      } else if (e.key === "Escape") {
         setIsSearchOpen(false);
+        searchInputRef.current?.blur();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -341,6 +347,7 @@ export function AppHeader({
         <div className="relative w-full">
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
           <Input
+            ref={searchInputRef}
             type="search"
             placeholder="Mekan, salon, müşteri, telefon veya etkinlik ara..."
             value={searchTerm}
@@ -349,13 +356,13 @@ export function AppHeader({
               setSearchTerm(e.target.value);
               setIsSearchOpen(true);
             }}
-            className={`pl-8 pr-7 text-xs h-8 rounded-lg ${
+            className={`pl-8 pr-14 text-xs h-8 rounded-lg ${
               isDark
                 ? "bg-slate-950 border-slate-800 text-slate-100 placeholder:text-slate-500"
                 : "bg-slate-100 border-slate-200 text-slate-900 placeholder:text-slate-400"
             }`}
           />
-          {searchTerm && (
+          {searchTerm ? (
             <button
               type="button"
               onClick={() => {
@@ -367,6 +374,16 @@ export function AppHeader({
             >
               <X className="h-3.5 w-3.5" />
             </button>
+          ) : (
+            <kbd
+              className={`pointer-events-none absolute right-2 top-1.5 hidden lg:inline-flex h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium opacity-70 ${
+                isDark
+                  ? "border-slate-800 bg-slate-900 text-slate-400"
+                  : "border-slate-300 bg-slate-200/80 text-slate-600"
+              }`}
+            >
+              Ctrl+K
+            </kbd>
           )}
         </div>
 

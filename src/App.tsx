@@ -720,6 +720,45 @@ export function App(): React.JSX.Element {
     resetPersonnelForm,
   } = usePersonnelForm();
 
+  // Helper to open new reservation modal with fallback defaults
+  const handleOpenNewReservation = () => {
+    if (store.venues.length === 0) {
+      toast.error("Lütfen önce bir mekan ekleyin.");
+      return;
+    }
+    const firstV = store.venues[0];
+    setResVenueId(firstV.id);
+    if (firstV.halls.length > 0) {
+      setResHallId(firstV.halls[0].id);
+    }
+    setResModalOpen(true);
+  };
+
+  // Global Shortcut: Ctrl+N (or Cmd+N) for New Reservation
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput =
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "n") {
+        if (!isInput) {
+          e.preventDefault();
+          handleOpenNewReservation();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalShortcuts);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalShortcuts);
+    };
+  }, [store.venues]);
+
   // Hall lookup helper
   const hallById = (id: string) => {
     for (const v of store.venues) {
@@ -951,18 +990,7 @@ export function App(): React.JSX.Element {
         onShowLauncher={() => setShowLauncherModal(true)}
         onClose={handleAppClose}
         onOpenTrashModal={() => setTrashModalOpen(true)}
-        onOpenNewReservation={() => {
-          if (store.venues.length === 0) {
-            toast.error("Lütfen önce bir mekan ekleyin.");
-            return;
-          }
-          const firstV = store.venues[0];
-          setResVenueId(firstV.id);
-          if (firstV.halls.length > 0) {
-            setResHallId(firstV.halls[0].id);
-          }
-          setResModalOpen(true);
-        }}
+        onOpenNewReservation={handleOpenNewReservation}
       />
 
       {/* Startup Animated Developer Splash Screen */}
