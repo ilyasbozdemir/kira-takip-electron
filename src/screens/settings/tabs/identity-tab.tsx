@@ -511,25 +511,7 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleCancelInstitutionSettings}
-              className="text-xs h-8"
-            >
-              Vazgeç
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleSaveInstitutionSettings}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
-            >
-              <Check className="h-3.5 w-3.5 mr-1" /> Bilgileri Kaydet
-            </Button>
-          </div>
+
         </CardContent>
       </Card>
 
@@ -540,6 +522,38 @@ export const IdentityTab: React.FC<IdentityTabProps> = ({
         onOpenChange={setIsHolidaysModalOpen}
         initialYear={Number(draftWorkingYear) || 2026}
       />
+
+      {/* Sticky Save Bar — sayfanın altında sabit, kaydırırken hep görünür */}
+      <div
+        className={`sticky bottom-0 z-10 -mx-1 px-4 py-3 border-t flex items-center justify-between gap-3 backdrop-blur-sm rounded-b-xl ${
+          isDark
+            ? "bg-slate-950/90 border-slate-800"
+            : "bg-white/90 border-slate-200 shadow-sm"
+        }`}
+      >
+        <p className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-400"}`}>
+          Değişiklikleri kaydetmeyi unutmayın.
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleCancelInstitutionSettings}
+            className="text-xs h-8"
+          >
+            Vazgeç
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleSaveInstitutionSettings}
+            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-8 font-semibold shadow-xs"
+          >
+            <Check className="h-3.5 w-3.5 mr-1" /> Bilgileri Kaydet
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

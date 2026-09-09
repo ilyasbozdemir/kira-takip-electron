@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import packageJson from "../../../package.json";
 import {
   Building2,
@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Clock,
   DollarSign,
+  ExternalLink,
   FileCode,
   FolderOpen,
   HardDrive,
@@ -23,7 +24,6 @@ import {
   User,
   Users,
   X,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,7 +133,13 @@ export function AppHeader({
   const searchResults = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
     if (!q || !store) {
-      return { venues: [], reservations: [], customers: [], personnel: [], total: 0 };
+      return {
+        venues: [],
+        reservations: [],
+        customers: [],
+        personnel: [],
+        total: 0,
+      };
     }
 
     // 1. Matched Venues & Halls
@@ -180,8 +186,8 @@ export function AppHeader({
       );
     });
 
-    const total =
-      venues.length + reservations.length + customers.length + personnel.length;
+    const total = venues.length + reservations.length + customers.length +
+      personnel.length;
 
     return { venues, reservations, customers, personnel, total };
   }, [searchTerm, store]);
@@ -210,26 +216,31 @@ export function AppHeader({
         className="flex items-center gap-3"
       >
         <div className="flex items-center gap-2.5">
-          {institutionLogo ? (
-            <img
-              src={institutionLogo}
-              alt="Kurum Logosu"
-              className="h-8 w-8 rounded-lg object-contain bg-slate-900/60 p-0.5 border border-indigo-500/30 shrink-0"
-            />
-          ) : (
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xs shadow-md shrink-0">
-              VK
-            </div>
-          )}
+          {institutionLogo
+            ? (
+              <img
+                src={institutionLogo}
+                alt="Kurum Logosu"
+                className="h-8 w-8 rounded-lg object-contain bg-slate-900/60 p-0.5 border border-indigo-500/30 shrink-0"
+              />
+            )
+            : (
+              <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xs shadow-md shrink-0">
+                VK
+              </div>
+            )}
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <div
                 className="max-w-60 sm:max-w-90 md:max-w-120 lg:max-w-155 cursor-default"
-                title={`${institutionName ? `${institutionName} • ` : ""}${institutionSubHeader ? `${institutionSubHeader} • ` : ""}${appName || "İşletme & Tesis Takip Otomasyonu"}`}
+                title={`${institutionName ? `${institutionName} • ` : ""}${
+                  institutionSubHeader ? `${institutionSubHeader} • ` : ""
+                }${appName || "İşletme & Tesis Takip Otomasyonu"}`}
               >
                 <h1 className="font-extrabold text-xs sm:text-sm tracking-tight truncate text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                   <span className="truncate">
-                    {institutionName || appName || "İşletme & Tesis Takip Otomasyonu"}
+                    {institutionName || appName ||
+                      "İşletme & Tesis Takip Otomasyonu"}
                   </span>
                 </h1>
                 {institutionSubHeader && (
@@ -274,7 +285,9 @@ export function AppHeader({
                   </div>
 
                   <DropdownMenuSeparator
-                    className={theme === "dark" ? "bg-slate-800" : "bg-slate-200"}
+                    className={theme === "dark"
+                      ? "bg-slate-800"
+                      : "bg-slate-200"}
                   />
 
                   {onOpenFile && (
@@ -320,7 +333,9 @@ export function AppHeader({
                   {onShowLauncher && (
                     <>
                       <DropdownMenuSeparator
-                        className={theme === "dark" ? "bg-slate-800" : "bg-slate-200"}
+                        className={theme === "dark"
+                          ? "bg-slate-800"
+                          : "bg-slate-200"}
                       />
                       <DropdownMenuItem
                         onClick={onShowLauncher}
@@ -362,29 +377,31 @@ export function AppHeader({
                 : "bg-slate-100 border-slate-200 text-slate-900 placeholder:text-slate-400"
             }`}
           />
-          {searchTerm ? (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchTerm("");
-                setIsSearchOpen(false);
-              }}
-              className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-200 cursor-pointer"
-              title="Aramayı Temizle"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          ) : (
-            <kbd
-              className={`pointer-events-none absolute right-2 top-1.5 hidden lg:inline-flex h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium opacity-70 ${
-                isDark
-                  ? "border-slate-800 bg-slate-900 text-slate-400"
-                  : "border-slate-300 bg-slate-200/80 text-slate-600"
-              }`}
-            >
-              Ctrl+K
-            </kbd>
-          )}
+          {searchTerm
+            ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm("");
+                  setIsSearchOpen(false);
+                }}
+                className="absolute right-2 top-2.5 text-slate-400 hover:text-slate-200 cursor-pointer"
+                title="Aramayı Temizle"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )
+            : (
+              <kbd
+                className={`pointer-events-none absolute right-2 top-1.5 hidden lg:inline-flex h-5 select-none items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium opacity-70 ${
+                  isDark
+                    ? "border-slate-800 bg-slate-900 text-slate-400"
+                    : "border-slate-300 bg-slate-200/80 text-slate-600"
+                }`}
+              >
+                Ctrl+K
+              </kbd>
+            )}
         </div>
 
         {/* Global Search Results Dropdown Overlay */}
@@ -406,215 +423,262 @@ export function AppHeader({
               </Badge>
             </div>
 
-            {searchResults.total === 0 ? (
-              <div className="py-8 text-center text-slate-400 space-y-1">
-                <p className="text-xs font-semibold text-slate-300">
-                  Eşleşen kayıt bulunamadı
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Mekan adı, salon, müşteri ismi, telefon no veya etkinlik türü yazmayı deneyin.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* 1. MEKANLAR & SALONLAR */}
-                {searchResults.venues.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
-                      <Building2 className="h-3 w-3 text-indigo-400" /> Mekanlar & Salonlar ({searchResults.venues.length})
-                    </span>
+            {searchResults.total === 0
+              ? (
+                <div className="py-8 text-center text-slate-400 space-y-1">
+                  <p className="text-xs font-semibold text-slate-300">
+                    Eşleşen kayıt bulunamadı
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Mekan adı, salon, müşteri ismi, telefon no veya etkinlik
+                    türü yazmayı deneyin.
+                  </p>
+                </div>
+              )
+              : (
+                <div className="space-y-3">
+                  {/* 1. MEKANLAR & SALONLAR */}
+                  {searchResults.venues.length > 0 && (
                     <div className="space-y-1">
-                      {searchResults.venues.map((v) => (
-                        <div
-                          key={v.id}
-                          onClick={() => {
-                            if (onNavigateToSection) onNavigateToSection("venues");
-                            setIsSearchOpen(false);
-                          }}
-                          className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-                            isDark
-                              ? "bg-slate-950/60 border-slate-800/80 hover:border-indigo-500/50 hover:bg-indigo-950/20"
-                              : "bg-slate-50 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 shadow-2xs"
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-xs truncate text-slate-100">
-                                {v.name}
-                              </span>
-                              {v.category && (
-                                <Badge variant="outline" className="text-[9px] px-1 py-0">
-                                  {v.category}
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                              <span className="flex items-center gap-0.5">
-                                <MapPin className="h-2.5 w-2.5 text-rose-500" /> {v.district}
-                              </span>
-                              <span>•</span>
-                              <span>{v.halls.length} Salon ({v.halls.map((h) => h.name).join(", ")})</span>
-                            </div>
-                          </div>
-                          <ExternalLink className="h-3.5 w-3.5 text-indigo-400 opacity-60 shrink-0" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. ETKİNLİKLER & REZERVASYONLAR */}
-                {searchResults.reservations.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
-                      <CalendarIcon className="h-3 w-3 text-sky-400" /> Rezervasyonlar & Etkinlikler ({searchResults.reservations.length})
-                    </span>
-                    <div className="space-y-1">
-                      {searchResults.reservations.slice(0, 8).map((r) => {
-                        const vName = getVenueName(r.venueId);
-                        const hName = getHallName(r.venueId, r.hallId);
-                        return (
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
+                        <Building2 className="h-3 w-3 text-indigo-400" />{" "}
+                        Mekanlar & Salonlar ({searchResults.venues.length})
+                      </span>
+                      <div className="space-y-1">
+                        {searchResults.venues.map((v) => (
                           <div
-                            key={r.id}
+                            key={v.id}
                             onClick={() => {
-                              if (onSelectReservation) onSelectReservation(r);
-                              if (onNavigateToSection) onNavigateToSection("events");
+                              if (onNavigateToSection) {
+                                onNavigateToSection("venues");
+                              }
                               setIsSearchOpen(false);
                             }}
                             className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
                               isDark
-                                ? "bg-slate-950/60 border-slate-800/80 hover:border-sky-500/50 hover:bg-sky-950/20"
-                                : "bg-slate-50 border-slate-200 hover:border-sky-300 hover:bg-sky-50/40 shadow-2xs"
+                                ? "bg-slate-950/60 border-slate-800/80 hover:border-indigo-500/50 hover:bg-indigo-950/20"
+                                : "bg-slate-50 border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 shadow-2xs"
                             }`}
                           >
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <Badge variant="outline" className="text-[9px] font-mono px-1 py-0 bg-indigo-500/10 text-indigo-400">
-                                  {r.date}
-                                </Badge>
+                              <div className="flex items-center gap-1.5">
                                 <span className="font-bold text-xs truncate text-slate-100">
-                                  {r.customer}
+                                  {v.name}
                                 </span>
-                                <span className="text-[10px] text-sky-400 font-semibold">
-                                  • {r.eventType}
-                                </span>
+                                {v.category && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] px-1 py-0"
+                                  >
+                                    {v.category}
+                                  </Badge>
+                                )}
                               </div>
                               <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                                <span>{vName} / {hName}</span>
-                                <span>•</span>
                                 <span className="flex items-center gap-0.5">
-                                  <Clock className="h-2.5 w-2.5" /> {r.start}-{r.end}
+                                  <MapPin className="h-2.5 w-2.5 text-rose-500" />
+                                  {" "}
+                                  {v.district}
                                 </span>
-                                {r.phone && <span>• 📞 {r.phone}</span>}
+                                <span>•</span>
+                                <span>
+                                  {v.halls.length}{" "}
+                                  Salon ({v.halls.map((h) => h.name).join(
+                                    ", ",
+                                  )})
+                                </span>
                               </div>
                             </div>
+                            <ExternalLink className="h-3.5 w-3.5 text-indigo-400 opacity-60 shrink-0" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-                            <div className="text-right shrink-0">
-                              <span className="text-xs font-mono font-bold text-slate-200 block">
-                                {money(r.price)}
-                              </span>
-                              <Badge
-                                className={`text-[8px] px-1 py-0 ${
-                                  r.status === "confirmed"
-                                    ? "bg-emerald-500/20 text-emerald-400"
+                  {/* 2. ETKİNLİKLER & REZERVASYONLAR */}
+                  {searchResults.reservations.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
+                        <CalendarIcon className="h-3 w-3 text-sky-400" />{" "}
+                        Rezervasyonlar & Etkinlikler ({searchResults
+                          .reservations.length})
+                      </span>
+                      <div className="space-y-1">
+                        {searchResults.reservations.slice(0, 8).map((r) => {
+                          const vName = getVenueName(r.venueId);
+                          const hName = getHallName(r.venueId, r.hallId);
+                          return (
+                            <div
+                              key={r.id}
+                              onClick={() => {
+                                if (onSelectReservation) {
+                                  onSelectReservation(r);
+                                }
+                                if (onNavigateToSection) {
+                                  onNavigateToSection("events");
+                                }
+                                setIsSearchOpen(false);
+                              }}
+                              className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+                                isDark
+                                  ? "bg-slate-950/60 border-slate-800/80 hover:border-sky-500/50 hover:bg-sky-950/20"
+                                  : "bg-slate-50 border-slate-200 hover:border-sky-300 hover:bg-sky-50/40 shadow-2xs"
+                              }`}
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] font-mono px-1 py-0 bg-indigo-500/10 text-indigo-400"
+                                  >
+                                    {r.date}
+                                  </Badge>
+                                  <span className="font-bold text-xs truncate text-slate-100">
+                                    {r.customer}
+                                  </span>
+                                  <span className="text-[10px] text-sky-400 font-semibold">
+                                    • {r.eventType}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                  <span>{vName} / {hName}</span>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-0.5">
+                                    <Clock className="h-2.5 w-2.5" />{" "}
+                                    {r.start}-{r.end}
+                                  </span>
+                                  {r.phone && <span>• 📞 {r.phone}</span>}
+                                </div>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <span className="text-xs font-mono font-bold text-slate-200 block">
+                                  {money(r.price)}
+                                </span>
+                                <Badge
+                                  className={`text-[8px] px-1 py-0 ${
+                                    r.status === "confirmed"
+                                      ? "bg-emerald-500/20 text-emerald-400"
+                                      : r.status === "option"
+                                      ? "bg-amber-500/20 text-amber-400"
+                                      : "bg-rose-500/20 text-rose-400"
+                                  }`}
+                                >
+                                  {r.status === "confirmed"
+                                    ? "Onaylı"
                                     : r.status === "option"
-                                    ? "bg-amber-500/20 text-amber-400"
-                                    : "bg-rose-500/20 text-rose-400"
-                                }`}
-                              >
-                                {r.status === "confirmed" ? "Onaylı" : r.status === "option" ? "Opsiyon" : "İptal"}
-                              </Badge>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. MÜŞTERİLER (CRM) */}
-                {searchResults.customers.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
-                      <Users className="h-3 w-3 text-emerald-400" /> Müşteri Rehberi ({searchResults.customers.length})
-                    </span>
-                    <div className="space-y-1">
-                      {searchResults.customers.map((c) => (
-                        <div
-                          key={c.id}
-                          onClick={() => {
-                            if (onNavigateToSection) onNavigateToSection("customers");
-                            setIsSearchOpen(false);
-                          }}
-                          className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-                            isDark
-                              ? "bg-slate-950/60 border-slate-800/80 hover:border-emerald-500/50 hover:bg-emerald-950/20"
-                              : "bg-slate-50 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 shadow-2xs"
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <span className="font-bold text-xs block text-slate-100">
-                              {c.name}
-                            </span>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                              {c.phone && <span>📞 {c.phone}</span>}
-                              {c.email && <span>✉️ {c.email}</span>}
-                              {c.company && <span>🏢 {c.company}</span>}
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="text-[9px] shrink-0">
-                            Rehbere Git
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. PERSONEL KADROSU */}
-                {searchResults.personnel.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
-                      <User className="h-3 w-3 text-amber-400" /> Personel Kadrosu ({searchResults.personnel.length})
-                    </span>
-                    <div className="space-y-1">
-                      {searchResults.personnel.map((p) => (
-                        <div
-                          key={p.id}
-                          onClick={() => {
-                            if (onNavigateToSection) onNavigateToSection("personnel");
-                            setIsSearchOpen(false);
-                          }}
-                          className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
-                            isDark
-                              ? "bg-slate-950/60 border-slate-800/80 hover:border-amber-500/50 hover:bg-amber-950/20"
-                              : "bg-slate-50 border-slate-200 hover:border-amber-300 hover:bg-amber-50/40 shadow-2xs"
-                          }`}
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-xs text-slate-100">{p.name}</span>
-                              {p.title && (
-                                <Badge variant="outline" className="text-[9px] px-1 py-0">
-                                  {p.title}
+                                    ? "Opsiyon"
+                                    : "İptal"}
                                 </Badge>
-                              )}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
-                              {p.phone && <span>📞 {p.phone}</span>}
-                              {p.email && <span>✉️ {p.email}</span>}
-                            </div>
-                          </div>
-                          <Badge variant="outline" className="text-[9px] shrink-0">
-                            Personele Git
-                          </Badge>
-                        </div>
-                      ))}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {/* 3. MÜŞTERİLER (CRM) */}
+                  {searchResults.customers.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
+                        <Users className="h-3 w-3 text-emerald-400" />{" "}
+                        Müşteri Rehberi ({searchResults.customers.length})
+                      </span>
+                      <div className="space-y-1">
+                        {searchResults.customers.map((c) => (
+                          <div
+                            key={c.id}
+                            onClick={() => {
+                              if (onNavigateToSection) {
+                                onNavigateToSection("customers");
+                              }
+                              setIsSearchOpen(false);
+                            }}
+                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+                              isDark
+                                ? "bg-slate-950/60 border-slate-800/80 hover:border-emerald-500/50 hover:bg-emerald-950/20"
+                                : "bg-slate-50 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 shadow-2xs"
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <span className="font-bold text-xs block text-slate-100">
+                                {c.name}
+                              </span>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                {c.phone && <span>📞 {c.phone}</span>}
+                                {c.email && <span>✉️ {c.email}</span>}
+                                {c.company && <span>🏢 {c.company}</span>}
+                              </div>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] shrink-0"
+                            >
+                              Rehbere Git
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 4. PERSONEL KADROSU */}
+                  {searchResults.personnel.length > 0 && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 px-2 flex items-center gap-1">
+                        <User className="h-3 w-3 text-amber-400" />{" "}
+                        Personel Kadrosu ({searchResults.personnel.length})
+                      </span>
+                      <div className="space-y-1">
+                        {searchResults.personnel.map((p) => (
+                          <div
+                            key={p.id}
+                            onClick={() => {
+                              if (onNavigateToSection) {
+                                onNavigateToSection("personnel");
+                              }
+                              setIsSearchOpen(false);
+                            }}
+                            className={`p-2 rounded-xl border flex items-center justify-between gap-2 cursor-pointer transition-colors ${
+                              isDark
+                                ? "bg-slate-950/60 border-slate-800/80 hover:border-amber-500/50 hover:bg-amber-950/20"
+                                : "bg-slate-50 border-slate-200 hover:border-amber-300 hover:bg-amber-50/40 shadow-2xs"
+                            }`}
+                          >
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-xs text-slate-100">
+                                  {p.name}
+                                </span>
+                                {p.title && (
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] px-1 py-0"
+                                  >
+                                    {p.title}
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                                {p.phone && <span>📞 {p.phone}</span>}
+                                {p.email && <span>✉️ {p.email}</span>}
+                              </div>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] shrink-0"
+                            >
+                              Personele Git
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
             {/* Bottom Keyboard Shortcut Hint */}
             <div className="pt-2 border-t border-slate-800/40 flex items-center justify-between text-[10px] text-slate-500 px-1">
@@ -664,11 +728,9 @@ export function AppHeader({
           }`}
           title={theme === "dark" ? "Açık Temaya Geç" : "Koyu Temaya Geç"}
         >
-          {theme === "dark" ? (
-            <Sun className="h-3.5 w-3.5 text-amber-400" />
-          ) : (
-            <Moon className="h-3.5 w-3.5 text-indigo-600" />
-          )}
+          {theme === "dark"
+            ? <Sun className="h-3.5 w-3.5 text-amber-400" />
+            : <Moon className="h-3.5 w-3.5 text-indigo-600" />}
         </Button>
 
         {/* Electron Window Minimize / Maximize / Close Buttons */}
@@ -694,7 +756,9 @@ export function AppHeader({
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => (onClose ? onClose() : (window.electronAPI as any)?.closeWindow?.())}
+            onClick={() => (onClose
+              ? onClose()
+              : (window.electronAPI as any)?.closeWindow?.())}
             className="h-7 w-7 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-950/40"
             title="Kapat"
           >

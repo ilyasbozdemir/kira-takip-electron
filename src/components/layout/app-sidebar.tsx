@@ -77,12 +77,12 @@ export function AppSidebar({
     },
     ...(accountingModuleEnabled
       ? [
-          {
-            id: "accounting",
-            label: "Muhasebe & Kasa",
-            icon: WalletCards,
-          },
-        ]
+        {
+          id: "accounting",
+          label: "Muhasebe & Kasa",
+          icon: WalletCards,
+        },
+      ]
       : []),
     { id: "reports", label: "Finans & Raporlar", icon: BarChart3 },
     { id: "settings", label: "Ayarlar & İletişim", icon: Settings },
@@ -105,7 +105,8 @@ export function AppSidebar({
           const IconComp = item.icon;
           const isDirectActive = activeSection === item.id;
           const isCalendarGroup = item.id === "calendar";
-          const isGroupActive = isCalendarGroup && (activeSection === "calendar" || activeSection === "holidays");
+          const isGroupActive = isCalendarGroup &&
+            (activeSection === "calendar" || activeSection === "holidays");
 
           return (
             <div key={item.id} className="space-y-1">
@@ -133,9 +134,9 @@ export function AppSidebar({
                 }`}
               >
                 <IconComp
-                  className={
-                    sidebarCollapsed ? "h-5 w-5 shrink-0" : "h-4 w-4 shrink-0"
-                  }
+                  className={sidebarCollapsed
+                    ? "h-5 w-5 shrink-0"
+                    : "h-4 w-4 shrink-0"}
                 />
                 {!sidebarCollapsed && (
                   <div className="flex-1 flex items-center justify-between min-w-0">
@@ -157,8 +158,8 @@ export function AppSidebar({
 
               {/* İç İçe Alt Menü (Submenu): Takvim & Etkinlikler Alt Başlıkları */}
               {isCalendarGroup && !sidebarCollapsed && (
-                <div className="ml-4 pl-3.5 border-l-2 border-slate-700/40 dark:border-slate-800 space-y-1 my-1">
-                  {/* Submenu 1: Rezervasyon Takvimi */}
+                <div className="ml-4 pl-3.5 border-l-2 border-slate-700/40 dark:border-slate-800 space-y-0.5 my-1">
+                  {/* Submenu 1: Rezervasyon Takvimi — ANA menü, belirgin */}
                   <button
                     type="button"
                     onClick={() => {
@@ -166,21 +167,19 @@ export function AppSidebar({
                       setSidebarOpen(false);
                     }}
                     title="Etkinlik ve Salon Rezervasyon Takvimi"
-                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all cursor-pointer ${
                       activeSection === "calendar"
-                        ? "bg-indigo-600 text-white font-bold shadow-xs"
+                        ? "bg-indigo-600 text-white shadow-xs"
                         : theme === "dark"
-                        ? "text-slate-400 hover:bg-slate-800/70 hover:text-slate-200"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        ? "text-slate-300 hover:bg-slate-800/70 hover:text-white"
+                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                     }`}
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="text-xs">🗓️</span>
-                      <span className="truncate">Rezervasyon Takvimi</span>
-                    </div>
+                    <span className="text-xs">🗓️</span>
+                    <span className="truncate">Rezervasyon Takvimi</span>
                   </button>
 
-                  {/* Submenu 2: Tatil & Takvim Yönetimi */}
+                  {/* Submenu 2: Resmi Tatiller — İKİNCİL, küçük ve sade */}
                   <button
                     type="button"
                     onClick={() => {
@@ -188,21 +187,16 @@ export function AppSidebar({
                       setSidebarOpen(false);
                     }}
                     title="Resmi Tatiller, Dini Bayramlar & Hicri/Miladi Takvim Yönetimi"
-                    className={`w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                    className={`w-full flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all cursor-pointer ${
                       activeSection === "holidays"
-                        ? "bg-rose-600 text-white font-bold shadow-xs"
+                        ? "text-rose-400 bg-rose-950/30"
                         : theme === "dark"
-                        ? "text-rose-300/80 hover:bg-rose-950/40 hover:text-rose-200"
-                        : "text-rose-700/90 hover:bg-rose-50 hover:text-rose-900"
+                        ? "text-slate-500 hover:text-slate-400 hover:bg-slate-800/40"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-100/60"
                     }`}
                   >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="text-xs">🇹🇷</span>
-                      <span className="truncate">Resmi & Dini Tatiller</span>
-                    </div>
-                    <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 shrink-0">
-                      Hicri/ICS
-                    </span>
+                    <span className="text-[10px] opacity-70">🎌</span>
+                    <span className="truncate">Resmi & Dini Tatiller</span>
                   </button>
                 </div>
               )}
@@ -260,11 +254,9 @@ export function AppSidebar({
             }`}
             title={sidebarCollapsed ? "Menüyü Genişlet" : "Menüyü Daralt"}
           >
-            {sidebarCollapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
+            {sidebarCollapsed
+              ? <ChevronRight className="h-4 w-4" />
+              : <ChevronLeft className="h-4 w-4" />}
           </Button>
         </div>
 
@@ -283,7 +275,9 @@ export function AppSidebar({
           {/* User Avatar with Green Online Badge */}
           <div className="relative shrink-0">
             <div className="h-8 w-8 rounded-xl bg-indigo-600/20 border border-indigo-500/40 text-indigo-400 flex items-center justify-center font-bold text-xs shadow-xs">
-              {institutionName ? institutionName.slice(0, 2).toUpperCase() : "UK"}
+              {institutionName
+                ? institutionName.slice(0, 2).toUpperCase()
+                : "UK"}
             </div>
             <span
               className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900"

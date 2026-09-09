@@ -88,7 +88,15 @@ export function ExitBackupModal({
     }
   }, [open]);
 
+  // Hiçbir seçenek işaretli değilse direkt çıkış
+  const nothingSelected = !backupLocal && !sendEmail;
+
   const handleBackupAndExit = async () => {
+    if (nothingSelected) {
+      onDirectExit();
+      return;
+    }
+
     if (sendEmail) {
       if (!backupEmail || !backupEmail.trim()) {
         toast.error(
@@ -310,6 +318,23 @@ export function ExitBackupModal({
             )}
           </div>
 
+          {/* Hiçbir seçenek işaretli değilse bilgi notu */}
+          {nothingSelected && statusStep === "idle" && (
+            <div
+              className={`px-3 py-2 rounded-lg border text-[11px] flex items-center gap-2 ${
+                isDark
+                  ? "bg-slate-800/50 border-slate-700/60 text-slate-400"
+                  : "bg-slate-50 border-slate-200 text-slate-500"
+              }`}
+            >
+              <span className="text-base leading-none">ℹ️</span>
+              <span>
+                Hiçbir yedek seçeneği işaretlenmedi.{" "}
+                <strong>Kapat</strong> butonuna basarak yedek almadan çıkabilirsiniz.
+              </span>
+            </div>
+          )}
+
           {/* Live Status & Diagnostic Result Banner */}
           {statusStep !== "idle" && (
             <div
@@ -381,20 +406,28 @@ export function ExitBackupModal({
               type="button"
               onClick={handleBackupAndExit}
               disabled={isProcessing}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs h-9 font-bold px-4 shadow-sm"
+              className={`text-xs h-9 font-bold px-4 shadow-sm ${
+                nothingSelected
+                  ? isDark
+                    ? "bg-slate-700 hover:bg-slate-600 text-slate-200"
+                    : "bg-slate-200 hover:bg-slate-300 text-slate-800"
+                  : "bg-indigo-600 hover:bg-indigo-500 text-white"
+              }`}
             >
-              {isProcessing
-                ? (
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent inline-block" />
-                    Yedekleniyor...
-                  </span>
-                )
-                : (
-                  <span className="flex items-center gap-1.5">
-                    <Save className="h-3.5 w-3.5" /> Yedekle ve Kapat
-                  </span>
-                )}
+              {isProcessing ? (
+                <span className="flex items-center gap-1.5">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent inline-block" />
+                  Yedekleniyor...
+                </span>
+              ) : nothingSelected ? (
+                <span className="flex items-center gap-1.5">
+                  <LogOut className="h-3.5 w-3.5" /> Kapat
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <Save className="h-3.5 w-3.5" /> Yedekle ve Kapat
+                </span>
+              )}
             </Button>
           </div>
         </div>
