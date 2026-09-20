@@ -1,6 +1,7 @@
 import React from "react";
 import {
   BookOpen,
+  Cloud,
   Mail,
   PartyPopper,
   Scale,
@@ -100,9 +101,9 @@ export function SettingsScreen({
           </TabsTrigger>
           <TabsTrigger
             value="integrations"
-            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-indigo-600 data-[state=active]:text-white shadow-xs"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-semibold cursor-pointer data-[state=active]:bg-teal-600 data-[state=active]:text-white shadow-xs"
           >
-            <Mail className="h-3.5 w-3.5" /> E-posta & Modüller
+            <Cloud className="h-3.5 w-3.5" /> Bulut & E-Posta
           </TabsTrigger>
           <TabsTrigger
             value="categories"

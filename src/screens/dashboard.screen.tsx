@@ -1,5 +1,15 @@
-import React, { useMemo } from "react";
-import { Building2, Calendar as CalendarIcon, Clock, DollarSign, BarChart3 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import {
+  Building2,
+  Calendar as CalendarIcon,
+  Clock,
+  DollarSign,
+  BarChart3,
+  AlertTriangle,
+  ExternalLink,
+  X,
+  Sparkles,
+} from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +30,7 @@ interface DashboardScreenProps {
   };
   hallById: (id: string) => { name: string } | undefined;
   onNavigateToCalendar: () => void;
+  onOpenHolidaysModal?: () => void;
 }
 
 export function DashboardScreen({
@@ -28,6 +39,7 @@ export function DashboardScreen({
   monthStats,
   hallById,
   onNavigateToCalendar,
+  onOpenHolidaysModal,
 }: DashboardScreenProps): React.JSX.Element {
   const isDark = theme === "dark";
 
@@ -69,6 +81,19 @@ export function DashboardScreen({
 
   const totalAllEvents = store.reservations.length || 1;
 
+  const [isHolidayNoticeDismissed, setIsHolidayNoticeDismissed] = useState(() => {
+    const dismissedAt = localStorage.getItem("venue_keeper_holiday_notice_dismissed");
+    if (!dismissedAt) return false;
+    // Auto-show again after 24 hours
+    const diffHours = (Date.now() - Number(dismissedAt)) / (1000 * 60 * 60);
+    return diffHours < 24;
+  });
+
+  const handleDismissNotice = () => {
+    localStorage.setItem("venue_keeper_holiday_notice_dismissed", String(Date.now()));
+    setIsHolidayNoticeDismissed(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -88,7 +113,79 @@ export function DashboardScreen({
             Aylık genel doluluk, gelir dökümü ve yaklaşan rezervasyonlar.
           </p>
         </div>
+
+        {isHolidayNoticeDismissed && (
+          <button
+            type="button"
+            onClick={() => setIsHolidayNoticeDismissed(false)}
+            className="text-[11px] text-amber-600 dark:text-amber-400 hover:underline font-medium flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 cursor-pointer"
+          >
+            <AlertTriangle className="h-3 w-3" />
+            <span>Resmi Tatil Uyarısını Göster</span>
+          </button>
+        )}
       </div>
+
+      {/* Official Holidays & Verification Announcement Banner */}
+      {!isHolidayNoticeDismissed && (
+        <div className="relative p-4 sm:p-5 rounded-2xl border border-amber-500/30 bg-linear-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-amber-950/20 shadow-xs animate-in fade-in duration-300">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex items-start gap-3.5 min-w-0">
+              <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                    <span>📢 Önemli Duyuru: Resmi Tatiller ve İdari İzinler</span>
+                  </h3>
+                  <span className="px-2 py-0.2 rounded-full text-[9px] font-extrabold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    ÖNEMLİ HATIRLATMA
+                  </span>
+                </div>
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl">
+                  Sistem takvimindeki resmi tatil, bayram ve idari izin günleri genel ön bilgilendirme amaçlıdır. Salon tahsis, etkinlik planlama veya kiralama sözleşmesi yaparken resmi tatil ve idari izin durumlarını mutlaka <strong>Google</strong>, <strong>T.C. Resmi Gazete</strong> veya yetkili <strong>resmi mülki idare kurumlarından</strong> teyit ediniz.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const year = new Date().getFullYear();
+                  (window.electronAPI as any)?.openExternalLink?.(
+                    `https://www.google.com/search?q=resmi+tatiller+ve+idari+izinler+${year}`
+                  );
+                }}
+                className="text-xs h-8 font-bold border-amber-500/40 hover:bg-amber-500/15 text-amber-700 dark:text-amber-300 gap-1.5 cursor-pointer"
+              >
+                <ExternalLink className="h-3.5 w-3.5" /> Google'da Teyit Et
+              </Button>
+
+              {onOpenHolidaysModal && (
+                <Button
+                  size="sm"
+                  onClick={onOpenHolidaysModal}
+                  className="bg-amber-600 hover:bg-amber-700 text-white text-xs h-8 font-bold gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" /> Tatil Takvimini Aç
+                </Button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleDismissNotice}
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                title="Duyuruyu Gizle (24 Saat)"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

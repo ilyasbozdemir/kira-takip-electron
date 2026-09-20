@@ -5,6 +5,7 @@ import {
   Calendar as CalendarIcon,
   ChevronDown,
   Clock,
+  Cloud,
   DollarSign,
   ExternalLink,
   FileCode,
@@ -716,6 +717,20 @@ export function AppHeader({
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         )}
+
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => window.dispatchEvent(new CustomEvent("open-gdrive-modal"))}
+          className={`h-8 w-8 rounded-lg ${
+            theme === "dark"
+              ? "bg-slate-900 border-slate-800 text-slate-400 hover:text-teal-400 hover:bg-slate-800"
+              : "bg-white border-slate-200 text-slate-600 hover:text-teal-600 hover:bg-teal-50 shadow-2xs"
+          }`}
+          title="Google Drive Bulut Depolama & Yedekleme Yöneticisi"
+        >
+          <Cloud className="h-3.5 w-3.5" />
+        </Button>
 
         <Button
           size="icon"

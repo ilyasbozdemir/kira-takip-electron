@@ -760,6 +760,187 @@ safeHandle("backup-database", () => {
  * quit-with-backup: Renderer bu IPC'yi çağırır → yerel yedek alınır
  * → SMTP ayarlıysa e-posta gönderilir → sonuç renderer'a döner.
  */
+/** Google Drive API Helper Functions */
+async function verifyGoogleDriveToken(accessToken: string): Promise<{ success: boolean; user?: any; storageQuota?: any; error?: string }> {
+  try {
+    if (!accessToken || !accessToken.trim()) {
+      return { success: false, error: "Google Drive erişim belirteci (token) boş olamaz." };
+    }
+    const res = await net.fetch("https://www.googleapis.com/drive/v3/about?fields=user,storageQuota", {
+      headers: {
+        Authorization: `Bearer ${accessToken.trim()}`,
+      },
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      return { success: false, error: `Google API Hatası (${res.status}): ${errText || res.statusText}` };
+    }
+    const data: any = await res.json();
+    return { success: true, user: data.user, storageQuota: data.storageQuota };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Google Drive bağlantı hatası." };
+  }
+}
+
+async function uploadToGoogleDrive(
+  accessToken: string,
+  filePath: string,
+  customFileName?: string,
+  folderId?: string
+): Promise<{ success: boolean; fileId?: string; fileName?: string; webViewLink?: string; error?: string }> {
+  try {
+    if (!accessToken || !accessToken.trim()) {
+      return { success: false, error: "Google Drive erişim belirteci bulunamadı." };
+    }
+    if (!filePath || !fs.existsSync(filePath)) {
+      return { success: false, error: `Yüklenecek dosya bulunamadı: ${filePath}` };
+    }
+
+    const fileName = customFileName || path.basename(filePath);
+    const fileBuffer = fs.readFileSync(filePath);
+
+    const boundary = "-------314159265358979323846";
+    const delimiter = `\r\n--${boundary}\r\n`;
+    const closeDelimiter = `\r\n--${boundary}--`;
+
+    const metadata: any = {
+      name: fileName,
+      mimeType: "application/octet-stream",
+    };
+    if (folderId && folderId.trim()) {
+      metadata.parents = [folderId.trim()];
+    }
+
+    const multipartRequestBody = Buffer.concat([
+      Buffer.from(
+        delimiter +
+          "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+          JSON.stringify(metadata) +
+          delimiter +
+          "Content-Type: application/octet-stream\r\n\r\n"
+      ),
+      fileBuffer,
+      Buffer.from(closeDelimiter),
+    ]);
+
+    const res = await net.fetch(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken.trim()}`,
+          "Content-Type": `multipart/related; boundary=${boundary}`,
+          "Content-Length": String(multipartRequestBody.length),
+        },
+        body: multipartRequestBody as any,
+      }
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return { success: false, error: `Google Drive Yükleme Hatası (${res.status}): ${errText}` };
+    }
+
+    const data: any = await res.json();
+    return {
+      success: true,
+      fileId: data.id,
+      fileName: data.name,
+      webViewLink: data.webViewLink,
+    };
+  } catch (err: any) {
+    console.error("[GoogleDrive] Upload Error:", err);
+    return { success: false, error: err?.message || "Google Drive yükleme başarısız oldu." };
+  }
+}
+
+async function listGoogleDriveBackups(
+  accessToken: string,
+  folderId?: string
+): Promise<{ success: boolean; files?: any[]; error?: string }> {
+  try {
+    if (!accessToken || !accessToken.trim()) {
+      return { success: false, error: "Google Drive erişim belirteci bulunamadı." };
+    }
+
+    let q = "trashed = false and name contains '.vke'";
+    if (folderId && folderId.trim()) {
+      q += ` and '${folderId.trim()}' in parents`;
+    }
+
+    const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+      q
+    )}&fields=files(id,name,size,createdTime,modifiedTime,webViewLink)&orderBy=modifiedTime desc&pageSize=30`;
+
+    const res = await net.fetch(url, {
+      headers: {
+        Authorization: `Bearer ${accessToken.trim()}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return { success: false, error: `Google Drive Listeleme Hatası (${res.status}): ${errText}` };
+    }
+
+    const data: any = await res.json();
+    return { success: true, files: data.files || [] };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Google Drive listeleme hatası." };
+  }
+}
+
+async function downloadFromGoogleDrive(
+  accessToken: string,
+  fileId: string,
+  destPath?: string
+): Promise<{ success: boolean; filePath?: string; error?: string }> {
+  try {
+    if (!accessToken || !accessToken.trim() || !fileId) {
+      return { success: false, error: "Erişim belirteci veya dosya ID eksik." };
+    }
+
+    const res = await net.fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: {
+        Authorization: `Bearer ${accessToken.trim()}`,
+      },
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      return { success: false, error: `Google Drive İndirme Hatası (${res.status}): ${errText}` };
+    }
+
+    const arrayBuffer = await res.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    let targetPath = destPath;
+    if (!targetPath) {
+      const backupsDir = path.join(app.getPath("userData"), "backups");
+      if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+      targetPath = path.join(backupsDir, `gdrive-download-${Date.now()}.vke`);
+    }
+
+    fs.writeFileSync(targetPath, buffer);
+    return { success: true, filePath: targetPath };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Google Drive indirme hatası." };
+  }
+}
+
+// Google Drive IPCs
+safeHandle("gdrive:verify", (_event, token: string) => verifyGoogleDriveToken(token));
+safeHandle("gdrive:upload", (_event, data: any) =>
+  uploadToGoogleDrive(data?.token, data?.filePath || getCurrentDbPath(), data?.fileName, data?.folderId)
+);
+safeHandle("gdrive:list", (_event, data: any) => listGoogleDriveBackups(data?.token, data?.folderId));
+safeHandle("gdrive:download", (_event, data: any) => downloadFromGoogleDrive(data?.token, data?.fileId, data?.destPath));
+
+/**
+ * quit-with-backup: Renderer bu IPC'yi çağırır → yerel yedek alınır
+ * → Google Drive ve/veya SMTP e-posta ile yedeklenir.
+ * → Değişiklik yoksa ve skipEmailIfNoChanges aktifse gereksiz mail atılmaz!
+ */
 safeHandle("quit-with-backup", async (_event, options: any) => {
   const currentPath = getCurrentDbPath();
   if (!currentPath || !fs.existsSync(currentPath)) {
@@ -768,47 +949,78 @@ safeHandle("quit-with-backup", async (_event, options: any) => {
 
   const shouldBackupLocal = options?.backupLocal !== false;
   const shouldSendEmail = options?.sendEmail === true;
+  const shouldBackupGdrive = options?.backupGdrive === true;
+  const hasChanges = options?.hasChanges !== false;
+  const skipEmailIfNoChanges = options?.skipEmailIfNoChanges !== false;
+  const gdriveToken = options?.gdriveToken;
+  const gdriveFolderId = options?.gdriveFolderId;
+
   const smtpSettings = options?.smtpSettings || options;
   const targetEmail = options?.backupEmail || smtpSettings?.backupEmail;
 
   // 1. Yerel yedek al
   let backupPath: string | null = null;
-  if (shouldBackupLocal || shouldSendEmail) {
+  if (shouldBackupLocal || shouldSendEmail || shouldBackupGdrive) {
     backupPath = makeLocalBackup(currentPath);
   }
 
-  // 2. SMTP ayarlıysa e-posta gönder
-  let emailSent = false;
-  let emailError: string | undefined;
-  if (
-    shouldSendEmail &&
-    smtpSettings &&
-    smtpSettings.host &&
-    smtpSettings.user &&
-    smtpSettings.pass &&
-    targetEmail &&
-    backupPath
-  ) {
-    const result = await sendBackupEmail(
-      smtpSettings,
-      targetEmail,
+  // 2. Google Drive Yedeği
+  let gdriveUploaded = false;
+  let gdriveError: string | undefined;
+  if (shouldBackupGdrive && gdriveToken && backupPath) {
+    const gdRes = await uploadToGoogleDrive(
+      gdriveToken,
       backupPath,
-      path.basename(currentPath),
-      options?.mailSubject,
-      options?.mailHtml,
-      options?.mailText,
+      path.basename(backupPath),
+      gdriveFolderId
     );
-    emailSent = result.success;
-    emailError = result.error;
-  } else if (shouldSendEmail) {
-    emailError = "SMTP yapılandırması eksik (Host, Kullanıcı veya Şifre boş).";
+    gdriveUploaded = gdRes.success;
+    gdriveError = gdRes.error;
+  }
+
+  // 3. SMTP E-Posta Yedeği (Değişiklik yoksa atlanabilir!)
+  let emailSent = false;
+  let emailSkipped = false;
+  let emailMessage: string | undefined;
+  let emailError: string | undefined;
+
+  if (shouldSendEmail) {
+    if (!hasChanges && skipEmailIfNoChanges) {
+      emailSkipped = true;
+      emailMessage = "Değişiklik olmadığı için e-posta gönderimi atlandı.";
+    } else if (
+      smtpSettings &&
+      smtpSettings.host &&
+      smtpSettings.user &&
+      smtpSettings.pass &&
+      targetEmail &&
+      backupPath
+    ) {
+      const result = await sendBackupEmail(
+        smtpSettings,
+        targetEmail,
+        backupPath,
+        path.basename(currentPath),
+        options?.mailSubject,
+        options?.mailHtml,
+        options?.mailText
+      );
+      emailSent = result.success;
+      emailError = result.error;
+    } else {
+      emailError = "SMTP yapılandırması eksik (Host, Kullanıcı veya Şifre boş).";
+    }
   }
 
   return {
     localBackup: !!backupPath,
     localBackupPath: backupPath,
     emailSent,
+    emailSkipped,
+    emailMessage,
     emailError,
+    gdriveUploaded,
+    gdriveError,
   };
 });
 

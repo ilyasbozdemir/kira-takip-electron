@@ -108,11 +108,21 @@ export const electronAPI = {
   getAppVersion: () => ipcRenderer.invoke("get-app-version"),
   getLocalIp: () => ipcRenderer.invoke("get-local-ip"),
   backupDatabase: () => ipcRenderer.invoke("backup-database"),
-  quitWithBackup: (smtpSettings?: any) => ipcRenderer.invoke("quit-with-backup", smtpSettings),
+  quitWithBackup: (options?: any) => ipcRenderer.invoke("quit-with-backup", options),
   listBackups: () => ipcRenderer.invoke("list-backups"),
   openBackupFolder: () => ipcRenderer.invoke("open-backup-folder"),
   openExternalLink: (url: string) => ipcRenderer.invoke("open-external-link", url),
   fetchUrl: (url: string) => ipcRenderer.invoke("fetch-url", url),
+
+  // Google Drive Cloud Storage IPCs
+  gdrive: {
+    verify: (token: string) => ipcRenderer.invoke("gdrive:verify", token),
+    upload: (data: { token: string; filePath?: string; fileName?: string; folderId?: string }) =>
+      ipcRenderer.invoke("gdrive:upload", data),
+    list: (data: { token: string; folderId?: string }) => ipcRenderer.invoke("gdrive:list", data),
+    download: (data: { token: string; fileId: string; destPath?: string }) =>
+      ipcRenderer.invoke("gdrive:download", data),
+  },
 
   minimizeWindow: () => ipcRenderer.invoke("win:minimize"),
   maximizeWindow: () => ipcRenderer.invoke("win:maximize"),

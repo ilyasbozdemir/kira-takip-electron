@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { type Store, type Hall, type Venue, type Reservation, type Personnel } from "./rental-store";
+import { notifyDataChanged } from "@/context/ChangeTrackingContext";
 
 let currentStoreData: Store = { venues: [], reservations: [], personnel: [] };
 const listeners = new Set<() => void>();
@@ -52,6 +53,7 @@ export const sqliteStore = {
       currentStoreData.reservations.push({ ...r, id: Math.random().toString(36).slice(2) });
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged("Yeni rezervasyon oluşturuldu");
     await this.loadFromDb();
   },
   async deleteReservation(id: string) {
@@ -61,6 +63,7 @@ export const sqliteStore = {
       currentStoreData.reservations = currentStoreData.reservations.filter((x) => x.id !== id);
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged("Rezervasyon silindi / çöp kutusuna taşındı");
     await this.loadFromDb();
   },
   async getDeletedReservations(): Promise<any[]> {
@@ -73,24 +76,28 @@ export const sqliteStore = {
     if (window.electronAPI?.db?.restoreReservation) {
       await window.electronAPI.db.restoreReservation(id);
     }
+    notifyDataChanged("Rezervasyon çöp kutusundan geri yüklendi");
     await this.loadFromDb();
   },
   async permanentDeleteReservation(id: string) {
     if (window.electronAPI?.db?.permanentDeleteReservation) {
       await window.electronAPI.db.permanentDeleteReservation(id);
     }
+    notifyDataChanged("Rezervasyon kalıcı olarak silindi");
     await this.loadFromDb();
   },
   async emptyRecycleBin() {
     if (window.electronAPI?.db?.emptyRecycleBin) {
       await window.electronAPI.db.emptyRecycleBin();
     }
+    notifyDataChanged("Çöp kutusu boşaltıldı");
     await this.loadFromDb();
   },
   async cleanupOldTrash(days?: number) {
     if (window.electronAPI?.db?.cleanupOldTrash) {
       await window.electronAPI.db.cleanupOldTrash(days);
     }
+    notifyDataChanged("Eski silinen kayıtlar temizlendi");
     await this.loadFromDb();
   },
   async updateReservationStatus(id: string, status: string) {
@@ -101,6 +108,7 @@ export const sqliteStore = {
       if (res) res.status = status;
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Rezervasyon durumu güncellendi: ${status}`);
     await this.loadFromDb();
   },
   async updateReservationDetails(id: string, details: any) {
@@ -111,6 +119,7 @@ export const sqliteStore = {
       if (res) Object.assign(res, details);
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged("Rezervasyon detayları düzenlendi");
     await this.loadFromDb();
   },
   async addVenue(data: any) {
@@ -120,6 +129,7 @@ export const sqliteStore = {
       currentStoreData.venues.push({ ...data, id: Math.random().toString(36).slice(2), halls: [] });
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Yeni mekan eklendi: ${data?.name || ""}`);
     await this.loadFromDb();
   },
   async deleteVenue(id: string) {
@@ -129,6 +139,7 @@ export const sqliteStore = {
       currentStoreData.venues = currentStoreData.venues.filter((x) => x.id !== id);
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged("Mekan silindi");
     await this.loadFromDb();
   },
   async updateVenue(arg1: any, arg2?: any) {
@@ -142,6 +153,7 @@ export const sqliteStore = {
         localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
       }
     }
+    notifyDataChanged(`Mekan güncellendi: ${v?.name || ""}`);
     await this.loadFromDb();
   },
   async addHall(data: any) {
@@ -152,6 +164,7 @@ export const sqliteStore = {
       if (v) v.halls.push({ ...data, id: Math.random().toString(36).slice(2) });
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Yeni salon eklendi: ${data?.name || ""}`);
     await this.loadFromDb();
   },
   async updateHall(arg1: any, arg2?: any) {
@@ -168,6 +181,7 @@ export const sqliteStore = {
         }
       }
     }
+    notifyDataChanged(`Salon güncellendi: ${h?.name || ""}`);
     await this.loadFromDb();
   },
   async deleteHall(venueId: string, hallId: string) {
@@ -178,6 +192,7 @@ export const sqliteStore = {
       if (v) v.halls = v.halls.filter((h) => h.id !== hallId);
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged("Salon silindi");
     await this.loadFromDb();
   },
   async addPersonnel(p: any) {
@@ -188,6 +203,7 @@ export const sqliteStore = {
       currentStoreData.personnel.push({ ...p, id: Math.random().toString(36).slice(2) });
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Yeni personel eklendi: ${p?.name || ""}`);
     await this.loadFromDb();
   },
   async updatePersonnel(p: any) {
@@ -201,6 +217,7 @@ export const sqliteStore = {
       }
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Personel bilgisi güncellendi: ${p?.name || ""}`);
     await this.loadFromDb();
   },
   async deletePersonnel(id: string) {
@@ -212,6 +229,7 @@ export const sqliteStore = {
       }
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged("Personel silindi");
     await this.loadFromDb();
   },
   async addCustomer(c: any) {
@@ -222,6 +240,7 @@ export const sqliteStore = {
       currentStoreData.customers.push({ ...c, id: Math.random().toString(36).slice(2) });
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Yeni müşteri/vatandaş eklendi: ${c?.name || ""}`);
     await this.loadFromDb();
   },
   async updateCustomer(c: any) {
@@ -233,6 +252,7 @@ export const sqliteStore = {
       if (idx !== -1) currentStoreData.customers[idx] = c;
       localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
     }
+    notifyDataChanged(`Müşteri/vatandaş güncellendi: ${c?.name || ""}`);
     await this.loadFromDb();
   },
   async deleteCustomer(id: string) {
@@ -244,6 +264,7 @@ export const sqliteStore = {
         localStorage.setItem("venuekeeper-store-backup", JSON.stringify(currentStoreData));
       }
     }
+    notifyDataChanged("Müşteri/vatandaş kaydı silindi");
     await this.loadFromDb();
   },
   async addTransaction(t: any) {
@@ -258,6 +279,7 @@ export const sqliteStore = {
     if (window.electronAPI?.db?.setSetting) {
       await window.electronAPI.db.setSetting("financial_transactions_json", JSON.stringify(currentStoreData.transactions));
     }
+    notifyDataChanged(`Yeni muhasebe/kasa işlemi: ${t?.description || ""}`);
     notifyListeners();
     await this.loadFromDb();
   },
@@ -271,6 +293,7 @@ export const sqliteStore = {
     if (window.electronAPI?.db?.setSetting) {
       await window.electronAPI.db.setSetting("financial_transactions_json", JSON.stringify(currentStoreData.transactions));
     }
+    notifyDataChanged(`Muhasebe/kasa işlemi düzenlendi: ${t?.description || ""}`);
     notifyListeners();
     await this.loadFromDb();
   },
@@ -282,6 +305,7 @@ export const sqliteStore = {
         await window.electronAPI.db.setSetting("financial_transactions_json", JSON.stringify(currentStoreData.transactions));
       }
     }
+    notifyDataChanged("Muhasebe/kasa işlemi silindi");
     notifyListeners();
     await this.loadFromDb();
   },

@@ -38,6 +38,8 @@ import { AccountingScreen } from "@/screens/accounting";
 import { HelpScreen } from "@/screens/help.screen";
 import { generateEmailHTMLTemplate, generateBackupEmailContent } from "@/lib/email-template";
 import { ExitBackupModal } from "@/components/modals/exit-backup-modal";
+import { GoogleDriveModal } from "@/components/modals/google-drive-modal";
+import { useChangeTracker } from "@/context/ChangeTrackingContext";
 import { SplashScreen } from "@/components/splash-screen";
 import { ReservationDateConfirmModal } from "@/components/modals/reservation-date-confirm-modal";
 import { PastRecordSecurityModal } from "@/components/modals/past-record-security-modal";
@@ -213,7 +215,46 @@ export function App(): React.JSX.Element {
   /**
    * Kullanıcı çıkış butonuna bastığında onay modalı açılır.
    */
-  const handleAppClose = () => {
+  const {
+    hasChanges,
+    resetChanges,
+    closePreferenceMode,
+    closePreferenceActions,
+    skipEmailIfNoChanges,
+  } = useChangeTracker();
+
+  /**
+   * Kullanıcı çıkış butonuna bastığında onay modalı veya otomatik mod çalışır.
+   */
+  const handleAppClose = async () => {
+    if (closePreferenceMode === "auto") {
+      const backupLocal = closePreferenceActions.includes("backup");
+      const sendEmail = closePreferenceActions.includes("email");
+      const backupGdrive = closePreferenceActions.includes("gdrive");
+
+      const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
+      let backupEmail = "";
+      if (smtpRaw) {
+        try {
+          const parsed = JSON.parse(smtpRaw);
+          backupEmail = parsed.backupEmail || parsed.user || "";
+        } catch {}
+      }
+
+      await handleExecuteExit({
+        backupLocal,
+        sendEmail,
+        backupEmail,
+        backupGdrive,
+        hasChanges,
+        skipEmailIfNoChanges,
+      });
+      setTimeout(() => {
+        (window.electronAPI as any)?.closeWindow?.();
+      }, 300);
+      return;
+    }
+
     setExitModalOpen(true);
   };
 
@@ -221,7 +262,18 @@ export function App(): React.JSX.Element {
     backupLocal: boolean;
     sendEmail: boolean;
     backupEmail: string;
-  }): Promise<{ success: boolean; localBackup?: boolean; emailSent?: boolean; error?: string }> => {
+    backupGdrive?: boolean;
+    hasChanges?: boolean;
+    skipEmailIfNoChanges?: boolean;
+  }): Promise<{
+    success: boolean;
+    localBackup?: boolean;
+    emailSent?: boolean;
+    emailSkipped?: boolean;
+    emailMessage?: string;
+    gdriveUploaded?: boolean;
+    error?: string;
+  }> => {
     setIsClosing(true);
     try {
       const smtpRaw = localStorage.getItem("venue-keeper-smtp-settings");
@@ -240,29 +292,43 @@ export function App(): React.JSX.Element {
         senderName: smtpSettings.senderName,
       });
 
+      const gdriveToken = localStorage.getItem("gdrive_token") || undefined;
+      const gdriveFolderId = localStorage.getItem("gdrive_folder_id") || undefined;
+
       const res = await (window.electronAPI as any)?.quitWithBackup?.({
         backupLocal: options.backupLocal,
         sendEmail: options.sendEmail,
         backupEmail: options.backupEmail,
+        backupGdrive: options.backupGdrive,
+        gdriveToken,
+        gdriveFolderId,
+        hasChanges: options.hasChanges,
+        skipEmailIfNoChanges: options.skipEmailIfNoChanges,
         smtpSettings,
         mailSubject: subject,
         mailHtml: html,
         mailText: text,
       });
 
-      if (options.sendEmail && res && !res.emailSent) {
+      if (options.sendEmail && res && !res.emailSent && !res.emailSkipped) {
         return {
           success: false,
           localBackup: res.localBackup,
           emailSent: false,
+          gdriveUploaded: res.gdriveUploaded,
           error: res.emailError || "E-posta sunucusu yanıt vermedi.",
         };
       }
+
+      resetChanges();
 
       return {
         success: true,
         localBackup: res?.localBackup ?? true,
         emailSent: res?.emailSent ?? false,
+        emailSkipped: res?.emailSkipped ?? false,
+        emailMessage: res?.emailMessage,
+        gdriveUploaded: res?.gdriveUploaded ?? false,
       };
     } catch (err: any) {
       console.error("[EXIT] Hata:", err);
@@ -1036,6 +1102,7 @@ export function App(): React.JSX.Element {
                   monthStats={monthStats}
                   hallById={hallById}
                   onNavigateToCalendar={() => setActiveSection("calendar")}
+                  onOpenHolidaysModal={() => setHolidaysModalOpen(true)}
                 />
               )}
 
@@ -1496,6 +1563,12 @@ export function App(): React.JSX.Element {
         currentFilePath={currentFilePath}
         onConfirmExit={handleExecuteExit}
         onDirectExit={handleDirectExit}
+      />
+
+      <GoogleDriveModal
+        theme={theme}
+        currentFilePath={currentFilePath}
+        onDatabaseRestored={() => sqliteStore.loadFromDb()}
       />
 
       {/* Global Tatiller & Takvim Yönetim Modalı (Sol Menüden Tetiklenir) */}
